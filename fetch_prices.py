@@ -629,7 +629,7 @@ HTML_TEMPLATE = """
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script>%%TOPOJSON_JS%%</script>
 <script>%%D3_JS%%</script>
-<link rel="stylesheet" href="css/styles.css">
+<link rel="stylesheet" href="css/styles.css?v=%%FETCH_DATE%%">
 </head>
 <body>
 <div id="topbar">
