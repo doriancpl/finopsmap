@@ -1,0 +1,282 @@
+[
+  {
+    "title": "FinOps Framework 2026: Executive Strategy, Technology Categories, and Converging Disciplines",
+    "url": "https://www.finops.org/insights/2026-finops-framework/",
+    "date": "Thu, 19 Mar 2026",
+    "source": "ff",
+    "summary": "Key Insight: The FinOps Framework has been updated to reflect the growing strategic role of FinOps in organizations working to maximize value from an expanding"
+  },
+  {
+    "title": "Announcing savings plan for databases: flexible savings for modern, evolving workloads",
+    "url": "https://techcommunity.microsoft.com/t5/finops-blog/announcing-savings-plan-for-databases-flexible-savings-for/ba-p/4503107",
+    "date": "Wed, 18 Mar 2026",
+    "source": "azure",
+    "summary": "As organizations modernize their data platforms, database environments are constantly changing. Teams migrate between services, scale across regions, and evolve"
+  },
+  {
+    "title": "Microsoft Agent Pre-Purchase Plan: One Unified Path to Scale AI Agents",
+    "url": "https://techcommunity.microsoft.com/t5/finops-blog/microsoft-agent-pre-purchase-plan-one-unified-path-to-scale-ai/ba-p/4476052",
+    "date": "Fri, 20 Feb 2026",
+    "source": "azure",
+    "summary": "AI is now essential, and at Microsoft Ignite 2025, we introduced a new foundation for intelligent agents: Work IQ, Fabric IQ, and Foundry IQ. These three IQs re"
+  },
+  {
+    "title": "A One Word Change: How the FinOps Community Made Our Mission Evolution Inevitable",
+    "url": "https://www.finops.org/insights/mission-update/",
+    "date": "Thu, 19 Feb 2026",
+    "source": "ff",
+    "summary": "Today, I&#8217;m announcing that the FinOps Foundation has officially updated our mission, as approved by our Governing Board. We have moved from &#8220;advanci"
+  },
+  {
+    "title": "The State of FinOps 2026",
+    "url": "https://www.finops.org/insights/the-state-of-finops-2026/",
+    "date": "Thu, 19 Feb 2026",
+    "source": "ff",
+    "summary": ""
+  },
+  {
+    "title": "Why Data Cloud Platform Warehouse Cost Isn’t Enough to Understand Value",
+    "url": "https://www.finops.org/insights/finops-for-data-cloud-platforms/",
+    "date": "Thu, 12 Feb 2026",
+    "source": "ff",
+    "summary": "Key Insight: Many teams still manage costs on Data Cloud Platforms, like Snowflake and Databricks, at the warehouse or cluster level, which shows a component of"
+  },
+  {
+    "title": "What’s new in FinOps toolkit 13 – January 2026",
+    "url": "https://techcommunity.microsoft.com/t5/finops-blog/what-s-new-in-finops-toolkit-13-january-2026/ba-p/4493090",
+    "date": "Mon, 09 Feb 2026",
+    "source": "azure",
+    "summary": "Whether you consider yourself a FinOps practitioner, someone who’s enthusiastic about driving cloud efficiency and maximizing the value you get from the cloud o"
+  },
+  {
+    "title": "Improve Cost Visibility and Observability with AWS Cost Categories – Part 2: Hierarchical Structures and Programmatic Implementation",
+    "url": "https://aws.amazon.com/blogs/aws-cloud-financial-management/improve-cost-visibility-and-observability-with-aws-cost-categories-part-2-hierarchical-structures-and-programmatic-implementation/",
+    "date": "Tue, 27 Jan 2026",
+    "source": "aws",
+    "summary": "In Part 1 of our series on improving cost visibility and observability, \"Improve Cost Visibility and Observability with AWS Cost Categories - Part 1: Fundamenta"
+  },
+  {
+    "title": "Microsoft Ignite 2025: Reinforcing FinOps with Agentic AI Optimization and Governance",
+    "url": "https://www.finops.org/insights/microsoft-ignite-2025/",
+    "date": "Thu, 18 Dec 2025",
+    "source": "ff",
+    "summary": "Key Insight: Microsoft adds agentic AI directly into its FinOps products. Key announcements from Ignite 2025, like the Azure Copilot Optimization Agent, Foundry"
+  },
+  {
+    "title": "Introducing FOCUS 1.3: Contract Commitments, Split Cost Allocation, Dimensions for Recency & Completeness",
+    "url": "https://www.finops.org/insights/introducing-focus-1-3/",
+    "date": "Thu, 11 Dec 2025",
+    "source": "ff",
+    "summary": "Key Insight: The FOCUS 1.3 specification solves three persistent problems: splitting shared resource costs, tracking contract commitments accurately, and verify"
+  },
+  {
+    "title": "FinOps Enabled Executive: Two New Archetypes for Technology Leadership (‘COO for the CTO’)",
+    "url": "https://www.finops.org/insights/finops-executive-technology-leader/",
+    "date": "Mon, 08 Dec 2025",
+    "source": "ff",
+    "summary": "Key Insight: A new technology leader profile is reshaping how enterprises manage and deliver technology value. Interviews and analysis based on dozens of techno"
+  },
+  {
+    "title": "AWS re:Invent 2025 FinOps Updates",
+    "url": "https://www.finops.org/insights/aws-reinvent-2025-finops-updates/",
+    "date": "Fri, 05 Dec 2025",
+    "source": "ff",
+    "summary": "Key Insight: AWS demonstrated support of FOCUS 1.2, including improvements to invoice reconciliation, capacity reservation tracking, and support for virtual cur"
+  },
+  {
+    "title": "Accelerate Enterprise FinOps Adoption: Include AI, SaaS, and Data Centers from the Start",
+    "url": "https://www.finops.org/insights/accelerate-enterprise-finops-adoption-include-ai-saas-data-center/",
+    "date": "Thu, 27 Nov 2025",
+    "source": "ff",
+    "summary": "Key Insight: HealthEdge CTO Robert Duffy discusses the critical need to embed FinOps practices from the start of a major cloud migration, and how his recent Fin"
+  },
+  {
+    "title": "Streamline Analytics Spend on Microsoft Fabric with Azure Reservations",
+    "url": "https://techcommunity.microsoft.com/t5/finops-blog/streamline-analytics-spend-on-microsoft-fabric-with-azure/ba-p/4472670",
+    "date": "Mon, 24 Nov 2025",
+    "source": "azure",
+    "summary": "Introduction \nAs organizations accelerate their cloud adoption, optimizing spend while maintaining performance and scalability is a top priority. Microsoft Fabr"
+  },
+  {
+    "title": "Introducing Automated Amazon EBS Volume Optimization in AWS Compute Optimizer",
+    "url": "https://aws.amazon.com/blogs/aws-cloud-financial-management/introducing-automated-amazon-ebs-volume-optimization-in-aws-compute-optimizer/",
+    "date": "Fri, 21 Nov 2025",
+    "source": "aws",
+    "summary": "Starting today, AWS Compute Optimizer introduces a new automation feature that streamlines how you optimize Amazon Elastic Block Store (EBS) volumes. Instead of"
+  },
+  {
+    "title": "Introducing 18-Month Forecasting and Explainable AI Insights in AWS Cost Explorer",
+    "url": "https://aws.amazon.com/blogs/aws-cloud-financial-management/introducing-18-month-forecasting-and-explainable-ai-insights-in-aws-cost-explorer/",
+    "date": "Wed, 19 Nov 2025",
+    "source": "aws",
+    "summary": "We're excited to announce enhanced forecasting capabilities in AWS Cost Explorer, now providing up to 18 months of future cost projections with improved accurac"
+  },
+  {
+    "title": "Data Exports for FOCUS 1.2 is now generally available",
+    "url": "https://aws.amazon.com/blogs/aws-cloud-financial-management/data-exports-for-focus-1-2-is-now-generally-available/",
+    "date": "Wed, 19 Nov 2025",
+    "source": "aws",
+    "summary": "Today AWS announced Cost and Usage data exports in FOCUS 1.2 specification. You can now create exports of your AWS Cost and Usage data in the FOCUS 1.2 schema."
+  },
+  {
+    "title": "Smarter Cloud, Smarter Spend: How Azure Powers Cost-Efficient Innovation",
+    "url": "https://techcommunity.microsoft.com/t5/finops-blog/smarter-cloud-smarter-spend-how-azure-powers-cost-efficient/ba-p/4465687",
+    "date": "Thu, 30 Oct 2025",
+    "source": "azure",
+    "summary": "In today’s dynamic business environment, organizations are under pressure to innovate rapidly while managing costs effectively. The cloud, especially with AI at"
+  },
+  {
+    "title": "Unifying FinOps and ITAM: Realize Tech Value, Reduce Risk, and Increase Efficiency",
+    "url": "https://www.finops.org/insights/unifying-finops-and-itam-realize-tech-value-reduce-risk-increase-efficiency/",
+    "date": "Thu, 30 Oct 2025",
+    "source": "ff",
+    "summary": ""
+  },
+  {
+    "title": "Unlock Savings with Copilot Credit Pre-Purchase Plan",
+    "url": "https://techcommunity.microsoft.com/t5/finops-blog/unlock-savings-with-copilot-credit-pre-purchase-plan/ba-p/4464511",
+    "date": "Mon, 27 Oct 2025",
+    "source": "azure",
+    "summary": "Introduction\nAs organizations scale their use of Microsoft Copilot Studio from building custom agents to integrating with Dynamics 365, cost predictability and"
+  },
+  {
+    "title": "Updated Cloud Financial Management Digital Training Courses with a New Course Added: “FinOps for GenAI”",
+    "url": "https://aws.amazon.com/blogs/aws-cloud-financial-management/updated-cloud-financial-management-digital-training-courses-with-a-new-course-added-finops-for-genai/",
+    "date": "Tue, 14 Oct 2025",
+    "source": "aws",
+    "summary": "AWS is committed to empowering the FinOps community with the knowledge, tools, and best practices needed to excel in cloud financial management. Our dedication"
+  },
+  {
+    "title": "A FinOps Guide to Comparing Containers and Serverless Functions for Compute",
+    "url": "https://aws.amazon.com/blogs/aws-cloud-financial-management/a-finops-guide-to-comparing-containers-and-serverless-functions-for-compute/",
+    "date": "Fri, 10 Oct 2025",
+    "source": "aws",
+    "summary": "The decision between Containers and Serverless Functions – or the implementation of both – should be driven by a thorough understanding of workload characterist"
+  },
+  {
+    "title": "Your Ultimate Guide to Cloud Financial Management sessions at re:Invent 2025: Know Before You Go",
+    "url": "https://aws.amazon.com/blogs/aws-cloud-financial-management/your-ultimate-guide-to-cloud-financial-management-sessions-at-reinvent-2025-know-before-you-go/",
+    "date": "Tue, 07 Oct 2025",
+    "source": "aws",
+    "summary": "Are you ready to maximize your Cloud Financial Management (CFM) learning and networking time at re:Invent 2025? As usual, I've put together this comprehensive g"
+  },
+  {
+    "title": "Provider-Managed Azure Subscriptions: Cost Control and Commitment Clarity",
+    "url": "https://techcommunity.microsoft.com/t5/finops-blog/provider-managed-azure-subscriptions-cost-control-and-commitment/ba-p/4448688",
+    "date": "Fri, 29 Aug 2025",
+    "source": "azure",
+    "summary": "As a Microsoft Cloud Solution Architect supporting enterprise customers, I occasionally encounter a specific scenario where customers with an Enterprise Agreeme"
+  },
+  {
+    "title": "Streamline AWS cost analytics with new customized Billing and Cost Management Dashboards",
+    "url": "https://aws.amazon.com/blogs/aws-cloud-financial-management/streamline-aws-cost-analytics-with-new-customized-billing-and-cost-management-dashboards/",
+    "date": "Wed, 20 Aug 2025",
+    "source": "aws",
+    "summary": "Today, we're excited to announce the general availability of Billing and Cost Management Dashboards, a new feature within AWS Billing and Cost Management that a"
+  },
+  {
+    "title": "What’s new in FinOps toolkit 12 – July 2025",
+    "url": "https://techcommunity.microsoft.com/t5/finops-blog/what-s-new-in-finops-toolkit-12-july-2025/ba-p/4438562",
+    "date": "Thu, 07 Aug 2025",
+    "source": "azure",
+    "summary": "Whether you consider yourself a FinOps practitioner, someone who’s enthusiastic about driving cloud efficiency and maximizing the value you get from the cloud o"
+  },
+  {
+    "title": "Introducing non-breaking “breaking” changes in FinOps hubs 12",
+    "url": "https://techcommunity.microsoft.com/t5/finops-blog/introducing-non-breaking-breaking-changes-in-finops-hubs-12/ba-p/4438554",
+    "date": "Tue, 05 Aug 2025",
+    "source": "azure",
+    "summary": "Before I explain this, I want to say that I’m extremely excited about this update. FinOps hubs was designed to solve a common versioning challenge many organiza"
+  },
+  {
+    "title": "News and updates from FinOps X 2025: Transforming FinOps in the era of AI",
+    "url": "https://techcommunity.microsoft.com/t5/finops-blog/news-and-updates-from-finops-x-2025-transforming-finops-in-the/ba-p/4426851",
+    "date": "Sun, 06 Jul 2025",
+    "source": "azure",
+    "summary": "Last year, I talked about how Microsoft is empowering stakeholders across the organization with FinOps resources, tools, and services. It's been an amazing year"
+  },
+  {
+    "title": "FOCUS 1.2 in Microsoft Cost Management: Unified multi-cloud, multi-currency reporting",
+    "url": "https://techcommunity.microsoft.com/t5/finops-blog/focus-1-2-in-microsoft-cost-management-unified-multi-cloud-multi/ba-p/4423852",
+    "date": "Sun, 06 Jul 2025",
+    "source": "azure",
+    "summary": "On June 3, 2025, the FinOps Foundation released the FOCUS 1.2&nbsp;standard, introducing key enhancements to help FinOps teams analyze, manage, and optimize clo"
+  },
+  {
+    "title": "What's new in FinOps toolkit 0.11 – May 2025",
+    "url": "https://techcommunity.microsoft.com/t5/finops-blog/what-s-new-in-finops-toolkit-0-11-may-2025/ba-p/4420719",
+    "date": "Sun, 06 Jul 2025",
+    "source": "azure",
+    "summary": "Whether you consider yourself a FinOps practitioner, someone who’s enthusiastic about driving cloud efficiency and maximizing the value you get from the cloud o"
+  },
+  {
+    "title": "Understanding the Total Cost of Ownership",
+    "url": "https://techcommunity.microsoft.com/t5/finops-blog/understanding-the-total-cost-of-ownership/ba-p/4419195",
+    "date": "Thu, 12 Jun 2025",
+    "source": "azure",
+    "summary": "Whether you're just beginning your journey in Azure or are already managing workloads in the cloud, it's essential to ground your strategy in proven guidance. T"
+  },
+  {
+    "title": "A practitioner's guide to accelerating FinOps with GitHub Copilot and FinOps hubs",
+    "url": "https://techcommunity.microsoft.com/t5/finops-blog/a-practitioner-s-guide-to-accelerating-finops-with-github/ba-p/4420302",
+    "date": "Tue, 10 Jun 2025",
+    "source": "azure",
+    "summary": "ℹ️ Quick implementation overview\nSetup time: ~30 minutes for basic configurationTarget audience: FinOps practitioners, finance teams, engineering managersPrere"
+  },
+  {
+    "title": "Microsoft Cost Management updates—May 2025 (summary)",
+    "url": "https://techcommunity.microsoft.com/t5/finops-blog/microsoft-cost-management-updates-may-2025-summary/ba-p/4421930",
+    "date": "Mon, 09 Jun 2025",
+    "source": "azure",
+    "summary": "Here's a quick run-down of the Cost Management updates for May 2025:\n\nView estimated carbon emissions in Azure Migrate\nGenerally available: Azure Carbon Optimiz"
+  },
+  {
+    "title": "The authenticated AWS Pricing Calculator is now generally available",
+    "url": "https://aws.amazon.com/blogs/aws-cloud-financial-management/the-authenticated-aws-pricing-calculator-is-now-generally-available/",
+    "date": "Thu, 05 Jun 2025",
+    "source": "aws",
+    "summary": "Today, we’re excited to announce the general availability of the authenticated AWS Pricing Calculator in the AWS Billing and Cost Management Console. The new ca"
+  },
+  {
+    "title": "From San Diego to Your Organization: Latest AWS Announcements for FinOps X 2025",
+    "url": "https://aws.amazon.com/blogs/aws-cloud-financial-management/from-san-diego-to-your-organization-latest-aws-announcements-for-finops-x-2025/",
+    "date": "Wed, 04 Jun 2025",
+    "source": "aws",
+    "summary": "While San Diego's famous June gloom may have given FinOps attendees overcast skies, the energy inside the FinOps X conference was anything but gloomy. Within ju"
+  },
+  {
+    "title": "2024 re:Invent announcement recap for AWS Cloud Financial Management services",
+    "url": "https://aws.amazon.com/blogs/aws-cloud-financial-management/2024-reinvent-announcement-recap-for-cloud-financial-management-services/",
+    "date": "Sat, 21 Dec 2024",
+    "source": "aws",
+    "summary": "With great pleasure, I am happy to share with you the ten features recently added to the AWS Cloud Financial Management portfolio of services. We hope that thes"
+  },
+  {
+    "title": "Data Exports for FOCUS 1.0 is now in general availability",
+    "url": "https://aws.amazon.com/blogs/aws-cloud-financial-management/data-exports-for-focus-1-0-is-now-generally-available/",
+    "date": "Mon, 25 Nov 2024",
+    "source": "aws",
+    "summary": "Today AWS announced the general availability release of Data Exports for FOCUS 1.0. You can now create exports of your AWS cost and usage data with the FOCUS 1."
+  },
+  {
+    "title": "AWS’ debut to FinOps X: recap and product announcement highlights",
+    "url": "https://aws.amazon.com/blogs/aws-cloud-financial-management/aws-debut-to-finops-x-recap-and-product-announcement-highlights/",
+    "date": "Fri, 21 Jun 2024",
+    "source": "aws",
+    "summary": "Our product teams have spared no effort in the past few months developing new capabilities, so that we can bring the latest advancements to FinOps X. Let’s take"
+  },
+  {
+    "title": "Empower your engineers to take an active role in cost optimization",
+    "url": "https://aws.amazon.com/blogs/aws-cloud-financial-management/ce-empower-your-engineers-to-take-an-active-role-in-cost-optimization/",
+    "date": "Wed, 25 Jan 2023",
+    "source": "aws",
+    "summary": "A vital element of proactive cost optimization is empowering engineering teams, since they are owners of the AWS resources and services deployed. Let’s explore"
+  },
+  {
+    "title": "Using the right tools for your cloud cost forecasting",
+    "url": "https://aws.amazon.com/blogs/aws-cloud-financial-management/using-the-right-tools-for-your-cloud-cost-forecasting/",
+    "date": "Tue, 22 Nov 2022",
+    "source": "aws",
+    "summary": "We’re at the final blog of our forecasting series! If you’ve been following along the past few weeks, you have explored creating a process for more effective fo"
+  }
+]

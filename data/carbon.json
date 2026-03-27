@@ -1,0 +1,100 @@
+{
+  "eu-west-3": {
+    "co2": 56,
+    "renew": 91,
+    "mix": "Nuclear + Hydro",
+    "zone": "FR",
+    "label": "France"
+  },
+  "eu-north-1": {
+    "co2": 21,
+    "renew": 98,
+    "mix": "Hydro + Wind",
+    "zone": "SE",
+    "label": "Sweden"
+  },
+  "eu-central-1": {
+    "co2": 312,
+    "renew": 52,
+    "mix": "Gas + Coal + Wind",
+    "zone": "DE",
+    "label": "Germany"
+  },
+  "eu-west-1": {
+    "co2": 258,
+    "renew": 58,
+    "mix": "Gas + Wind",
+    "zone": "IE",
+    "label": "Ireland"
+  },
+  "eu-west-2": {
+    "co2": 192,
+    "renew": 64,
+    "mix": "Gas + Wind + Nuclear",
+    "zone": "GB",
+    "label": "United Kingdom"
+  },
+  "us-east-1": {
+    "co2": 358,
+    "renew": 41,
+    "mix": "Gas + Coal + Nuclear",
+    "zone": "US-MIDA-PJM",
+    "label": "US East"
+  },
+  "francecentral": {
+    "co2": 56,
+    "renew": 91,
+    "mix": "Nuclear + Hydro",
+    "zone": "FR",
+    "label": "France"
+  },
+  "northeurope": {
+    "co2": 258,
+    "renew": 58,
+    "mix": "Gas + Wind",
+    "zone": "IE",
+    "label": "Ireland"
+  },
+  "westeurope": {
+    "co2": 278,
+    "renew": 56,
+    "mix": "Gas + Wind",
+    "zone": "NL",
+    "label": "Netherlands"
+  },
+  "germanywestcentral": {
+    "co2": 312,
+    "renew": 52,
+    "mix": "Gas + Coal + Wind",
+    "zone": "DE",
+    "label": "Germany"
+  },
+  "uksouth": {
+    "co2": 192,
+    "renew": 64,
+    "mix": "Gas + Wind + Nuclear",
+    "zone": "GB",
+    "label": "United Kingdom"
+  },
+  "swedencentral": {
+    "co2": 21,
+    "renew": 98,
+    "mix": "Hydro + Wind",
+    "zone": "SE",
+    "label": "Sweden"
+  },
+  "italynorth": {
+    "co2": 233,
+    "renew": 42,
+    "mix": "Gas + Hydro + Solar",
+    "zone": "IT",
+    "label": "Italy"
+  },
+  "eastus": {
+    "co2": 358,
+    "renew": 41,
+    "mix": "Gas + Coal + Nuclear",
+    "zone": "US-MIDA-PJM",
+    "label": "US East"
+  }
+}

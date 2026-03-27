@@ -205,6 +205,7 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
-data/
+data/aws/
+data/azure/
 .DS_Store
 .claude/

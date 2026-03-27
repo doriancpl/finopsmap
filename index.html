@@ -295,7 +295,7 @@
     <a href="https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEC2/current/eu-west-3/index.json" target="_blank" style="color:var(--text);text-decoration:none">AWS Price List API</a>
   </span>
   <span class="fts" style="color:var(--text)"><a href="#" onclick="document.getElementById('aboutModal').style.display='flex';return false;" style="color:var(--text);text-decoration:none;border-bottom:1px dotted var(--muted)">About me</a></span>
-  <span class="fts" style="color:var(--text)">Updated 3/27/2026 · 10:21 PM</span>
+  <span class="fts" style="color:var(--text)">Updated 3/27/2026 · 10:34 PM</span>
 </footer>
 
 <div id="aboutModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;align-items:center;justify-content:center" onclick="if(event.target===this)this.style.display='none'">
@@ -374,6 +374,7 @@ const AZURE_REGION_OPTIONS = [
   {v:'germanywestcentral', l:'&#x1F1E9;&#x1F1EA; germanywestcentral — Francfort'},
   {v:'uksouth',            l:'&#x1F1EC;&#x1F1E7; uksouth — Londres'},
   {v:'swedencentral',      l:'&#x1F1F8;&#x1F1EA; swedencentral — Suède'},
+  {v:'italynorth',         l:'&#x1F1EE;&#x1F1F9; italynorth — Milan'},
   {v:'eastus',             l:'&#x1F1FA;&#x1F1F8; eastus — Virginie'},
 ];
 
@@ -1708,6 +1709,7 @@ function renderHeatmap() {
     'germanywestcentral': { lon:8.6821, lat:50.1109, label:'Francfort', cloud:'azure' },
     'uksouth':            { lon:-0.1276,lat:51.5074, label:'Londres',   cloud:'azure' },
     'swedencentral':      { lon:16.3458,lat:60.1282, label:'Gävle',     cloud:'azure' },
+    'italynorth':         { lon:9.1900, lat:45.4654, label:'Milan',     cloud:'azure' },
     'eastus':             { lon:-77.47, lat:38.99,   label:'Virginie',  cloud:'azure' },
   };
   const ISO_MAP = {
@@ -1718,6 +1720,7 @@ function renderHeatmap() {
     'eu-central-1':'276','germanywestcentral':'276',
     'swedencentral':'752','eu-north-1':'752',
     'eu-south-1':'380',
+    'italynorth':'380',
     'eu-south-2':'724',
     'us-east-1':'840','eastus':'840',
   };

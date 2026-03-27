@@ -174,6 +174,7 @@ CARBON_ZONES = {
     "germanywestcentral": {"zone": "DE",           "label": "Germany"},
     "uksouth":            {"zone": "GB",           "label": "United Kingdom"},
     "swedencentral":      {"zone": "SE",           "label": "Sweden"},
+    "italynorth":         {"zone": "IT",           "label": "Italy"},
     "eastus":             {"zone": "US-MIDA-PJM",  "label": "US East"},
 }
 
@@ -243,6 +244,7 @@ AZURE_REGIONS = {
     "germanywestcentral": {"label": "Francfort",   "flag": "&#x1F1E9;&#x1F1EA;", "location": "Germany West Central"},
     "uksouth":            {"label": "Londres",     "flag": "&#x1F1EC;&#x1F1E7;", "location": "UK South"},
     "swedencentral":      {"label": "Su\u00e8de",  "flag": "&#x1F1F8;&#x1F1EA;", "location": "Sweden Central"},
+    "italynorth":         {"label": "Milan",       "flag": "&#x1F1EE;&#x1F1F9;", "location": "Italy North"},
     "eastus":             {"label": "Virginie",    "flag": "&#x1F1FA;&#x1F1F8;", "location": "East US"},
 }
 
@@ -915,6 +917,7 @@ const AZURE_REGION_OPTIONS = [
   {v:'germanywestcentral', l:'&#x1F1E9;&#x1F1EA; germanywestcentral \u2014 Francfort'},
   {v:'uksouth',            l:'&#x1F1EC;&#x1F1E7; uksouth \u2014 Londres'},
   {v:'swedencentral',      l:'&#x1F1F8;&#x1F1EA; swedencentral \u2014 Su\u00e8de'},
+  {v:'italynorth',         l:'&#x1F1EE;&#x1F1F9; italynorth \u2014 Milan'},
   {v:'eastus',             l:'&#x1F1FA;&#x1F1F8; eastus \u2014 Virginie'},
 ];
 
@@ -2249,6 +2252,7 @@ function renderHeatmap() {
     'germanywestcentral': { lon:8.6821, lat:50.1109, label:'Francfort', cloud:'azure' },
     'uksouth':            { lon:-0.1276,lat:51.5074, label:'Londres',   cloud:'azure' },
     'swedencentral':      { lon:16.3458,lat:60.1282, label:'Gävle',     cloud:'azure' },
+    'italynorth':         { lon:9.1900, lat:45.4654, label:'Milan',     cloud:'azure' },
     'eastus':             { lon:-77.47, lat:38.99,   label:'Virginie',  cloud:'azure' },
   };
   const ISO_MAP = {
@@ -2259,6 +2263,7 @@ function renderHeatmap() {
     'eu-central-1':'276','germanywestcentral':'276',
     'swedencentral':'752','eu-north-1':'752',
     'eu-south-1':'380',
+    'italynorth':'380',
     'eu-south-2':'724',
     'us-east-1':'840','eastus':'840',
   };
