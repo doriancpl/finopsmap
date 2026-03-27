@@ -177,3 +177,5 @@ footer{position:sticky;bottom:0;z-index:100;margin-top:auto;padding:16px 36px;bo
 .tip-row:last-child{margin-bottom:0}
 .tip-lbl{color:var(--text2)}
 .tip-sep{border:none;border-top:1px solid var(--b1);margin:7px 0}
+
+@keyframes spin{to{transform:rotate(360deg)}}

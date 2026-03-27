@@ -586,7 +586,7 @@ HTML_TEMPLATE = """
         <text x="33" y="23" font-family="'Syne',sans-serif" font-size="17" font-weight="800" fill="#ffffff" letter-spacing="-0.3">FinOps<tspan fill="#7bffe0">Map</tspan></text>
       </svg>
     </div>
-    <div id="topbarLeft" style="display:flex;align-items:center;gap:12px">
+    <div id="topbarLeft" style="display:flex;align-items:center;gap:12px;opacity:0;transition:opacity .2s ease">
       <span id="regionRuler"></span>
       <select class="region-select" id="regionSelect" onchange="onRegionChange(this.value)">
       <option value="eu-west-3">&#x1F1EB;&#x1F1F7; eu-west-3 &mdash; Paris</option>
@@ -628,7 +628,7 @@ HTML_TEMPLATE = """
 
 <section id="hero">
   <div class="eyebrow" id="heroEyebrow"></div>
-  <h1 id="heroTitle">Amazon EC2 <em>Paris</em></h1>
+  <h1 id="heroTitle"></h1>
   <p class="hero-sub" id="heroSub">Chargement...</p>
 </section>
 
@@ -700,6 +700,10 @@ HTML_TEMPLATE = """
 </div>
 
 <div id="tblwrap">
+<div id="tableLoader" style="display:none;justify-content:center;align-items:center;padding:60px;flex-direction:column;gap:16px">
+  <div style="width:32px;height:32px;border:2px solid #2a3050;border-top-color:#7bffe0;border-radius:50%;animation:spin .8s linear infinite"></div>
+  <span style="font-family:'IBM Plex Mono',monospace;font-size:.75rem;color:#3a3f55;letter-spacing:.1em">LOADING PRICES...</span>
+</div>
   <table id="mainTable" class="view-aws">
     <thead>
     <tr id="sortRow">
@@ -852,20 +856,12 @@ HTML_TEMPLATE = """
 </div>
 
 <script>
-let   AWS_DATA   = %%AWS_DATA%%;
-let   AZURE_DATA = %%AZURE_DATA%%;
-let RDS_DATA   = %%RDS_DATA%%;
-let   PSQL_DATA  = %%PSQL_DATA%%;
-const AWS_ALL_REGIONS   = %%AWS_ALL_REGIONS%%;
-const RDS_ALL_REGIONS   = %%RDS_ALL_REGIONS%%;
-const AZURE_ALL_REGIONS = %%AZURE_ALL_REGIONS%%;
-const BDD_ALL_REGIONS   = %%BDD_ALL_REGIONS%%;
-const REGIONS_META       = %%REGIONS_META%%;
-const AZURE_REGIONS_META = %%AZURE_REGIONS_META%%;
-const CARBON_DATA        = %%CARBON_DATA%%;
-const VEILLE_DATA        = %%VEILLE_DATA%%;
-let   currentRegion      = 'eu-west-3';
-let   currentAzureRegion = 'francecentral';
+let AWS_DATA = [], AZURE_DATA = [], RDS_DATA = [], PSQL_DATA = [];
+let AWS_ALL_REGIONS = {}, RDS_ALL_REGIONS = {}, AZURE_ALL_REGIONS = {}, BDD_ALL_REGIONS = {};
+let REGIONS_META = {}, AZURE_REGIONS_META = {}, CARBON_DATA = {}, VEILLE_DATA = [];
+let EUR_RATE = 0.92;
+let currentRegion      = 'eu-west-3';
+let currentAzureRegion = 'francecentral';
 
 const FL_RDS = {'aurora-mysql':'Aurora MySQL','aurora-pg':'Aurora PG','mysql':'MySQL','postgresql':'PostgreSQL','oracle':'Oracle','sqlserver':'SQL Server','mariadb':'MariaDB','other':'Other'};
 const FL = {general:'General',compute:'CPU',memory:'Memoire',burstable:'Burst',storage:'Stockage',gpu:'GPU',other:'Other'};
@@ -885,7 +881,6 @@ const fmo = n => n == null ? '-' : Number(((discount ? n * (1 - discountRate()) 
 const ramFmt = r => r < 1 ? (r * 1024) + 'MB' : r + ' GiB';
 
 let _curr = 'usd';
-const EUR_RATE = %%EUR_RATE%%;
 function currRate() { return _curr === 'eur' ? EUR_RATE : 1; }
 function currSym()  { return _curr === 'eur' ? '\u20ac' : '$'; }
 
@@ -2722,33 +2717,69 @@ window.checkRefInstances = function() {
 };
 console.log('%c[CloudPrice] Run checkRefInstances() to verify reference instance availability', 'color:#7bffe0');
 
-updateHmFamButtons();
-setNav('ec2');
-// Sauvegarder le HTML original de topbarNav une seule fois
-(function(){ const tn = document.getElementById('topbarNav'); if(tn) tn.dataset.orig = tn.innerHTML; })();
-onPriceSlider();
-(function() {
-  function fixStickyRows() {
-    const sortRow    = document.getElementById('sortRow');
-    const filterRow  = document.getElementById('filterRow');
-    const filtersBar = document.getElementById('filters');
-    if (!sortRow || !filterRow) return;
-    const topbarH  = 64;
-    const filtersH = filtersBar ? filtersBar.getBoundingClientRect().height : 0;
-    const sortTop  = topbarH + filtersH;
-    const sortH    = sortRow.getBoundingClientRect().height;
-    const filterTop = sortTop + sortH;
-    sortRow.querySelectorAll('th').forEach(th => th.style.top = sortTop + 'px');
-    filterRow.querySelectorAll('th').forEach(th => th.style.top = filterTop + 'px');
+(async function() {
+  const loader = document.getElementById('tableLoader');
+  if (loader) loader.style.display = 'flex';
+  try {
+    const [awsAll, rdsAll, azureAll, bddAll, meta, carbon, eurData, veille] = await Promise.all([
+      fetch('data/agregations/aws_regions.json').then(r => r.json()),
+      fetch('data/agregations/rds_regions.json').then(r => r.json()),
+      fetch('data/agregations/azure_regions.json').then(r => r.json()),
+      fetch('data/agregations/bdd_regions.json').then(r => r.json()),
+      fetch('data/agregations/regions_meta.json').then(r => r.json()),
+      fetch('data/carbon.json').then(r => r.json()),
+      fetch('data/eur_rate.json').then(r => r.json()),
+      fetch('data/veille.json').then(r => r.json()),
+    ]);
+    AWS_ALL_REGIONS   = awsAll;
+    RDS_ALL_REGIONS   = rdsAll;
+    AZURE_ALL_REGIONS = azureAll;
+    BDD_ALL_REGIONS   = bddAll;
+    REGIONS_META       = meta.aws;
+    AZURE_REGIONS_META = meta.azure;
+    CARBON_DATA        = carbon;
+    EUR_RATE           = eurData.rate || 0.92;
+    VEILLE_DATA        = veille;
+    AWS_DATA   = awsAll[currentRegion]        || [];
+    AZURE_DATA = azureAll[currentAzureRegion] || [];
+    RDS_DATA   = rdsAll[currentRegion]        || [];
+    PSQL_DATA  = bddAll[currentAzureRegion]   || [];
+  } catch(e) {
+    console.error('[FinOpsMap] Erreur chargement données:', e);
+    const tb = document.getElementById('tbody');
+    if (tb) tb.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:40px;color:#ff5566">Erreur de chargement des données</td></tr>';
+    return;
+  } finally {
+    if (loader) loader.style.display = 'none';
   }
-  fixStickyRows();
-  window.addEventListener('resize', fixStickyRows);
+  updateHmFamButtons();
+  setNav('ec2');
+  const tl = document.getElementById('topbarLeft'); if(tl) tl.style.opacity='1';
+  (function(){ const tn = document.getElementById('topbarNav'); if(tn) tn.dataset.orig = tn.innerHTML; })();
+  onPriceSlider();
+  (function() {
+    function fixStickyRows() {
+      const sortRow    = document.getElementById('sortRow');
+      const filterRow  = document.getElementById('filterRow');
+      const filtersBar = document.getElementById('filters');
+      if (!sortRow || !filterRow) return;
+      const topbarH  = 64;
+      const filtersH = filtersBar ? filtersBar.getBoundingClientRect().height : 0;
+      const sortTop  = topbarH + filtersH;
+      const sortH    = sortRow.getBoundingClientRect().height;
+      const filterTop = sortTop + sortH;
+      sortRow.querySelectorAll('th').forEach(th => th.style.top = sortTop + 'px');
+      filterRow.querySelectorAll('th').forEach(th => th.style.top = filterTop + 'px');
+    }
+    fixStickyRows();
+    window.addEventListener('resize', fixStickyRows);
+  })();
+  document.getElementById('tbody').addEventListener('click', function(e) {
+    if (!cmpMode) return;
+    const tr = e.target.closest('tr[data-iname]');
+    if (tr) toggleRow(tr.dataset.iname, tr.dataset.fam);
+  });
 })();
-document.getElementById('tbody').addEventListener('click', function(e) {
-  if (!cmpMode) return;
-  const tr = e.target.closest('tr[data-iname]');
-  if (tr) toggleRow(tr.dataset.iname, tr.dataset.fam);
-});
 </script>
 <div id="globalTip" class="score-tip"></div>
 <div class="modal-overlay" id="seriesModal" onclick="if(event.target===this)closeSeriesModal()">
@@ -2916,6 +2947,19 @@ def generate_html(aws_data, azure_data, rds_data, fetch_date, psql_data=None, aw
     aws_regions_meta   = {k: {"label": v["label"], "flag": v["flag"]} for k, v in AWS_REGIONS.items()}
     azure_regions_meta = {k: {"label": v["label"], "flag": v["flag"]} for k, v in AZURE_REGIONS.items()}
 
+    # Écrire les fichiers JSON agrégés pour chargement côté client
+    data_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
+    with open(os.path.join(data_dir, "agregations", "aws_regions.json"), "w", encoding="utf-8") as f:
+        json.dump(aws_all_regions, f, ensure_ascii=False)
+    with open(os.path.join(data_dir, "agregations", "rds_regions.json"), "w", encoding="utf-8") as f:
+        json.dump(rds_all_regions, f, ensure_ascii=False)
+    with open(os.path.join(data_dir, "agregations", "azure_regions.json"), "w", encoding="utf-8") as f:
+        json.dump(azure_all_regions, f, ensure_ascii=False)
+    with open(os.path.join(data_dir, "agregations", "bdd_regions.json"), "w", encoding="utf-8") as f:
+        json.dump(bdd_all_regions, f, ensure_ascii=False)
+    with open(os.path.join(data_dir, "agregations", "regions_meta.json"), "w", encoding="utf-8") as f:
+        json.dump({"aws": aws_regions_meta, "azure": azure_regions_meta}, f, ensure_ascii=False)
+
     veille_data = veille_data or []
     carbon_data = carbon_data or {}
 
@@ -2936,19 +2980,6 @@ def generate_html(aws_data, azure_data, rds_data, fetch_date, psql_data=None, aw
 
     html = HTML_TEMPLATE
     html = html.replace("%%FETCH_DATE%%",          fetch_date)
-    html = html.replace("%%AWS_DATA%%",            json.dumps(aws_list,          ensure_ascii=False))
-    html = html.replace("%%AZURE_DATA%%",          json.dumps(azure_list,        ensure_ascii=False))
-    html = html.replace("%%RDS_DATA%%",            json.dumps(rds_list,          ensure_ascii=False))
-    html = html.replace("%%PSQL_DATA%%",           json.dumps(psql_list,         ensure_ascii=False))
-    html = html.replace("%%AWS_ALL_REGIONS%%",     json.dumps(aws_all_regions,   ensure_ascii=False))
-    html = html.replace("%%RDS_ALL_REGIONS%%",     json.dumps(rds_all_regions,   ensure_ascii=False))
-    html = html.replace("%%AZURE_ALL_REGIONS%%",   json.dumps(azure_all_regions, ensure_ascii=False))
-    html = html.replace("%%BDD_ALL_REGIONS%%",     json.dumps(bdd_all_regions,   ensure_ascii=False))
-    html = html.replace("%%REGIONS_META%%",        json.dumps(aws_regions_meta,  ensure_ascii=False))
-    html = html.replace("%%AZURE_REGIONS_META%%",  json.dumps(azure_regions_meta,ensure_ascii=False))
-    html = html.replace("%%EUR_RATE%%",            str(eur_rate))
-    html = html.replace("%%CARBON_DATA%%",         json.dumps(carbon_data,       ensure_ascii=False))
-    html = html.replace("%%VEILLE_DATA%%",         json.dumps(veille_data,       ensure_ascii=False))
     html = html.replace("%%TOPOJSON_JS%%",         topojson_js)
     html = html.replace("%%D3_JS%%",               d3_js)
     html = html.replace("%%WORLD_TOPO%%",          world_topo)
