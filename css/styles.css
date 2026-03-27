@@ -179,3 +179,58 @@ footer{position:sticky;bottom:0;z-index:100;margin-top:auto;padding:16px 36px;bo
 .tip-sep{border:none;border-top:1px solid var(--b1);margin:7px 0}
 
 @keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── TCO CALCULATOR ── */
+.tco-layout{display:grid;grid-template-columns:340px 1fr;gap:20px;align-items:start}
+.tco-panel{background:var(--s1);border:1px solid var(--b1);border-radius:10px;padding:22px}
+.tco-panel-title{font-family:'IBM Plex Mono',monospace;font-size:.65rem;letter-spacing:.18em;text-transform:uppercase;color:var(--accent);margin-bottom:14px;display:flex;align-items:center;gap:7px}
+.tco-panel-title::before{content:'';display:inline-block;width:5px;height:5px;background:var(--accent);border-radius:50%}
+.tco-field{margin-bottom:12px}
+.tco-field:last-child{margin-bottom:0}
+.tco-field-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;align-items:end}
+.tco-label{display:block;font-family:'IBM Plex Mono',monospace;font-size:.55rem;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);margin-bottom:5px}
+.tco-input{width:100%;padding:9px 11px;background:var(--s2);border:1px solid var(--b1);border-radius:6px;color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:.82rem;outline:none;font-weight:600;transition:border-color .15s;-webkit-appearance:none;appearance:none}
+.tco-input:focus{border-color:var(--accent)}
+select.tco-input{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%236b738f'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;padding-right:28px}
+.tco-sep{border:none;border-top:1px solid var(--b1);margin:16px 0}
+.tco-dur-toggle{display:flex;border:1px solid var(--b1);border-radius:6px;overflow:hidden}
+.tco-dur-btn{flex:1;padding:8px;background:transparent;border:none;font-family:'IBM Plex Mono',monospace;font-size:.75rem;font-weight:700;color:var(--muted);cursor:pointer;transition:all .15s;text-align:center}
+.tco-dur-btn.on{background:var(--accent-d);color:var(--accent)}
+.tco-dur-btn:hover:not(.on){color:var(--text)}
+.tco-calc-btn{width:100%;padding:11px;background:var(--accent-d);border:1px solid var(--accent);border-radius:6px;color:var(--accent);font-family:'Syne',sans-serif;font-size:.9rem;font-weight:700;cursor:pointer;margin-top:16px;transition:all .15s;letter-spacing:.02em}
+.tco-calc-btn:hover{background:rgba(123,255,224,0.14)}
+.tco-right{display:flex;flex-direction:column;gap:14px}
+.tco-empty{padding:60px 20px;text-align:center;color:var(--muted);font-family:'IBM Plex Mono',monospace;font-size:.75rem;background:var(--s1);border:1px solid var(--b1);border-radius:10px}
+.tco-sum-row{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.tco-sum-card{background:var(--s1);border:1px solid var(--b1);border-radius:10px;padding:16px 18px}
+.tco-sum-card.hl{border-color:rgba(123,255,224,0.4);background:rgba(123,255,224,0.03)}
+.tco-sum-lbl{font-family:'IBM Plex Mono',monospace;font-size:.55rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+.tco-sum-val{font-family:'IBM Plex Mono',monospace;font-size:1.4rem;font-weight:700;line-height:1;margin-bottom:3px}
+.tco-sum-sub{font-size:.7rem;color:var(--text2)}
+.tco-sum-badge{display:inline-block;padding:2px 7px;border-radius:3px;font-family:'IBM Plex Mono',monospace;font-size:.55rem;font-weight:700;margin-top:5px}
+.tco-badge-save{background:rgba(123,255,224,0.12);border:1px solid rgba(123,255,224,0.3);color:var(--accent)}
+.tco-badge-aws{background:rgba(255,153,0,0.1);border:1px solid rgba(255,153,0,0.3);color:var(--aws)}
+.tco-badge-az{background:rgba(0,170,255,0.1);border:1px solid rgba(0,170,255,0.3);color:var(--azure)}
+.tco-breakdown{background:var(--s1);border:1px solid var(--b1);border-radius:10px;overflow:hidden}
+.tco-bk-hdr{display:grid;grid-template-columns:1fr 120px 120px 90px;padding:9px 16px;background:var(--s2);border-bottom:1px solid var(--b1)}
+.tco-bk-hdr span{font-family:'IBM Plex Mono',monospace;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:#dde3f0;font-weight:700}
+.tco-bk-row{display:grid;grid-template-columns:1fr 120px 120px 90px;padding:12px 16px;border-bottom:1px solid rgba(42,48,80,0.5);align-items:center;transition:background .12s}
+.tco-bk-row:last-child{border-bottom:none}
+.tco-bk-row:hover{background:rgba(255,255,255,0.02)}
+.tco-bk-row.total{background:rgba(255,255,255,0.02);border-top:2px solid var(--b1)!important}
+.tco-row-name{font-size:.82rem;font-weight:600}
+.tco-row-sub{font-size:.67rem;color:var(--text2);font-family:'IBM Plex Mono',monospace;margin-top:2px}
+.tco-row-aws{font-family:'IBM Plex Mono',monospace;font-size:.85rem;font-weight:700;color:var(--aws)}
+.tco-row-az{font-family:'IBM Plex Mono',monospace;font-size:.85rem;font-weight:700;color:var(--azure)}
+.tco-chart-panel{background:var(--s1);border:1px solid var(--b1);border-radius:10px;padding:20px}
+.tco-chart-title{font-family:'IBM Plex Mono',monospace;font-size:.65rem;letter-spacing:.18em;text-transform:uppercase;color:var(--accent);margin-bottom:16px;display:flex;align-items:center;gap:7px}
+.tco-chart-title::before{content:'';display:inline-block;width:5px;height:5px;background:var(--accent);border-radius:50%}
+.tco-chart-legend{display:flex;gap:18px;justify-content:flex-end;margin-top:8px}
+.tco-legend-item{display:flex;align-items:center;gap:5px;font-family:'IBM Plex Mono',monospace;font-size:.65rem;color:var(--text2)}
+.tco-legend-dot{width:8px;height:8px;border-radius:2px}
+.tco-reco-panel{background:var(--s1);border:1px solid rgba(123,255,224,0.25);border-radius:10px;padding:18px}
+.tco-reco-title{font-family:'IBM Plex Mono',monospace;font-size:.65rem;letter-spacing:.18em;text-transform:uppercase;color:var(--accent)}
+.tco-reco-list{display:flex;flex-direction:column;gap:8px;margin-top:14px}
+.tco-reco-item{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;background:var(--s2);border-radius:6px;border-left:2px solid var(--accent)}
+.tco-reco-text{font-size:.78rem;line-height:1.5;color:var(--text2)}
+.tco-reco-text strong{color:#dde3f0}

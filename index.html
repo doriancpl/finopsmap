@@ -29,7 +29,7 @@
     <div id="topbarLogo" style="display:flex;align-items:center;flex-shrink:0;cursor:pointer" onclick="
       if(heatmapActive){setHeatmap();}
       if(veilleActive){setVeille();}
-      if(comparaisonActive){setComparaison();}
+      if(tcoActive){setTco();}
       const _tn=document.getElementById('topbarNav'); if(_tn){_tn.style.opacity='1';_tn.style.pointerEvents='';}
       setNav('ec2');window.scrollTo(0,0);">
       <svg width="190" height="36" viewBox="0 0 190 36" style="flex-shrink:0">
@@ -80,7 +80,7 @@
   <div style="position:absolute;right:20px;top:50%;transform:translateY(-50%);display:flex;gap:14px;align-items:center">
     <button id="backBtn" onclick="goBack()" style="display:none;align-items:center;gap:6px;padding:6px 12px;background:transparent;border:1px solid #2a3050;border-radius:6px;color:#c8d0e8;font-family:'IBM Plex Mono',monospace;font-size:.72rem;cursor:pointer;transition:all .15s" onmouseenter="this.style.borderColor='#ff5566';this.style.color='#ff5566'" onmouseleave="this.style.borderColor='#2a3050';this.style.color='#c8d0e8'">&#x2190; Back</button>
     <button class="veille-btn" id="heatmapBtn" onclick="setHeatmap()"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:5px;position:relative;top:-1px"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>Heatmap regions</button>
-    <button class="veille-btn" id="comparaisonBtn" onclick="setComparaison()" style="display:none"><span style="font-size:1rem;vertical-align:middle;margin-right:5px;position:relative;top:-2px">⇄</span>Comparison</button>
+    <button class="veille-btn" id="tcoBtn" onclick="setTco()"><span style="position:relative;top:-1px;margin-right:5px">∑</span>TCO</button>
     <button class="veille-btn" id="veilleBtn" onclick="setVeille()"><span style="position:relative;top:-1px">&#x25C8;</span> Blog FinOps</button>
   </div>
 </div>
@@ -202,11 +202,86 @@
   <div class="cmp-grid" id="cmpGrid"></div>
 </div>
 
-<div id="comparaisonSection" style="display:none;padding:20px 36px 44px;flex:1">
-  <div style="text-align:center;padding:60px 20px;flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:calc(100vh - 250px)">
-    <div style="font-family:'IBM Plex Mono',monospace;font-size:.62rem;letter-spacing:.2em;text-transform:uppercase;color:#7bffe0;margin-bottom:16px">⇄ Compare</div>
-    <div style="font-family:'Syne',sans-serif;font-size:2rem;font-weight:800;color:#dde3f0;margin-bottom:12px">Under construction</div>
-    <div style="font-family:'IBM Plex Mono',monospace;font-size:.82rem;color:#3a4468;max-width:400px;margin:0 auto;line-height:1.7">This feature is coming soon.<br>AWS vs Azure side-by-side comparison,<br>TCO calculator and savings estimator.</div>
+<div id="tcoSection" style="display:none;padding:20px 36px 44px;flex:1;min-height:calc(100vh - 64px)">
+  <h2 style="font-size:clamp(1.4rem,2.5vw,2rem);font-weight:800;letter-spacing:-.04em;margin-bottom:4px"><span style="font-size:1.5rem;margin-right:8px;position:relative;top:-4px">∑</span>Total Cost of <span style="color:#7bffe0">Ownership</span></h2>
+  <p style="font-family:'IBM Plex Mono',monospace;font-size:.82rem;color:#6b738f;margin-bottom:28px">Compute &middot; Storage &middot; Network &middot; Support</p>
+
+  <div class="tco-layout">
+    <!-- FORM -->
+    <div>
+      <div class="tco-panel">
+        <div class="tco-panel-title">Workload</div>
+        <div class="tco-field-row">
+          <div>
+            <label class="tco-label">vCPU</label>
+            <select id="tcoCpu" class="tco-input" onchange="filterTcoInstances()">
+              <option value="">Any</option>
+            </select>
+          </div>
+          <div>
+            <label class="tco-label">RAM (GiB)</label>
+            <select id="tcoRam" class="tco-input" onchange="filterTcoInstances()">
+              <option value="">Any</option>
+            </select>
+          </div>
+        </div>
+        <div class="tco-field">
+          <label class="tco-label">Instance type</label>
+          <select id="tcoInstance" class="tco-input"><option value="">&#x2014; loading instances &#x2014;</option></select>
+        </div>
+        <div class="tco-field-row">
+          <div>
+            <label class="tco-label">Nb instances</label>
+            <input type="number" id="tcoNbInst" class="tco-input" value="5" min="1">
+          </div>
+          <div>
+            <label class="tco-label">Usage / month</label>
+            <select id="tcoUsage" class="tco-input">
+              <option value="730">730h (24/7)</option>
+              <option value="480">480h (16h/day)</option>
+              <option value="160">160h (work hrs)</option>
+            </select>
+          </div>
+        </div>
+        <div class="tco-field">
+          <label class="tco-label">Commitment</label>
+          <select id="tcoCommit" class="tco-input">
+            <option value="od">On-Demand</option>
+            <option value="ri1y" selected>Reserved 1yr No Upfront</option>
+            <option value="ri1y_all">Reserved 1yr All Upfront</option>
+            <option value="ri3y">Reserved 3yr No Upfront</option>
+          </select>
+        </div>
+
+        <hr class="tco-sep">
+        <div class="tco-panel-title">Storage</div>
+        <div class="tco-field-row">
+          <div>
+            <label class="tco-label">EBS / Managed Disk (GB)</label>
+            <input type="number" id="tcoStorage" class="tco-input" value="200" min="0">
+          </div>
+          <div>
+            <label class="tco-label">Disk type</label>
+            <select id="tcoDiskType" class="tco-input"></select>
+          </div>
+        </div>
+
+
+        <hr class="tco-sep">
+        <div class="tco-panel-title">Duration</div>
+        <div class="tco-dur-toggle">
+          <div class="tco-dur-btn" onclick="tcoSetDur(1,this)">1 yr</div>
+          <div class="tco-dur-btn on" onclick="tcoSetDur(2,this)">2 yr</div>
+          <div class="tco-dur-btn" onclick="tcoSetDur(3,this)">3 yr</div>
+        </div>
+        <button class="tco-calc-btn" onclick="calcTco()">&#x2192; Calculate TCO</button>
+      </div>
+    </div>
+
+    <!-- RESULTS -->
+    <div class="tco-right" id="tcoResults">
+      <div class="tco-empty">Configure your workload and click <strong style="color:#7bffe0">Calculate TCO</strong></div>
+    </div>
   </div>
 </div>
 
@@ -295,7 +370,7 @@
     <a href="https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEC2/current/eu-west-3/index.json" target="_blank" style="color:var(--text);text-decoration:none">AWS Price List API</a>
   </span>
   <span class="fts" style="color:var(--text)"><a href="#" onclick="document.getElementById('aboutModal').style.display='flex';return false;" style="color:var(--text);text-decoration:none;border-bottom:1px dotted var(--muted)">About me</a></span>
-  <span class="fts" style="color:var(--text)">Updated 3/27/2026 · 10:34 PM</span>
+  <span class="fts" style="color:var(--text)">Updated 3/27/2026 · 11:39 PM</span>
 </footer>
 
 <div id="aboutModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;align-items:center;justify-content:center" onclick="if(event.target===this)this.style.display='none'">
@@ -319,6 +394,7 @@ let AWS_DATA = [], AZURE_DATA = [], RDS_DATA = [], PSQL_DATA = [];
 let AWS_ALL_REGIONS = {}, RDS_ALL_REGIONS = {}, AZURE_ALL_REGIONS = {}, BDD_ALL_REGIONS = {};
 let REGIONS_META = {}, AZURE_REGIONS_META = {}, CARBON_DATA = {}, VEILLE_DATA = [];
 let EUR_RATE = 0.92;
+const DISK_REGIONS = {"eu-west-3": {"io1": {"name": "io1", "type": "Provisioned IOPS", "storage_media": "SSD-backed", "price_gb": 0.145}, "gp3": {"name": "gp3", "type": "General Purpose", "storage_media": "SSD-backed", "price_gb": 0.0928, "free_iops": 3000, "free_throughput": 125}, "io2": {"name": "io2", "type": "Provisioned IOPS", "storage_media": "SSD-backed", "price_gb": 0.145, "tiered_iops": true}, "st1": {"name": "st1", "type": "Throughput Optimized HDD", "storage_media": "HDD-backed", "price_gb": 0.053}, "gp2": {"name": "gp2", "type": "General Purpose", "storage_media": "SSD-backed", "price_gb": 0.116}, "sc1": {"name": "sc1", "type": "Cold HDD", "storage_media": "HDD-backed", "price_gb": 0.0174}, "standard": {"name": "standard", "type": "Magnetic", "storage_media": "HDD-backed", "price_gb": 0.058}}, "eu-west-1": {"sc1": {"name": "sc1", "type": "Cold HDD", "storage_media": "HDD-backed", "price_gb": 0.0168}, "io1": {"name": "io1", "type": "Provisioned IOPS", "storage_media": "SSD-backed", "price_gb": 0.138}, "gp3": {"name": "gp3", "type": "General Purpose", "storage_media": "SSD-backed", "price_gb": 0.088, "free_iops": 3000, "free_throughput": 125}, "gp2": {"name": "gp2", "type": "General Purpose", "storage_media": "SSD-backed", "price_gb": 0.11}, "st1": {"name": "st1", "type": "Throughput Optimized HDD", "storage_media": "HDD-backed", "price_gb": 0.05}, "standard": {"name": "standard", "type": "Magnetic", "storage_media": "HDD-backed", "price_gb": 0.055}, "io2": {"name": "io2", "type": "Provisioned IOPS", "storage_media": "SSD-backed", "price_gb": 0.138, "tiered_iops": true}}, "eu-central-1": {"sc1": {"name": "sc1", "type": "Cold HDD", "storage_media": "HDD-backed", "price_gb": 0.018}, "io1": {"name": "io1", "type": "Provisioned IOPS", "storage_media": "SSD-backed", "price_gb": 0.149}, "io2": {"name": "io2", "type": "Provisioned IOPS", "storage_media": "SSD-backed", "price_gb": 0.149, "tiered_iops": true}, "standard": {"name": "standard", "type": "Magnetic", "storage_media": "HDD-backed", "price_gb": 0.059}, "st1": {"name": "st1", "type": "Throughput Optimized HDD", "storage_media": "HDD-backed", "price_gb": 0.054}, "gp3": {"name": "gp3", "type": "General Purpose", "storage_media": "SSD-backed", "price_gb": 0.0952, "free_iops": 3000, "free_throughput": 125}, "gp2": {"name": "gp2", "type": "General Purpose", "storage_media": "SSD-backed", "price_gb": 0.119}}, "eu-west-2": {"st1": {"name": "st1", "type": "Throughput Optimized HDD", "storage_media": "HDD-backed", "price_gb": 0.053}, "gp2": {"name": "gp2", "type": "General Purpose", "storage_media": "SSD-backed", "price_gb": 0.116}, "standard": {"name": "standard", "type": "Magnetic", "storage_media": "HDD-backed", "price_gb": 0.058}, "io2": {"name": "io2", "type": "Provisioned IOPS", "storage_media": "SSD-backed", "price_gb": 0.145, "tiered_iops": true}, "sc1": {"name": "sc1", "type": "Cold HDD", "storage_media": "HDD-backed", "price_gb": 0.0174}, "io1": {"name": "io1", "type": "Provisioned IOPS", "storage_media": "SSD-backed", "price_gb": 0.145}, "gp3": {"name": "gp3", "type": "General Purpose", "storage_media": "SSD-backed", "price_gb": 0.0928, "free_iops": 3000, "free_throughput": 125}}, "eu-north-1": {"gp3": {"name": "gp3", "type": "General Purpose", "storage_media": "SSD-backed", "price_gb": 0.0836, "free_iops": 3000, "free_throughput": 125}, "gp2": {"name": "gp2", "type": "General Purpose", "storage_media": "SSD-backed", "price_gb": 0.1045}, "io2": {"name": "io2", "type": "Provisioned IOPS", "storage_media": "SSD-backed", "price_gb": 0.1311, "tiered_iops": true}, "sc1": {"name": "sc1", "type": "Cold HDD", "storage_media": "HDD-backed", "price_gb": 0.01596}, "standard": {"name": "standard", "type": "Magnetic", "storage_media": "HDD-backed", "price_gb": 0.05225}, "io1": {"name": "io1", "type": "Provisioned IOPS", "storage_media": "SSD-backed", "price_gb": 0.1311}, "st1": {"name": "st1", "type": "Throughput Optimized HDD", "storage_media": "HDD-backed", "price_gb": 0.0475}}, "eu-south-1": {"standard": {"name": "standard", "type": "Magnetic", "storage_media": "HDD-backed", "price_gb": 0.05775}, "sc1": {"name": "sc1", "type": "Cold HDD", "storage_media": "HDD-backed", "price_gb": 0.01764}, "st1": {"name": "st1", "type": "Throughput Optimized HDD", "storage_media": "HDD-backed", "price_gb": 0.0525}, "io1": {"name": "io1", "type": "Provisioned IOPS", "storage_media": "SSD-backed", "price_gb": 0.1449}, "gp2": {"name": "gp2", "type": "General Purpose", "storage_media": "SSD-backed", "price_gb": 0.1155}, "io2": {"name": "io2", "type": "Provisioned IOPS", "storage_media": "SSD-backed", "price_gb": 0.1449, "tiered_iops": true}, "gp3": {"name": "gp3", "type": "General Purpose", "storage_media": "SSD-backed", "price_gb": 0.0924, "free_iops": 3000, "free_throughput": 125}}, "eu-south-2": {"io1": {"name": "io1", "type": "Provisioned IOPS", "storage_media": "SSD-backed", "price_gb": 0.138}, "sc1": {"name": "sc1", "type": "Cold HDD", "storage_media": "HDD-backed", "price_gb": 0.0168}, "gp2": {"name": "gp2", "type": "General Purpose", "storage_media": "SSD-backed", "price_gb": 0.11}, "st1": {"name": "st1", "type": "Throughput Optimized HDD", "storage_media": "HDD-backed", "price_gb": 0.05}, "standard": {"name": "standard", "type": "Magnetic", "storage_media": "HDD-backed", "price_gb": 0.055}, "gp3": {"name": "gp3", "type": "General Purpose", "storage_media": "SSD-backed", "price_gb": 0.088, "free_iops": 3000, "free_throughput": 125}, "io2": {"name": "io2", "type": "Provisioned IOPS", "storage_media": "SSD-backed", "price_gb": 0.138, "tiered_iops": true}}, "us-east-1": {"gp2": {"name": "gp2", "type": "General Purpose", "storage_media": "SSD-backed", "price_gb": 0.1}, "gp3": {"name": "gp3", "type": "General Purpose", "storage_media": "SSD-backed", "price_gb": 0.08, "free_iops": 3000, "free_throughput": 125}, "standard": {"name": "standard", "type": "Magnetic", "storage_media": "HDD-backed", "price_gb": 0.05}, "io2": {"name": "io2", "type": "Provisioned IOPS", "storage_media": "SSD-backed", "price_gb": 0.125, "tiered_iops": true}, "sc1": {"name": "sc1", "type": "Cold HDD", "storage_media": "HDD-backed", "price_gb": 0.015}, "st1": {"name": "st1", "type": "Throughput Optimized HDD", "storage_media": "HDD-backed", "price_gb": 0.045}, "io1": {"name": "io1", "type": "Provisioned IOPS", "storage_media": "SSD-backed", "price_gb": 0.125}}};
 let currentRegion      = 'eu-west-3';
 let currentAzureRegion = 'francecentral';
 
@@ -355,6 +431,7 @@ function setNav(v) {
     active.className = 'nav-btn ' + (v === 'azure' || v === 'psql' ? 'active-azure' : 'active-aws');
   }
   setView(v === 'ec2' ? 'aws' : v);
+  if (tcoActive) initTcoInstanceSelect();
 }
 
 const AWS_REGION_OPTIONS = [
@@ -1151,9 +1228,10 @@ function qs(col) {
   render();
 }
 
-let veilleActive      = false;
-let heatmapActive     = false;
-let comparaisonActive = false;
+let veilleActive  = false;
+let heatmapActive = false;
+let tcoActive     = false;
+let tcoDurYears   = 2;
 let hmSortCol = 'cost';
 let hmSortDir = 'asc';
 
@@ -1171,7 +1249,7 @@ function hmSort(col) {
   renderHeatmap();
 }
 
-function setComparaison() {
+function setTco() {
   if (veilleActive) {
     veilleActive = false;
     document.getElementById('veilleBtn').classList.remove('active');
@@ -1184,36 +1262,337 @@ function setComparaison() {
     const hs = document.getElementById('heatmapSection');
     if (hs) hs.style.display = 'none';
   }
-  comparaisonActive = !comparaisonActive;
-  const btn     = document.getElementById('comparaisonBtn');
+  tcoActive = !tcoActive;
+  const btn     = document.getElementById('tcoBtn');
   const main    = document.getElementById('hero');
   const filters = document.getElementById('filters');
   const tblwrap = document.getElementById('tblwrap');
   const statsrow= document.getElementById('statsrow');
   const topLeft = document.getElementById('topbarLeft');
   const topNav  = document.getElementById('topbarNav');
-  btn.classList.toggle('active', comparaisonActive);
-  const cs = document.getElementById('comparaisonSection');
-  if (comparaisonActive) {
+  btn.classList.toggle('active', tcoActive);
+  const ts = document.getElementById('tcoSection');
+  if (tcoActive) {
     if (main)     main.style.display     = 'none';
     if (filters)  filters.style.display  = 'none';
     if (tblwrap)  tblwrap.style.display  = 'none';
     if (statsrow) statsrow.style.display = 'none';
-    if (topLeft)  { topLeft.style.opacity = '0'; topLeft.style.pointerEvents = 'none'; }
-    if (topNav)   { topNav.style.opacity  = '0'; topNav.style.pointerEvents  = 'none'; }
-    if (cs) cs.style.display = 'block';
-    renderComparaison();
+    if (ts) ts.style.display = 'block';
+    initTcoInstanceSelect();
+    initTcoDiskSelect();
     showBackBtn(true);
   } else {
     if (main)     main.style.display     = '';
     if (filters)  filters.style.display  = '';
     if (tblwrap)  tblwrap.style.display  = '';
     if (statsrow) statsrow.style.display = '';
-    if (topLeft)  { topLeft.style.opacity = '1'; topLeft.style.pointerEvents = ''; }
-    if (topNav)   { topNav.style.opacity  = '1'; topNav.style.pointerEvents  = ''; }
-    if (cs) cs.style.display = 'none';
+    if (ts) ts.style.display = 'none';
     showBackBtn(false);
   }
+}
+
+function tcoSetDur(val, el) {
+  tcoDurYears = val;
+  document.querySelectorAll('.tco-dur-btn').forEach(function(b){ b.classList.remove('on'); });
+  el.classList.add('on');
+}
+
+function initTcoInstanceSelect() {
+  const cpuSel  = document.getElementById('tcoCpu');
+  const ramSel  = document.getElementById('tcoRam');
+  if (!cpuSel || !ramSel) return;
+
+  const prevCpu = cpuSel.value;
+  const prevRam = ramSel.value;
+
+  // CPU uniques triés
+  const cpuVals = AWS_DATA.map(function(d){ return d.vcpu; })
+    .filter(function(v,i,a){ return a.indexOf(v)===i; })
+    .sort(function(a,b){ return a-b; });
+  cpuSel.innerHTML = '<option value="">Any vCPU</option>';
+  cpuVals.forEach(function(v){
+    const o = document.createElement('option');
+    o.value = v; o.textContent = v + ' vCPU';
+    if (String(v) === prevCpu) o.selected = true;
+    cpuSel.appendChild(o);
+  });
+
+  // RAM uniques triés
+  const ramVals = AWS_DATA.map(function(d){ return d.ram; })
+    .filter(function(v,i,a){ return a.indexOf(v)===i; })
+    .sort(function(a,b){ return a-b; });
+  ramSel.innerHTML = '<option value="">Any RAM</option>';
+  ramVals.forEach(function(v){
+    const o = document.createElement('option');
+    o.value = v;
+    o.textContent = v >= 1024 ? (v/1024).toFixed(0)+' TiB' : v+' GiB';
+    if (String(v) === prevRam) o.selected = true;
+    ramSel.appendChild(o);
+  });
+
+  filterTcoInstances();
+}
+
+// Correspondance Azure par type EBS
+const AZ_DISK_MAP = {
+  gp3:      { name:'Premium SSD LRS',   price_gb: 0.115 },
+  gp2:      { name:'Standard SSD LRS',  price_gb: 0.094 },
+  io1:      { name:'Ultra Disk',        price_gb: 0.125 },
+  io2:      { name:'Ultra Disk',        price_gb: 0.125 },
+  st1:      { name:'Standard HDD LRS',  price_gb: 0.043 },
+  sc1:      { name:'Standard HDD LRS',  price_gb: 0.043 },
+  standard: { name:'Standard HDD LRS',  price_gb: 0.043 },
+};
+
+function initTcoDiskSelect() {
+  const sel = document.getElementById('tcoDiskType');
+  if (!sel) return;
+  const prev = sel.value;
+  const diskData = DISK_REGIONS[currentRegion] || DISK_REGIONS['eu-west-3'] || {};
+  const order = ['gp3','gp2','io1','io2','st1','sc1','standard'];
+  const keys = order.filter(function(k){ return diskData[k]; })
+    .concat(Object.keys(diskData).filter(function(k){ return order.indexOf(k)===-1; }));
+  sel.innerHTML = '';
+  keys.forEach(function(k){
+    const d = diskData[k];
+    const az = AZ_DISK_MAP[k] || { name:'Standard SSD', price_gb: 0.094 };
+    const o = document.createElement('option');
+    o.value = k;
+    o.textContent = k.toUpperCase() + ' — ' + d.type + ' ($' + d.price_gb.toFixed(4) + '/GB/mo)';
+    if (k === prev || (!prev && k === 'gp3')) o.selected = true;
+    sel.appendChild(o);
+  });
+}
+
+function filterTcoInstances() {
+  const cpuSel  = document.getElementById('tcoCpu');
+  const ramSel  = document.getElementById('tcoRam');
+  const instSel = document.getElementById('tcoInstance');
+  if (!instSel) return;
+
+  const cpu = cpuSel && cpuSel.value ? parseInt(cpuSel.value)   : null;
+  const ram = ramSel && ramSel.value ? parseFloat(ramSel.value) : null;
+
+  // Mettre à jour les RAM dispo selon le CPU sélectionné
+  if (cpuSel && ramSel && cpu !== null) {
+    const prevRam = ramSel.value;
+    const ramVals = AWS_DATA
+      .filter(function(d){ return d.vcpu === cpu; })
+      .map(function(d){ return d.ram; })
+      .filter(function(v,i,a){ return a.indexOf(v)===i; })
+      .sort(function(a,b){ return a-b; });
+    ramSel.innerHTML = '<option value="">Any RAM</option>';
+    ramVals.forEach(function(v){
+      const o = document.createElement('option');
+      o.value = v;
+      o.textContent = v >= 1024 ? (v/1024).toFixed(0)+' TiB' : v+' GiB';
+      if (String(v) === prevRam) o.selected = true;
+      ramSel.appendChild(o);
+    });
+  }
+
+  const ramFinal = ramSel && ramSel.value ? parseFloat(ramSel.value) : null;
+
+  const filtered = AWS_DATA.filter(function(d){
+    if (cpu !== null && d.vcpu !== cpu) return false;
+    if (ramFinal !== null && d.ram !== ramFinal) return false;
+    return true;
+  }).sort(function(a,b){ return a.iname.localeCompare(b.iname); });
+
+  instSel.innerHTML = '';
+  if (filtered.length === 0) {
+    const o = document.createElement('option');
+    o.value = ''; o.textContent = '— no matching instances —';
+    instSel.appendChild(o);
+    return;
+  }
+  filtered.forEach(function(d){
+    const o = document.createElement('option');
+    o.value = d.iname;
+    const ramStr = d.ram >= 1024 ? (d.ram/1024).toFixed(0)+' TiB' : d.ram+' GiB';
+    o.textContent = d.iname + '  —  ' + d.vcpu + ' vCPU / ' + ramStr;
+    instSel.appendChild(o);
+  });
+}
+
+function tcoFmt(v) {
+  if (v >= 1e6) return '$' + (v/1e6).toFixed(2) + 'M';
+  if (v >= 100000) return '$' + Math.round(v/1000) + 'k';
+  if (v >= 10000)  return '$' + (v/1000).toFixed(1) + 'k';
+  return '$' + Math.round(v).toLocaleString();
+}
+
+function calcTco() {
+  const iname       = document.getElementById('tcoInstance').value;
+  const nbInst      = Math.max(1, parseInt(document.getElementById('tcoNbInst').value) || 1);
+  const hpm         = parseFloat(document.getElementById('tcoUsage').value) || 730;
+  const commit      = document.getElementById('tcoCommit').value;
+  const storageGB   = parseFloat(document.getElementById('tcoStorage').value) || 0;
+  const diskType    = document.getElementById('tcoDiskType').value;
+  const egressGB    = 0;
+  const supportType = 'none';
+  const months      = tcoDurYears * 12;
+
+  const awsInst = AWS_DATA.find(function(d){ return d.iname === iname; });
+  if (!awsInst) { alert('Please select an instance'); return; }
+
+  // AWS hourly rate based on commitment
+  let awsRate = awsInst.price;
+  let commitLabel = 'On-Demand';
+  if (commit === 'ri1y')     { awsRate = awsInst.price_1yr     || awsInst.price; commitLabel = 'Reserved 1yr'; }
+  if (commit === 'ri1y_all') { awsRate = awsInst.price_1yr_all || awsInst.price_1yr || awsInst.price; commitLabel = 'Reserved 1yr All Up.'; }
+  if (commit === 'ri3y')     { awsRate = awsInst.price_3yr     || awsInst.price; commitLabel = 'Reserved 3yr'; }
+
+  // Find best matching Azure instance (same vCPU, closest RAM)
+  const azCandidates = AZURE_DATA.filter(function(d){ return d.vcpu === awsInst.vcpu; })
+    .sort(function(a,b){ return Math.abs(a.ram - awsInst.ram) - Math.abs(b.ram - awsInst.ram); });
+  const azInst = azCandidates[0] || null;
+  let azRate = azInst ? azInst.price : awsInst.price * 1.1;
+  if (azInst && commit !== 'od') {
+    if (commit === 'ri3y') azRate = azInst.price_3yr || azInst.price;
+    else                   azRate = azInst.price_1yr || azInst.price;
+  }
+
+  // Compute cost
+  const awsCompute = awsRate * hpm * nbInst * months;
+  const azCompute  = azRate  * hpm * nbInst * months;
+
+  // Storage — prix réels depuis DISK_REGIONS
+  const diskRegData = DISK_REGIONS[currentRegion] || DISK_REGIONS['eu-west-3'] || {};
+  const diskInfo    = diskRegData[diskType] || {};
+  const awsDisk     = diskInfo.price_gb || 0.0928;
+  const azDiskInfo  = AZ_DISK_MAP[diskType] || { price_gb: 0.094 };
+  const azDisk      = azDiskInfo.price_gb;
+  const awsStorage = awsDisk * storageGB * nbInst * months;
+  const azStorage  = azDisk  * storageGB * nbInst * months;
+
+  // Network egress (EU, $/GB)
+  const awsEgress = Math.min(egressGB, 10240) * 0.09  * months;
+  const azEgress  = Math.min(egressGB, 10240) * 0.087 * months;
+
+  // Support
+  const suppPct    = supportType === 'enterprise' ? 0.15 : supportType === 'business' ? 0.10 : 0;
+  const awsSupport = awsCompute * suppPct;
+  const azSupport  = azCompute  * suppPct;
+
+  const awsTotal = awsCompute + awsStorage + awsEgress + awsSupport;
+  const azTotal  = azCompute  + azStorage  + azEgress  + azSupport;
+
+  renderTcoResults({
+    awsTotal, azTotal, months, awsCompute, azCompute,
+    awsStorage, azStorage, awsEgress, azEgress, awsSupport, azSupport,
+    awsRate, azRate, nbInst, hpm, storageGB, diskType, egressGB,
+    commitLabel, awsInst, azInst, suppPct
+  });
+}
+
+function renderTcoResults(r) {
+  const el = document.getElementById('tcoResults');
+  if (!el) return;
+
+  const durLbl   = tcoDurYears + 'yr';
+  const isBetter = r.awsTotal <= r.azTotal;
+  const savings  = Math.abs(r.azTotal - r.awsTotal);
+  const savPct   = r.azTotal > 0 ? (savings / r.azTotal * 100).toFixed(1) : '0.0';
+  const savLabel = isBetter ? 'AWS saves vs Azure' : 'Azure saves vs AWS';
+  const savColor = isBetter ? 'var(--accent)' : '#00aaff';
+
+  // Summary cards
+  const sumHtml =
+    '<div class="tco-sum-row">' +
+    '<div class="tco-sum-card"><div class="tco-sum-lbl">AWS Total (' + durLbl + ')</div>' +
+      '<div class="tco-sum-val" style="color:var(--aws)">' + tcoFmt(r.awsTotal) + '</div>' +
+      '<div class="tco-sum-sub">' + tcoFmt(r.awsTotal/r.months) + ' / month avg</div>' +
+      '<div class="tco-sum-badge tco-badge-aws">' + r.commitLabel + '</div></div>' +
+    '<div class="tco-sum-card"><div class="tco-sum-lbl">Azure Total (' + durLbl + ')</div>' +
+      '<div class="tco-sum-val" style="color:var(--azure)">' + tcoFmt(r.azTotal) + '</div>' +
+      '<div class="tco-sum-sub">' + tcoFmt(r.azTotal/r.months) + ' / month avg</div>' +
+      '<div class="tco-sum-badge tco-badge-az">' + (r.azInst ? r.azInst.iname : 'Estimated') + '</div></div>' +
+    '<div class="tco-sum-card hl"><div class="tco-sum-lbl">' + savLabel + '</div>' +
+      '<div class="tco-sum-val" style="color:' + savColor + '">' + tcoFmt(savings) + '</div>' +
+      '<div class="tco-sum-sub">over ' + r.months + ' months</div>' +
+      '<div class="tco-sum-badge tco-badge-save">−' + savPct + '%</div></div>' +
+    '</div>';
+
+  // Breakdown rows
+  const bkRows = [
+    { name:'Compute',        sub: r.nbInst + '× ' + r.awsInst.iname + ' · ' + r.commitLabel, aws: r.awsCompute, az: r.azCompute },
+    { name:'Storage',        sub: r.storageGB + ' GB ' + r.diskType + ' × ' + r.nbInst, aws: r.awsStorage, az: r.azStorage },
+    { name:'Network egress', sub: r.egressGB  + ' GB/mo EU', aws: r.awsEgress,   az: r.azEgress   },
+    { name:'Support',        sub: (r.suppPct*100).toFixed(0) + '% of compute',   aws: r.awsSupport, az: r.azSupport  },
+  ].filter(function(row){ return row.aws > 0 || row.az > 0; });
+
+  const bkRowsHtml = bkRows.map(function(row) {
+    const d = row.az - row.aws;
+    const p = row.az > 0 ? (d/row.az*100) : 0;
+    const dStr = d === 0
+      ? '<span style="color:var(--muted);font-family:IBM Plex Mono,monospace;font-size:.7rem">=</span>'
+      : '<span style="color:' + (d>0?'var(--accent)':'#ff5566') + ';font-family:IBM Plex Mono,monospace;font-size:.7rem">'
+          + (d>0?'−':'+') + Math.abs(p).toFixed(1) + '%</span>';
+    return '<div class="tco-bk-row"><div><div class="tco-row-name">' + row.name + '</div>'
+      + '<div class="tco-row-sub">' + row.sub + '</div></div>'
+      + '<div class="tco-row-aws">' + tcoFmt(row.aws) + '</div>'
+      + '<div class="tco-row-az">'  + tcoFmt(row.az)  + '</div>'
+      + dStr + '</div>';
+  }).join('');
+
+  const totDiff = r.azTotal - r.awsTotal;
+  const totPct  = r.azTotal > 0 ? (totDiff/r.azTotal*100) : 0;
+  const totStr  = '<span style="color:' + (totDiff>0?'var(--accent)':'#ff5566') + ';font-family:IBM Plex Mono,monospace;font-size:.8rem;font-weight:700">'
+    + (totDiff>0?'−':'+') + Math.abs(totPct).toFixed(1) + '%</span>';
+
+  const bkHtml =
+    '<div class="tco-breakdown">' +
+    '<div class="tco-bk-hdr"><span>Cost category</span><span>AWS (' + durLbl + ')</span><span>Azure (' + durLbl + ')</span><span>Diff</span></div>' +
+    bkRowsHtml +
+    '<div class="tco-bk-row total"><div><div class="tco-row-name" style="font-size:.88rem">Total ' + r.months + ' months</div></div>' +
+      '<div class="tco-row-aws" style="font-size:.95rem">' + tcoFmt(r.awsTotal) + '</div>' +
+      '<div class="tco-row-az"  style="font-size:.95rem">' + tcoFmt(r.azTotal)  + '</div>' +
+      totStr + '</div>' +
+    '</div>';
+
+  // SVG chart (cumulative cost)
+  var svgW=800,svgH=130,pL=44,pR=10,pT=14,pB=18;
+  var cW=svgW-pL-pR, cH=svgH-pT-pB;
+  var maxV=Math.max(r.awsTotal,r.azTotal)*1.08;
+  function tx(m){ return pL + (m/r.months)*cW; }
+  function ty(v){ return pT + cH - (v/maxV)*cH; }
+  var awsPts='',azPts='';
+  for(var m=0;m<=r.months;m++){
+    awsPts += tx(m).toFixed(1)+','+ty(r.awsTotal*m/r.months).toFixed(1)+' ';
+    azPts  += tx(m).toFixed(1)+','+ty(r.azTotal *m/r.months).toFixed(1)+' ';
+  }
+  var grid='';
+  [0.25,0.5,0.75].forEach(function(p){
+    var y=ty(maxV*p);
+    grid+='<line x1="'+pL+'" y1="'+y.toFixed(1)+'" x2="'+(svgW-pR)+'" y2="'+y.toFixed(1)+'" stroke="#2a3050" stroke-width="0.5"/>';
+    grid+='<text x="'+(pL-4)+'" y="'+(y+3).toFixed(1)+'" fill="#3a3f55" font-size="8" font-family="IBM Plex Mono" text-anchor="end">'+tcoFmt(maxV*p)+'</text>';
+  });
+  var mLabels='';
+  var step=Math.max(1,Math.floor(r.months/6));
+  for(var ml=0;ml<=r.months;ml+=step){
+    mLabels+='<text x="'+tx(ml).toFixed(1)+'" y="'+(svgH).toFixed(0)+'" fill="#3a3f55" font-size="7" font-family="IBM Plex Mono" text-anchor="middle">M'+ml+'</text>';
+  }
+  var bLine=pT+cH;
+  var chartSvg='<svg viewBox="0 0 '+svgW+' '+svgH+'" style="width:100%;height:140px" preserveAspectRatio="none">'
+    +grid
+    +'<polygon points="'+azPts+' '+(svgW-pR)+','+bLine+' '+pL+','+bLine+'" fill="rgba(0,170,255,0.05)"/>'
+    +'<polygon points="'+awsPts+' '+(svgW-pR)+','+bLine+' '+pL+','+bLine+'" fill="rgba(255,153,0,0.06)"/>'
+    +'<polyline points="'+azPts+'" fill="none" stroke="#00aaff" stroke-width="1.8" opacity="0.8"/>'
+    +'<polyline points="'+awsPts+'" fill="none" stroke="#ff9900" stroke-width="2.2"/>'
+    +mLabels
+    +'</svg>';
+
+  const chartHtml =
+    '<div class="tco-chart-panel">' +
+    '<div class="tco-chart-title">Cumulative cost over ' + r.months + ' months</div>' +
+    chartSvg +
+    '<div class="tco-chart-legend">' +
+      '<div class="tco-legend-item"><div class="tco-legend-dot" style="background:var(--aws)"></div>AWS</div>' +
+      '<div class="tco-legend-item"><div class="tco-legend-dot" style="background:var(--azure)"></div>Azure</div>' +
+    '</div></div>';
+
+  el.innerHTML = sumHtml + bkHtml + chartHtml;
 }
 let veilleFilterSrc = 'all';
 let _cmpRadarChart = null;
@@ -1301,11 +1680,11 @@ function renderComparaison() {
 
 
 function setVeille() {
-  if (comparaisonActive) {
-    comparaisonActive = false;
-    document.getElementById('comparaisonBtn').classList.remove('active');
-    const cs = document.getElementById('comparaisonSection');
-    if (cs) cs.style.display = 'none';
+  if (tcoActive) {
+    tcoActive = false;
+    document.getElementById('tcoBtn').classList.remove('active');
+    const ts = document.getElementById('tcoSection');
+    if (ts) ts.style.display = 'none';
   }
   if (heatmapActive) {
     heatmapActive = false;
@@ -1605,11 +1984,11 @@ function populateHmRam() {
 
 function setHeatmap() {
   if (veilleActive)      { veilleActive = false;      document.getElementById('veilleBtn').classList.remove('active');      document.getElementById('veilleSection').style.display = 'none'; }
-  if (comparaisonActive) {
-    comparaisonActive = false;
-    document.getElementById('comparaisonBtn').classList.remove('active');
-    const cs = document.getElementById('comparaisonSection');
-    if (cs) cs.style.display = 'none';
+  if (tcoActive) {
+    tcoActive = false;
+    document.getElementById('tcoBtn').classList.remove('active');
+    const ts = document.getElementById('tcoSection');
+    if (ts) ts.style.display = 'none';
   }
   heatmapActive = !heatmapActive;
   const btn     = document.getElementById('heatmapBtn');
@@ -2134,7 +2513,7 @@ function showBackBtn(show) {
 function goBack() {
   if (heatmapActive)          { setHeatmap(); }
   else if (veilleActive)      { setVeille(); }
-  else if (comparaisonActive) { setComparaison(); }
+  else if (tcoActive)         { setTco(); }
   // Garantir que topNav est toujours interactif après retour
   const topNav = document.getElementById('topbarNav');
   if (topNav) { topNav.style.opacity = '1'; topNav.style.pointerEvents = ''; }
