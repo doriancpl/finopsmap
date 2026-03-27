@@ -124,7 +124,7 @@ def parse_date(date_str):
 
 def fetch_veille():
     veille_file = os.path.join(DATA_DIR, "veille.json")
-    if is_fresh(veille_file, days=7):
+    if is_fresh(veille_file, days=1):
         log("cache frais utilise : " + veille_file)
         with open(veille_file, encoding="utf-8") as f: return json.load(f)
     articles = fetch_aws_blog() + fetch_azure_blog() + fetch_finops_foundation()
@@ -162,6 +162,8 @@ def get_family_azure(name):
 CARBON_ZONES = {
     "eu-west-3":          {"zone": "FR",           "label": "France"},
     "eu-north-1":         {"zone": "SE",           "label": "Sweden"},
+    "eu-south-1":         {"zone": "IT",           "label": "Italy"},
+    "eu-south-2":         {"zone": "ES",           "label": "Spain"},
     "eu-central-1":       {"zone": "DE",           "label": "Germany"},
     "eu-west-1":          {"zone": "IE",           "label": "Ireland"},
     "eu-west-2":          {"zone": "GB",           "label": "United Kingdom"},
@@ -443,6 +445,8 @@ AWS_REGIONS = {
     "eu-central-1": {"label": "Francfort",  "flag": "&#x1F1E9;&#x1F1EA;"},
     "eu-west-2":    {"label": "Londres",    "flag": "&#x1F1EC;&#x1F1E7;"},
     "eu-north-1":   {"label": "Su\u00e8de", "flag": "&#x1F1F8;&#x1F1EA;"},
+    "eu-south-1":   {"label": "Milan",      "flag": "&#x1F1EE;&#x1F1F9;"},
+    "eu-south-2":   {"label": "Espagne",    "flag": "&#x1F1EA;&#x1F1F8;"},
     "us-east-1":    {"label": "Virginie",   "flag": "&#x1F1FA;&#x1F1F8;"},
 }
 
@@ -770,6 +774,8 @@ footer{position:sticky;bottom:0;z-index:100;margin-top:auto;padding:16px 36px;bo
       <option value="eu-central-1">&#x1F1E9;&#x1F1EA; eu-central-1 &mdash; Francfort</option>
       <option value="eu-west-2">&#x1F1EC;&#x1F1E7; eu-west-2 &mdash; Londres</option>
       <option value="eu-north-1">&#x1F1F8;&#x1F1EA; eu-north-1 &mdash; Su&egrave;de</option>
+      <option value="eu-south-1">&#x1F1EE;&#x1F1F9; eu-south-1 &mdash; Milan</option>
+      <option value="eu-south-2">&#x1F1EA;&#x1F1F8; eu-south-2 &mdash; Espagne</option>
       <option value="us-east-1">&#x1F1FA;&#x1F1F8; us-east-1 &mdash; Virginie</option>
     </select>
   </div>
@@ -1083,6 +1089,8 @@ const AWS_REGION_OPTIONS = [
   {v:'eu-central-1',l:'&#x1F1E9;&#x1F1EA; eu-central-1 \u2014 Francfort'},
   {v:'eu-west-2',   l:'&#x1F1EC;&#x1F1E7; eu-west-2 \u2014 Londres'},
   {v:'eu-north-1',  l:'&#x1F1F8;&#x1F1EA; eu-north-1 \u2014 Su\u00e8de'},
+  {v:'eu-south-1',  l:'&#x1F1EE;&#x1F1F9; eu-south-1 \u2014 Milan'},
+  {v:'eu-south-2',  l:'&#x1F1EA;&#x1F1F8; eu-south-2 \u2014 Espagne'},
   {v:'us-east-1',   l:'&#x1F1FA;&#x1F1F8; us-east-1 \u2014 Virginie'},
 ];
 const AZURE_REGION_OPTIONS = [
@@ -2417,6 +2425,8 @@ function renderHeatmap() {
     'eu-central-1':       { lon:8.6821, lat:50.1109, label:'Francfort', cloud:'aws'   },
     'eu-west-2':          { lon:-0.1276,lat:51.5074, label:'Londres',   cloud:'aws'   },
     'eu-north-1':         { lon:17.9139,lat:59.3293, label:'Stockholm', cloud:'aws'   },
+    'eu-south-1':         { lon:9.1900, lat:45.4654, label:'Milan',     cloud:'aws'   },
+    'eu-south-2':         { lon:-3.7038,lat:40.4168, label:'Madrid',    cloud:'aws'   },
     'us-east-1':          { lon:-77.47, lat:38.99,   label:'Virginie',  cloud:'aws'   },
     'francecentral':      { lon:2.3522, lat:48.8566, label:'Paris',     cloud:'azure' },
     'northeurope':        { lon:-6.2603,lat:53.3498, label:'Irlande',   cloud:'azure' },
@@ -2433,6 +2443,8 @@ function renderHeatmap() {
     'westeurope':'528',
     'eu-central-1':'276','germanywestcentral':'276',
     'swedencentral':'752','eu-north-1':'752',
+    'eu-south-1':'380',
+    'eu-south-2':'724',
     'us-east-1':'840','eastus':'840',
   };
 
