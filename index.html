@@ -362,7 +362,7 @@
     <button class="vsrc-btn" onclick="veilleFilter('ff',this)">FinOps Foundation</button>
     <input id="veilleSearch" oninput="renderVeille()" placeholder="Search articles..." style="flex:1;max-width:220px;padding:4px 10px;background:#0d111a;border:1px solid #1e3050;border-radius:4px;color:#c8d0e8;font-size:.72rem;font-family:'IBM Plex Mono',monospace;outline:none">
   </div>
-  <table class="veille-list" id="veilleGrid"></table>
+  <div class="v-grid" id="veilleGrid"></div>
 </div>
 <footer>
   <span style="font-size:.8rem;color:var(--text)">
@@ -370,7 +370,7 @@
     <a href="https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEC2/current/eu-west-3/index.json" target="_blank" style="color:var(--text);text-decoration:none">AWS Price List API</a>
   </span>
   <span class="fts" style="color:var(--text)"><a href="#" onclick="document.getElementById('aboutModal').style.display='flex';return false;" style="color:var(--text);text-decoration:none;border-bottom:1px dotted var(--muted)">About me</a></span>
-  <span class="fts" style="color:var(--text)">Updated 3/27/2026 · 11:39 PM</span>
+  <span class="fts" style="color:var(--text)">Updated 3/28/2026 · 12:01 AM</span>
 </footer>
 
 <div id="aboutModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;align-items:center;justify-content:center" onclick="if(event.target===this)this.style.display='none'">
@@ -1742,13 +1742,14 @@ function renderVeille() {
   const now      = Date.now();
   let filtered   = veilleFilterSrc === 'all' ? VEILLE_DATA : VEILLE_DATA.filter(a => a.source === veilleFilterSrc);
   if (q) filtered = filtered.filter(a => (a.title||'').toLowerCase().includes(q) || (a.summary||'').toLowerCase().includes(q));
+  const borderCls = {aws:'v-border-aws', azure:'v-border-az', ff:'v-border-ff'};
   grid.innerHTML = filtered.length === 0
-    ? '<div style="text-align:center;padding:48px;color:#3a3f55;font-family:IBM Plex Mono,monospace;font-size:.75rem">No articles found.</div>'
-    : filtered.map(a => {
+    ? '<div style="grid-column:1/-1;text-align:center;padding:48px;color:#3a3f55;font-family:IBM Plex Mono,monospace;font-size:.75rem">No articles found.</div>'
+    : filtered.map((a, idx) => {
         const lbl = srcLabel[a.source] || a.source;
-        const ico = srcIco[a.source]  || 'FF';
-        const sc  = srcCls[a.source]  || 'src-ff';
         const tc  = tagCls[a.source]  || 'tag-ff';
+        const bc  = borderCls[a.source] || 'v-border-ff';
+        const isHero = idx === 0;
         let dFmt  = a.date || '';
         try { const d=new Date(a.date); if(!isNaN(d)) dFmt=d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}); } catch(e){}
         let isNew = false;
@@ -1756,18 +1757,19 @@ function renderVeille() {
         const words = ((a.title||'')+' '+(a.summary||'')).split(' ').length;
         const mins  = Math.max(2, Math.round(words/200*3));
         const safeUrl = (a.url||'').replace(/"/g,'&quot;');
-        return '<div data-href="'+safeUrl+'" onclick="window.open(this.dataset.href)" class="v-card">'
-          + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:7px">'
+        return '<div data-href="'+safeUrl+'" onclick="window.open(this.dataset.href)" class="v-card '+bc+(isHero?' v-hero':'')+'">'
+          + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">'
           + '<div style="display:flex;align-items:center;gap:7px">'
           + '<span class="veille-tag '+tc+'">'+lbl+'</span>'
-          + (isNew ? '<span style="font-size:.6rem;padding:2px 6px;border-radius:3px;background:rgba(123,255,224,.15);color:#7bffe0;border:1px solid rgba(123,255,224,.3)">New</span>' : '')
+          + (isNew ? '<span style="font-size:.58rem;padding:2px 6px;border-radius:3px;background:rgba(123,255,224,.15);color:#7bffe0;border:1px solid rgba(123,255,224,.3)">NEW</span>' : '')
           + '</div>'
-          + '<span style="font-size:.72rem;color:#c8d0e8">'+dFmt+'</span>'
+          + '<span style="font-size:.7rem;color:#6b738f;font-family:IBM Plex Mono,monospace">'+dFmt+'</span>'
           + '</div>'
-          + '<div style="font-family:IBM Plex Mono,monospace;font-size:.92rem;font-weight:600;color:#dde3f0;line-height:1.4;margin-bottom:5px">'+a.title+'</div>'
-          + (a.summary ? '<div style="font-size:.75rem;color:#c8d0e8;line-height:1.5;font-family:Syne,sans-serif;margin-bottom:6px">'+a.summary+'…</div>' : '')
-          + '<div style="display:flex;justify-content:flex-end">'
-          + '<span style="font-size:.72rem;color:#7bffe0">'+mins+' min read ↗</span>'
+          + '<div class="'+(isHero?'v-hero-title':'')+'" style="font-family:Syne,sans-serif;font-size:'+(isHero?'1.15rem':'.9rem')+';font-weight:700;color:#dde3f0;line-height:1.35;margin-bottom:8px">'+a.title+'</div>'
+          + (a.summary ? '<div class="v-summary" style="font-size:.75rem;color:#6b738f;line-height:1.6;font-family:Syne,sans-serif;margin-bottom:8px">'+a.summary+'…</div>' : '')
+          + '<div style="display:flex;align-items:center;justify-content:flex-end;gap:8px">'
+          + '<span style="font-size:.65rem;color:#3a4468;font-family:IBM Plex Mono,monospace">&#x23F1; '+mins+' min</span>'
+          + '<span style="font-size:.68rem;color:#7bffe0;font-family:IBM Plex Mono,monospace">Read ↗</span>'
           + '</div></div>';
       }).join('');
 }
