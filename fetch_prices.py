@@ -795,7 +795,7 @@ footer{position:sticky;bottom:0;z-index:100;margin-top:auto;padding:16px 36px;bo
   <div style="position:absolute;right:20px;top:50%;transform:translateY(-50%);display:flex;gap:14px;align-items:center">
     <button id="backBtn" onclick="goBack()" style="display:none;align-items:center;gap:6px;padding:6px 12px;background:transparent;border:1px solid #2a3050;border-radius:6px;color:#c8d0e8;font-family:'IBM Plex Mono',monospace;font-size:.72rem;cursor:pointer;transition:all .15s" onmouseenter="this.style.borderColor='#ff5566';this.style.color='#ff5566'" onmouseleave="this.style.borderColor='#2a3050';this.style.color='#c8d0e8'">&#x2190; Back</button>
     <button class="veille-btn" id="heatmapBtn" onclick="setHeatmap()"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:5px;position:relative;top:-1px"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>Heatmap regions</button>
-    <button class="veille-btn" id="comparaisonBtn" onclick="setComparaison()"><span style="font-size:1rem;vertical-align:middle;margin-right:5px;position:relative;top:-2px">⇄</span>Comparison</button>
+    <button class="veille-btn" id="comparaisonBtn" onclick="setComparaison()" style="display:none"><span style="font-size:1rem;vertical-align:middle;margin-right:5px;position:relative;top:-2px">⇄</span>Comparison</button>
     <button class="veille-btn" id="veilleBtn" onclick="setVeille()"><span style="position:relative;top:-1px">&#x25C8;</span> Blog FinOps</button>
   </div>
 </div>
