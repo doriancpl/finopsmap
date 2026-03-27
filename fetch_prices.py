@@ -963,7 +963,7 @@ HTML_TEMPLATE = """
 <div id="veilleSection">
   <div class="veille-title"><span style="position:relative;top:-2px;font-size:70%">&#x25C8;</span> Blog <em>FinOps</em></div>
   <div class="veille-sub" style="color:#c8d0e8">Latest articles</div>
-  <div class="veille-filters">
+  <div class="veille-filters" style="margin-top:28px">
     <button class="vsrc-btn on" onclick="veilleFilter('all',this)">ALL</button>
     <button class="vsrc-btn" onclick="veilleFilter('aws',this)">AWS FinOps</button>
     <button class="vsrc-btn" onclick="veilleFilter('azure',this)">Azure FinOps</button>
@@ -2362,8 +2362,6 @@ function renderVeille() {
         try { const d=new Date(a.date); if(!isNaN(d)) dFmt=d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}); } catch(e){}
         let isNew = false;
         try { isNew = (now - new Date(a.date).getTime()) < 8*24*3600*1000; } catch(e){}
-        const words = ((a.title||'')+' '+(a.summary||'')).split(' ').length;
-        const mins  = Math.max(2, Math.round(words/200*3));
         const safeUrl = (a.url||'').replace(/"/g,'&quot;');
         return '<div data-href="'+safeUrl+'" onclick="window.open(this.dataset.href)" class="v-card '+bc+(isHero?' v-hero':'')+'">'
           + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">'
@@ -2373,10 +2371,9 @@ function renderVeille() {
           + '</div>'
           + '<span style="font-size:.7rem;color:#6b738f;font-family:IBM Plex Mono,monospace">'+dFmt+'</span>'
           + '</div>'
-          + '<div class="'+(isHero?'v-hero-title':'')+'" style="font-family:Syne,sans-serif;font-size:'+(isHero?'1.15rem':'.9rem')+';font-weight:700;color:#dde3f0;line-height:1.35;margin-bottom:8px">'+a.title+'</div>'
-          + (a.summary ? '<div class="v-summary" style="font-size:.75rem;color:#6b738f;line-height:1.6;font-family:Syne,sans-serif;margin-bottom:8px">'+a.summary+'…</div>' : '')
-          + '<div style="display:flex;align-items:center;justify-content:flex-end;gap:8px">'
-          + '<span style="font-size:.65rem;color:#3a4468;font-family:IBM Plex Mono,monospace">&#x23F1; '+mins+' min</span>'
+          + '<div class="'+(isHero?'v-hero-title':'')+'" style="font-family:Syne,sans-serif;font-size:'+(isHero?'1.15rem':'.9rem')+';font-weight:700;color:#f0f4ff;line-height:1.35;margin-bottom:8px">'+a.title+'</div>'
+          + (a.summary ? '<div class="v-summary" style="font-size:.8rem;color:#8b94b0;line-height:1.6;font-family:Syne,sans-serif;margin-bottom:8px">'+a.summary+'…</div>' : '')
+          + '<div style="display:flex;align-items:center;justify-content:flex-end">'
           + '<span style="font-size:.68rem;color:#7bffe0;font-family:IBM Plex Mono,monospace">Read ↗</span>'
           + '</div></div>';
       }).join('');
