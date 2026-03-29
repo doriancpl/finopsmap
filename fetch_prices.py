@@ -1217,7 +1217,7 @@ function setView(v) {
   document.getElementById('heroTitle').innerHTML     = cfg[v].title;
   updateDiscountLabel();
   const tbl = document.getElementById('mainTable');
-  if (tbl) { tbl.classList.remove('view-aws','view-azure'); tbl.classList.add('view-'+v); }
+  if (tbl) { tbl.classList.remove('view-aws','view-azure','view-rds','view-psql'); tbl.classList.add('view-'+v); }
   const isRds = v === 'rds';
   const famSel = document.getElementById('famSelect');
   const famLbl = document.getElementById('famLabel');
