@@ -704,21 +704,19 @@ HTML_TEMPLATE = """
 <div id="filters">
 
   <div class="fgrp" id="famGrp">
-    <button class="fbtn on" onclick="setFam(&apos;all&apos;,this)">All</button>
-    <button class="fbtn ec2-fam" onclick="setFam(&apos;general&apos;,this)">General</button>
-    <button class="fbtn ec2-fam" onclick="setFam(&apos;burstable&apos;,this)">Burstable</button>
-    <button class="fbtn ec2-fam" onclick="setFam(&apos;compute&apos;,this)">CPU</button>
-    <button class="fbtn ec2-fam" onclick="setFam(&apos;memory&apos;,this)">Memoire</button>
-    <button class="fbtn ec2-fam" onclick="setFam(&apos;storage&apos;,this)">Storage</button>
-    <button class="fbtn ec2-fam" onclick="setFam(&apos;gpu&apos;,this)">GPU</button>
-    <button class="fbtn ec2-fam" onclick="setFam(&apos;other&apos;,this)">Other</button>
-    <button class="fbtn rds-fam" style="display:none" onclick="setFam(&apos;mysql&apos;,this)">MySQL</button>
-    <button class="fbtn rds-fam" style="display:none" onclick="setFam(&apos;postgresql&apos;,this)">PostgreSQL</button>
-    <button class="fbtn rds-fam" style="display:none" onclick="setFam(&apos;aurora-mysql&apos;,this)">Aurora MySQL</button>
-    <button class="fbtn rds-fam" style="display:none" onclick="setFam(&apos;aurora-pg&apos;,this)">Aurora PG</button>
-    <button class="fbtn rds-fam" style="display:none" onclick="setFam(&apos;mariadb&apos;,this)">MariaDB</button>
-    <button class="fbtn rds-fam" style="display:none" onclick="setFam(&apos;oracle&apos;,this)">Oracle</button>
-    <button class="fbtn rds-fam" style="display:none" onclick="setFam(&apos;sqlserver&apos;,this)">SQL Server</button>
+    <div style="display:inline-flex;align-items:center;background:var(--s1);border:1px solid var(--b1);border-radius:6px;overflow:hidden;height:36px;flex-shrink:0">
+      <span id="famLabel" style="padding:0 10px;background:var(--s2);font-family:'Syne',sans-serif;font-size:.78rem;font-weight:700;color:var(--text);border-right:1px solid var(--b1);height:100%;display:flex;align-items:center;white-space:nowrap">FAMILY</span>
+      <select id="famSelect" onchange="setFamSel(this.value)" style="font-family:'Syne',sans-serif;font-size:.78rem;font-weight:700;color:#7bffe0;background:var(--s1);border:none;padding:0 28px 0 10px;height:100%;cursor:pointer;outline:none;appearance:none;-webkit-appearance:none;background-image:url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='%237bffe0'/%3E%3C/svg%3E&quot;);background-repeat:no-repeat;background-position:right 8px center">
+        <option value="all">All Families</option>
+        <option value="general">General</option>
+        <option value="burstable">Burstable</option>
+        <option value="compute">CPU</option>
+        <option value="memory">Memory</option>
+        <option value="storage">Storage</option>
+        <option value="gpu">GPU</option>
+        <option value="other">Other</option>
+      </select>
+    </div>
   </div>
   <div class="fq"><span class="fq-icon">&#x2315;</span><input type="text" id="q" placeholder="Rechercher..." oninput="render()"></div>
 
@@ -738,8 +736,8 @@ HTML_TEMPLATE = """
     <span id="priceSliderLbl" style="padding:0 12px;font-family:'IBM Plex Mono',monospace;font-size:.75rem;font-weight:700;color:#3a3f55;min-width:52px;border-left:1px solid var(--b1);height:100%;display:flex;align-items:center">any</span>
   </div>
 
-  <div id="discountBtn" onclick="toggleDiscount()" style="display:inline-flex;align-items:center;background:var(--s1);border:1px solid var(--b1);border-radius:6px;overflow:hidden;cursor:pointer;transition:border-color .2s,color .2s">
-    <span id="discountLbl" style="padding:8px 15px;color:#c8d0e8;font-family:'Syne',sans-serif;font-size:.9rem;font-weight:700;white-space:nowrap;transition:color .2s;display:flex;align-items:center;gap:7px"><span id="discountIco" style="font-size:.65rem;color:#3a3f55;transition:color .2s">&#9658;</span>Discount EDP</span>
+  <div id="discountBtn" onclick="toggleDiscount()" onmouseenter="if(!discount){document.getElementById('discountLbl').style.color='var(--accent)'}" onmouseleave="if(!discount){document.getElementById('discountLbl').style.color='#c8d0e8'}" style="display:inline-flex;align-items:center;background:var(--s1);border:1px solid var(--b1);border-radius:6px;overflow:hidden;cursor:pointer;transition:border-color .2s,color .2s">
+    <span id="discountLbl" style="padding:8px 15px;color:#c8d0e8;font-family:'Syne',sans-serif;font-size:.9rem;font-weight:700;white-space:nowrap;transition:color .2s;display:flex;align-items:center;gap:7px">Discount EDP</span>
     <div id="discountFieldWrap" style="display:none;align-items:center;border-left:1px solid var(--b1);height:100%">
       <input type="number" id="discountInput" min="0" max="99" placeholder="%" oninput="setDiscountRate(this.value)" onclick="event.stopPropagation()" style="width:58px;padding:8px 10px;background:transparent;border:none;color:#7bffe0;font-family:'IBM Plex Mono',monospace;font-size:.82rem;font-weight:700;outline:none;text-align:center;-moz-appearance:textfield;appearance:textfield">
     </div>
@@ -771,6 +769,7 @@ HTML_TEMPLATE = """
   <div style="width:32px;height:32px;border:2px solid #2a3050;border-top-color:#7bffe0;border-radius:50%;animation:spin .8s linear infinite"></div>
   <span style="font-family:'IBM Plex Mono',monospace;font-size:.75rem;color:#3a3f55;letter-spacing:.1em">LOADING PRICES...</span>
 </div>
+<div id="tblscroll">
   <table id="mainTable" class="view-aws">
     <thead>
     <tr id="sortRow">
@@ -800,6 +799,7 @@ HTML_TEMPLATE = """
     </thead>
     <tbody id="tbody"></tbody>
   </table>
+</div>
 </div>
 
 <div class="cmp-sheet" id="cmpPanel">
@@ -977,7 +977,7 @@ HTML_TEMPLATE = """
     Sources : <a href="https://prices.azure.com/api/retail/prices" target="_blank" style="color:var(--text);text-decoration:none">Azure Retail Prices API</a> &mdash;
     <a href="https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEC2/current/eu-west-3/index.json" target="_blank" style="color:var(--text);text-decoration:none">AWS Price List API</a>
   </span>
-  <span class="fts" style="color:var(--text)"><a href="#" onclick="document.getElementById('aboutModal').style.display='flex';return false;" style="color:var(--text);text-decoration:none;border-bottom:1px dotted var(--muted)">About me</a></span>
+  <span class="fts" style="color:var(--text)"><a href="#" onclick="document.getElementById('aboutModal').style.display='flex';return false;" style="color:var(--text);text-decoration:none;border-bottom:1px dotted var(--muted)">FinOpsMap · About me</a></span>
   <span class="fts" style="color:var(--text)">Updated %%FETCH_DATE%%</span>
 </footer>
 
@@ -1133,18 +1133,28 @@ function setView(v) {
   if (_isAz) { loadAzureRegionData(currentAzureRegion); }
   else       { loadRegionData(currentRegion); }
   const cfg = {
-    aws:   {title:'<span style="color:#c8d0e8">Amazon</span> <em>EC2</em>',         color:'aws'},
-    azure: {title:'<span style="color:#c8d0e8">Azure</span> <em>Virtual Machines</em>', color:'azure'},
-    rds:   {title:'<span style="color:#c8d0e8">Amazon</span> <em>RDS</em>'},
-    psql:  {title:'<span style="color:#c8d0e8">Azure</span> <em>Database</em>', color:'azure'},
+    aws:   {title:'<span style="color:#c8d0e8">Amazon EC2</span>',         color:'aws'},
+    azure: {title:'<span style="color:#c8d0e8">Azure Virtual Machines</span>', color:'azure'},
+    rds:   {title:'<span style="color:#c8d0e8">Amazon RDS</span>'},
+    psql:  {title:'<span style="color:#c8d0e8">Azure Database</span>', color:'azure'},
   };
   document.getElementById('heroTitle').innerHTML     = cfg[v].title;
   updateDiscountLabel();
   const tbl = document.getElementById('mainTable');
   if (tbl) { tbl.classList.remove('view-aws','view-azure'); tbl.classList.add('view-'+v); }
   const isRds = v === 'rds';
-  document.querySelectorAll('.ec2-fam').forEach(b => b.style.display = isRds ? 'none' : '');
-  document.querySelectorAll('.rds-fam').forEach(b => b.style.display = isRds ? '' : 'none');
+  const famSel = document.getElementById('famSelect');
+  const famLbl = document.getElementById('famLabel');
+  if (famSel) {
+    if (isRds) {
+      if(famLbl) famLbl.textContent = 'ENGINE';
+      famSel.innerHTML = '<option value="all">All Engines</option><option value="mysql">MySQL</option><option value="postgresql">PostgreSQL</option><option value="aurora-mysql">Aurora MySQL</option><option value="aurora-pg">Aurora PG</option><option value="mariadb">MariaDB</option><option value="oracle">Oracle</option><option value="sqlserver">SQL Server</option>';
+    } else {
+      if(famLbl) famLbl.textContent = 'FAMILY';
+      famSel.innerHTML = '<option value="all">All Families</option><option value="general">General</option><option value="burstable">Burstable</option><option value="compute">CPU</option><option value="memory">Memory</option><option value="storage">Storage</option><option value="gpu">GPU</option><option value="other">Other</option>';
+    }
+    famSel.value = 'all';
+  }
   const fh = document.getElementById('famHeader'); if(fh) fh.textContent = (isRds || view==='psql') ? 'ENGINE' : 'FAMILY';
   const upfrontToggle = document.getElementById('riUpfrontToggle');
   const riSel = document.getElementById('riSelect');
@@ -1159,7 +1169,7 @@ function setView(v) {
       riSel.value = riYear + '_' + riUpfront;
     }
   }
-  if(fam !== 'all' || currentFam !== 'all'){ fam='all'; currentFam='all'; document.querySelectorAll('#famGrp .fbtn').forEach(b=>b.classList.remove('on')); document.querySelectorAll('#famGrp .fbtn')[0].classList.add('on'); }
+  if(fam !== 'all' || currentFam !== 'all'){ fam='all'; currentFam='all'; const fs=document.getElementById('famSelect'); if(fs) fs.value='all'; }
   render();
   // S'assurer que le toggle RI reste visible après render
   const ut2 = document.getElementById('riUpfrontToggle');
@@ -1629,7 +1639,7 @@ function render() {
         + '</tr>';
       }).join('');
 
-  document.getElementById('heroSub').innerHTML = '<span style="font-family:IBM Plex Mono,monospace;font-size:1.05rem;color:#dde3f0;font-weight:700">'+arr.length+'<span style="color:#dde3f0">/</span>'+getData().length+'</span> — instances displayed';
+  document.getElementById('heroSub').innerHTML = '<span style="font-family:IBM Plex Mono,monospace;font-size:1.05rem;color:#dde3f0;font-weight:700">'+arr.length+'<span style="color:#dde3f0">/</span>'+getData().length+'</span><span style="color:#c8d0e8"> — resources displayed</span>';
 }
 
 function discountRate() {
@@ -1724,8 +1734,7 @@ function setCurr(c) {
 function resetFiltres() {
   // Reset famille
   fam = 'all'; currentFam = 'all';
-  document.getElementById('famGrp').querySelectorAll('.fbtn').forEach(b => b.classList.remove('on'));
-  document.getElementById('famGrp').querySelectorAll('.fbtn')[0].classList.add('on');
+  const famSelR = document.getElementById('famSelect'); if(famSelR) famSelR.value = 'all';
   // Reset recherche
   document.getElementById('q').value = '';
   // Reset filtres colonnes
@@ -1804,10 +1813,8 @@ function resetPriceSlider() {
   onPriceSlider();
 }
 
-function setFam(f, btn) {
-  fam = f;
-  document.getElementById('famGrp').querySelectorAll('.fbtn').forEach(b => b.classList.remove('on'));
-  btn.classList.add('on');
+function setFamSel(v) {
+  fam = v;
   render();
 }
 
@@ -3207,17 +3214,12 @@ console.log('%c[CloudPrice] Run checkRefInstances() to verify reference instance
   onPriceSlider();
   (function() {
     function fixStickyRows() {
-      const sortRow    = document.getElementById('sortRow');
-      const filterRow  = document.getElementById('filterRow');
-      const filtersBar = document.getElementById('filters');
+      const sortRow   = document.getElementById('sortRow');
+      const filterRow = document.getElementById('filterRow');
       if (!sortRow || !filterRow) return;
-      const topbarH  = 64;
-      const filtersH = filtersBar ? filtersBar.getBoundingClientRect().height : 0;
-      const sortTop  = topbarH + filtersH;
-      const sortH    = sortRow.getBoundingClientRect().height;
-      const filterTop = sortTop + sortH;
-      sortRow.querySelectorAll('th').forEach(th => th.style.top = sortTop + 'px');
-      filterRow.querySelectorAll('th').forEach(th => th.style.top = filterTop + 'px');
+      const sortH = sortRow.getBoundingClientRect().height;
+      sortRow.querySelectorAll('th').forEach(th => th.style.top = '0px');
+      filterRow.querySelectorAll('th').forEach(th => th.style.top = sortH + 'px');
     }
     fixStickyRows();
     window.addEventListener('resize', fixStickyRows);
