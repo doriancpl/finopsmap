@@ -544,6 +544,58 @@ def fetch_aws(region="eu-west-3"):
     log("avec Reserved 1yr : " + str(ri_1yr) + "  3yr : " + str(ri_3yr))
     return result
 
+def fetch_spot_aws(region="eu-west-3"):
+    """Récupère les prix Spot Linux depuis spot-price.s3.amazonaws.com/spot.js (JSONP public)."""
+    spot_file = os.path.join(DATA_DIR_AWS, "spot-" + region + ".json")
+    if is_fresh(spot_file, days=1):
+        log("spot cache : " + spot_file)
+        with open(spot_file, encoding="utf-8") as f:
+            return json.load(f)
+    print("\nSpot prices AWS " + region + "...")
+    try:
+        conn = http.client.HTTPSConnection("spot-price.s3.amazonaws.com", timeout=30)
+        conn.request("GET", "/spot.js", headers={"User-Agent": "cloudprice/1.0", "Accept-Encoding": "gzip"})
+        r = conn.getresponse()
+        raw = r.read()
+        conn.close()
+        if raw[:2] == b'\x1f\x8b':
+            raw = gzip.decompress(raw)
+        raw = raw.decode("utf-8").strip()
+        # Strip JSONP wrapper: callback({...});
+        if raw.startswith("callback("):
+            raw = raw[len("callback("):]
+            if raw.endswith(");"):
+                raw = raw[:-2]
+            elif raw.endswith(")"):
+                raw = raw[:-1]
+        data = json.loads(raw)
+        result = {}
+        for reg in data.get("config", {}).get("regions", []):
+            if reg.get("region") != region:
+                continue
+            for itype_group in reg.get("instanceTypes", []):
+                for size_info in itype_group.get("sizes", []):
+                    iname = size_info.get("size", "")
+                    for col in size_info.get("valueColumns", []):
+                        if col.get("name") == "linux":
+                            price_str = (col.get("prices") or {}).get("USD", "")
+                            try:
+                                price = float(price_str)
+                                if price > 0:
+                                    result[iname] = price
+                            except (ValueError, TypeError):
+                                pass
+        log("spot prices trouvees : " + str(len(result)))
+        with open(spot_file, "w", encoding="utf-8") as f:
+            json.dump(result, f, indent=2)
+        return result
+    except Exception as e:
+        print("  Erreur spot " + region + " : " + str(e))
+        if os.path.exists(spot_file):
+            with open(spot_file, encoding="utf-8") as f:
+                return json.load(f)
+        return {}
+
 def fetch_ebs(region="eu-west-3"):
     """Récupère les prix EBS (gp2, gp3, io1, io2, st1, sc1) pour une région AWS."""
     print("\nEBS " + region + "...")
@@ -718,8 +770,6 @@ HTML_TEMPLATE = """
       </select>
     </div>
   </div>
-  <div class="fq"><span class="fq-icon">&#x2315;</span><input type="text" id="q" placeholder="Rechercher..." oninput="render()"></div>
-
   <div style="display:inline-flex;align-items:center;background:var(--s1);border:1px solid var(--b1);border-radius:6px;overflow:hidden;height:36px;flex-shrink:0">
     <span style="padding:0 10px;background:var(--s2);font-family:'Syne',sans-serif;font-size:.78rem;font-weight:700;color:var(--text);border-right:1px solid var(--b1);height:100%;display:flex;align-items:center;white-space:nowrap">COST</span>
     <select id="periodSel" onchange="setPeriod(this.value)" style="font-family:'Syne',sans-serif;font-size:.78rem;font-weight:700;color:#7bffe0;background:var(--s1);border:none;border-right:1px solid var(--b1);padding:0 28px 0 10px;height:100%;cursor:pointer;outline:none;appearance:none;-webkit-appearance:none;background-image:url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='%237bffe0'/%3E%3C/svg%3E&quot;);background-repeat:no-repeat;background-position:right 8px center">
@@ -736,31 +786,6 @@ HTML_TEMPLATE = """
     <span id="priceSliderLbl" style="padding:0 12px;font-family:'IBM Plex Mono',monospace;font-size:.75rem;font-weight:700;color:#3a3f55;min-width:52px;border-left:1px solid var(--b1);height:100%;display:flex;align-items:center">any</span>
   </div>
 
-  <div id="discountBtn" onclick="toggleDiscount()" onmouseenter="if(!discount){document.getElementById('discountLbl').style.color='var(--accent)'}" onmouseleave="if(!discount){document.getElementById('discountLbl').style.color='#c8d0e8'}" style="display:inline-flex;align-items:center;background:var(--s1);border:1px solid var(--b1);border-radius:6px;overflow:hidden;cursor:pointer;transition:border-color .2s,color .2s">
-    <span id="discountLbl" style="padding:8px 15px;color:#c8d0e8;font-family:'Syne',sans-serif;font-size:.9rem;font-weight:700;white-space:nowrap;transition:color .2s;display:flex;align-items:center;gap:7px">Discount EDP</span>
-    <div id="discountFieldWrap" style="display:none;align-items:center;border-left:1px solid var(--b1);height:100%">
-      <input type="number" id="discountInput" min="0" max="99" placeholder="%" oninput="setDiscountRate(this.value)" onclick="event.stopPropagation()" style="width:58px;padding:8px 10px;background:transparent;border:none;color:#7bffe0;font-family:'IBM Plex Mono',monospace;font-size:.82rem;font-weight:700;outline:none;text-align:center;-moz-appearance:textfield;appearance:textfield">
-    </div>
-  </div>
-
-  <button class="cmp-btn" id="cmpBtn" onclick="toggleCmp()">&#x229E; Compare <span class="cmp-count" id="cmpCount"></span></button>
-  <button class="reset-btn" onclick="resetFiltres()">&#x2715; Reset</button>
-  <div style="position:relative;flex-shrink:0" id="colPickerWrap">
-    <button class="reset-btn" onclick="toggleColPicker()" id="colPickerBtn" style="display:flex;align-items:center;gap:6px">&#x229E; Columns</button>
-    <div id="colPicker" style="display:none;position:absolute;top:calc(100% + 6px);left:0;background:var(--s1);border:1px solid var(--b1);border-radius:8px;padding:10px 14px;z-index:200;min-width:180px;box-shadow:0 8px 24px rgba(0,0,0,.6)">
-      <div style="font-family:'IBM Plex Mono',monospace;font-size:.65rem;letter-spacing:.12em;color:#6b738f;text-transform:uppercase;margin-bottom:8px">Columns</div>
-      <label class="col-pick-row" style="border-bottom:1px solid var(--b1);padding-bottom:8px;margin-bottom:4px"><input type="checkbox" id="colSelectAll" checked onchange="toggleAllCols(this.checked)"> All columns</label>
-      <label class="col-pick-row"><input type="checkbox" id="cb-fam" checked onchange="toggleCol('fam',this.checked)"> Family</label>
-      <label class="col-pick-row"><input type="checkbox" id="cb-vcpu" checked onchange="toggleCol('vcpu',this.checked)"> vCPU</label>
-      <label class="col-pick-row"><input type="checkbox" id="cb-ram" checked onchange="toggleCol('ram',this.checked)"> RAM</label>
-      <label class="col-pick-row"><input type="checkbox" id="cb-pvcpu" checked onchange="toggleCol('pvcpu',this.checked)"> Cost/vCPU</label>
-      <label class="col-pick-row"><input type="checkbox" id="cb-price" checked onchange="toggleCol('price',this.checked)"> On Demand Cost</label>
-      <label class="col-pick-row"><input type="checkbox" id="cb-month" checked onchange="toggleCol('month',this.checked)"> Reserved Cost</label>
-      <label class="col-pick-row"><input type="checkbox" id="cb-savings" checked onchange="toggleCol('savings',this.checked)"> Savings RI</label>
-      <label class="col-pick-row"><input type="checkbox" id="cb-score" checked onchange="toggleCol('score',this.checked)"> FinOps Score</label>
-    </div>
-  </div>
-  <div style="display:flex;align-items:center;gap:8px;margin-left:auto">
   <div style="display:inline-flex;align-items:center;background:var(--s1);border:1px solid var(--b1);border-radius:6px;overflow:hidden;height:36px" id="riUpfrontToggle">
     <span style="padding:0 10px;background:var(--s2);font-family:'IBM Plex Mono',monospace;font-size:.72rem;font-weight:700;color:#c8d0e8;border-right:1px solid var(--b1);height:100%;display:flex;align-items:center">RI</span>
     <select id="riSelect" onchange="onRiSelect(this.value)" style="font-family:'IBM Plex Mono',monospace;font-size:.72rem;font-weight:700;color:#7bffe0;background:var(--s1);border:none;padding:0 24px 0 10px;height:100%;cursor:pointer;outline:none;appearance:none;-webkit-appearance:none;background-image:url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='%237bffe0'/%3E%3C/svg%3E&quot;);background-repeat:no-repeat;background-position:right 8px center">
@@ -775,6 +800,35 @@ HTML_TEMPLATE = """
     <span style="width:1px;background:var(--b1)"></span>
     <button class="curr-btn" id="btnEur" onclick="setCurr(&apos;eur&apos;)">&#x20AC; EUR</button>
   </div>
+  <div id="discountBtn" onclick="toggleDiscount()" onmouseenter="if(!discount){document.getElementById('discountLbl').style.color='var(--accent)'}" onmouseleave="if(!discount){document.getElementById('discountLbl').style.color='#c8d0e8'}" style="display:inline-flex;align-items:center;background:var(--s1);border:1px solid var(--b1);border-radius:6px;overflow:hidden;cursor:pointer;transition:border-color .2s,color .2s">
+    <span id="discountLbl" style="padding:8px 15px;color:#c8d0e8;font-family:'Syne',sans-serif;font-size:.9rem;font-weight:700;white-space:nowrap;transition:color .2s;display:flex;align-items:center;gap:7px">Discount EDP</span>
+    <div id="discountFieldWrap" style="display:none;align-items:center;border-left:1px solid var(--b1);height:100%">
+      <input type="number" id="discountInput" min="0" max="99" placeholder="%" oninput="setDiscountRate(this.value)" onclick="event.stopPropagation()" style="width:58px;padding:8px 10px;background:transparent;border:none;color:#7bffe0;font-family:'IBM Plex Mono',monospace;font-size:.82rem;font-weight:700;outline:none;text-align:center;-moz-appearance:textfield;appearance:textfield">
+    </div>
+  </div>
+  <button class="reset-btn" onclick="resetFiltres()">&#x2715; Reset</button>
+
+  <div style="display:flex;align-items:center;gap:8px;margin-left:auto">
+  <div style="width:1px;height:20px;background:var(--b1)"></div>
+  <div style="position:relative;flex-shrink:0" id="colPickerWrap">
+    <button class="reset-btn" onclick="toggleColPicker()" id="colPickerBtn" style="display:flex;align-items:center;gap:6px">&#x229E; Columns</button>
+    <div id="colPicker" style="display:none;position:absolute;top:calc(100% + 6px);right:0;background:var(--s1);border:1px solid var(--b1);border-radius:8px;padding:10px 14px;z-index:200;min-width:180px;box-shadow:0 8px 24px rgba(0,0,0,.6)">
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:.65rem;letter-spacing:.12em;color:#6b738f;text-transform:uppercase;margin-bottom:8px">Columns</div>
+      <label class="col-pick-row" style="padding-bottom:6px;margin-bottom:2px"><input type="checkbox" id="colSelectAll" checked onchange="toggleAllCols(this.checked)"> All columns</label>
+      <label class="col-pick-row" style="border-bottom:1px solid var(--b1);padding-bottom:8px;margin-bottom:4px;cursor:pointer" onclick="setDefaultCols();return false;">&#x229E; Default columns</label>
+      <label class="col-pick-row"><input type="checkbox" id="cb-fam" checked onchange="toggleCol('fam',this.checked)"> Family</label>
+      <label class="col-pick-row"><input type="checkbox" id="cb-vcpu" checked onchange="toggleCol('vcpu',this.checked)"> vCPU</label>
+      <label class="col-pick-row"><input type="checkbox" id="cb-ram" checked onchange="toggleCol('ram',this.checked)"> RAM</label>
+      <label class="col-pick-row"><input type="checkbox" id="cb-pvcpu" checked onchange="toggleCol('pvcpu',this.checked)"> Cost/vCPU</label>
+      <label class="col-pick-row"><input type="checkbox" id="cb-price" checked onchange="toggleCol('price',this.checked)"> On Demand Cost</label>
+      <label class="col-pick-row"><input type="checkbox" id="cb-month" checked onchange="toggleCol('month',this.checked)"> Reserved Cost</label>
+      <label class="col-pick-row"><input type="checkbox" id="cb-savings" checked onchange="toggleCol('savings',this.checked)"> Savings RI</label>
+      <label class="col-pick-row" id="cb-spot-row"><input type="checkbox" id="cb-spot" checked onchange="toggleCol('spot',this.checked)"> Spot Cost</label>
+      <label class="col-pick-row" id="cb-spotsav-row"><input type="checkbox" id="cb-spotsav" checked onchange="toggleCol('spotsav',this.checked)"> Savings Spot</label>
+      <label class="col-pick-row"><input type="checkbox" id="cb-score" checked onchange="toggleCol('score',this.checked)"> FinOps Score</label>
+    </div>
+  </div>
+  <button class="cmp-btn" id="cmpBtn" onclick="toggleCmp()">&#x229E; Compare <span class="cmp-count" id="cmpCount"></span></button>
   <button class="reset-btn" onclick="exportCSV()" style="border-color:var(--muted);color:#c8d0e8">&#x2193; Export CSV</button>
   </div>
 </div>
@@ -797,6 +851,8 @@ HTML_TEMPLATE = """
       <th class="col-price" onclick="qs(&apos;price&apos;)"><div style="display:flex;align-items:center;justify-content:space-between"><span id="thPriceOd" style="letter-spacing:.08em">ON DEMAND COST<span id="periodOdLabel" style="color:#7bffe0;font-size:.65rem;letter-spacing:0">/H</span><span id="discountBadgeHdr" style="display:none" class="discount-badge"></span></span> <span class="sort-ico active-ico" id="si-price">&#x2191;</span></div></th>
       <th class="col-month" onclick="qs(&apos;month&apos;)"><div style="display:flex;align-items:center;justify-content:space-between"><span style="letter-spacing:.08em">RESERVED COST<span id="periodRiLabel" style="color:#7bffe0;font-size:.65rem;letter-spacing:0">/H</span><span id="riYearLabel" style="font-size:.65rem;margin-left:9px;letter-spacing:0;font-family:'Syne',sans-serif;font-weight:700;color:#7bffe0;background:rgba(123,255,224,0.1);border:1px solid rgba(123,255,224,0.3);border-radius:4px;padding:1px 5px">1 YEAR</span></span> <span class="sort-ico" id="si-month">&#x2195;</span></div></th>
       <th class="col-savings" onclick="qs(&apos;savings&apos;)"><div style="display:flex;align-items:center;justify-content:space-between">SAVINGS RI <span class="sort-ico" id="si-savings">&#x2195;</span></div></th>
+      <th class="col-spot ec2-only" onclick="qs(&apos;spot&apos;)"><div style="display:flex;align-items:center;justify-content:space-between">SPOT COST<span style="color:#7bffe0;font-size:.65rem;letter-spacing:0">/H</span> <span class="sort-ico" id="si-spot">&#x2195;</span></div></th>
+      <th class="col-spotsav ec2-only" onclick="qs(&apos;spotsav&apos;)"><div style="display:flex;align-items:center;justify-content:space-between">SAVINGS SPOT <span class="sort-ico" id="si-spotsav">&#x2195;</span></div></th>
       <th class="col-score" onclick="qs(&apos;score&apos;)"><div style="display:flex;align-items:center;justify-content:space-between">FINOPS SCORE <span class="sort-ico" id="si-score">&#x2195;</span></div></th>
     </tr>
     <tr id="filterRow">
@@ -809,6 +865,8 @@ HTML_TEMPLATE = """
       <th class="col-price"><input class="col-filter" oninput="render()" id="f-price" placeholder="ex: &lt;0.5"></th>
       <th class="col-month"><input class="col-filter" oninput="render()" id="f-month" placeholder="ex: &lt;0.5"></th>
       <th class="col-savings"><input class="col-filter" oninput="render()" id="f-savings" placeholder="ex: &gt;30"></th>
+      <th class="col-spot ec2-only"><input class="col-filter" oninput="render()" id="f-spot" placeholder="ex: &lt;0.1"></th>
+      <th class="col-spotsav ec2-only"><input class="col-filter" oninput="render()" id="f-spotsav" placeholder="ex: &gt;50"></th>
       <th class="col-score"><input class="col-filter" oninput="render()" id="f-score"   placeholder="ex: &gt;7"></th>
     </tr>
     </thead>
@@ -1185,6 +1243,10 @@ function setView(v) {
     }
   }
   if(fam !== 'all' || currentFam !== 'all'){ fam='all'; currentFam='all'; const fs=document.getElementById('famSelect'); if(fs) fs.value='all'; }
+  const cbSpotRow = document.getElementById('cb-spot-row');
+  if (cbSpotRow) cbSpotRow.style.display = v === 'aws' ? '' : 'none';
+  const cbSpotsavRow = document.getElementById('cb-spotsav-row');
+  if (cbSpotsavRow) cbSpotsavRow.style.display = v === 'aws' ? '' : 'none';
   render();
   // S'assurer que le toggle RI reste visible après render
   const ut2 = document.getElementById('riUpfrontToggle');
@@ -1212,7 +1274,7 @@ function getFiltered() {
   if (cmpMode && cmpSel.size > 0) {
     return getData().filter(d => cmpSel.has(view==='rds' ? d.iname+'||'+(d.fam||'') : view==='psql' ? (d.fam||'')+'||'+d.iname : d.iname));
   }
-  const q      = document.getElementById('q').value.toLowerCase().trim();
+  const q      = '';
   const fIname = getColVal('f-iname');
   const fFam   = getColVal('f-fam');
   const fVcpu  = getColVal('f-vcpu');
@@ -1221,6 +1283,8 @@ function getFiltered() {
   const fPrice = getColVal('f-price');
   const fMonth   = getColVal('f-month');
   const fSavings = getColVal('f-savings');
+  const fSpot    = getColVal('f-spot');
+  const fSpotsav = getColVal('f-spotsav');
   const fScore   = getColVal('f-score');
   const sliderPct = parseInt(document.getElementById('priceSlider').value);
   const priceSliderMax = sliderPct < 100 ? (getPricePercentile(sliderPct) / (PRICE_UNIT_MULT[period] || 1)) : null;
@@ -1238,6 +1302,8 @@ function getFiltered() {
     (!fPrice || matchNum(d.price, fPrice)) &&
     (!fMonth || matchNum((d[getRiKey()]||0), fMonth)) &&
     (!fSavings || (() => { const rp = d[getRiKey()]; if (!rp) return false; return matchNum(Math.round((1-rp/d.price)*100), fSavings); })()) &&
+    (!fSpot    || matchNum((d.spot||0), fSpot)) &&
+    (!fSpotsav || matchNum(d.spot ? Math.round((1-d.spot/d.price)*100) : 0, fSpotsav)) &&
     (!fScore   || matchNum(getScore(d).score, fScore))
   );
   return arr;
@@ -1266,6 +1332,10 @@ function getSorted(arr) {
     if (s === 'score-asc')  return (a.score||0) - (b.score||0);
     if (s === 'savings-desc') { const sa = a[getRiKey()]; const sb = b[getRiKey()]; const ra = sa?Math.round((1-sa/a.price)*100):0; const rb = sb?Math.round((1-sb/b.price)*100):0; return rb-ra; }
     if (s === 'savings-asc')  { const sa = a[getRiKey()]; const sb = b[getRiKey()]; const ra = sa?Math.round((1-sa/a.price)*100):0; const rb = sb?Math.round((1-sb/b.price)*100):0; return ra-rb; }
+    if (s === 'spot-asc')    return (a.spot||0) - (b.spot||0);
+    if (s === 'spot-desc')   return (b.spot||0) - (a.spot||0);
+    if (s === 'spotsav-asc')  { const ra = a.spot?Math.round((1-a.spot/a.price)*100):0; const rb = b.spot?Math.round((1-b.spot/b.price)*100):0; return ra-rb; }
+    if (s === 'spotsav-desc') { const ra = a.spot?Math.round((1-a.spot/a.price)*100):0; const rb = b.spot?Math.round((1-b.spot/b.price)*100):0; return rb-ra; }
     return 0;
   });
 }
@@ -1643,6 +1713,8 @@ function render() {
         + '<td class="col-price">'+((view==='aws'||view==='rds') ? '<span style="display:inline-block;padding:5px 12px;background:rgba(255,153,0,0.1);border:1px solid rgba(255,153,0,0.3);border-radius:6px;font-weight:700;font-size:.92rem;color:#ff9900;font-family:IBM Plex Mono,monospace">'+f4(d.price*(periodMult[period]||1))+' ' + currSym() + '</span>' : '<span style="display:inline-block;padding:5px 12px;background:rgba(0,170,255,0.1);border:1px solid rgba(0,170,255,0.3);border-radius:6px;font-weight:700;font-size:.92rem;color:#00aaff;font-family:IBM Plex Mono,monospace">'+f4(d.price*(periodMult[period]||1))+' ' + currSym() + '</span>')+'</td>'
         + '<td class="col-month"><span class="ph-mo">'+(function(){ const rp = d[getRiKey()]; if (!rp) return '<span style="color:var(--muted);font-size:.75rem">—</span>'; return f4(rp*(periodMult[period]||1))+' '+currSym(); })()+'</span></td>'
         + '<td class="col-savings">'+(function(){ const rp = d[getRiKey()]; if (!rp) return '<span style="color:var(--muted);font-size:.75rem">—</span>'; const sav = Math.round((1-rp/d.price)*100); return '<span style="padding:3px 8px;background:rgba(123,255,224,0.1);border:1px solid rgba(123,255,224,0.3);border-radius:4px;color:#7bffe0;font-weight:700;font-family:IBM Plex Mono,monospace;font-size:.82rem">\u2212'+sav+'%</span>'; })()+'</td>'
+        + '<td class="col-spot ec2-only"><span class="ph-mo">'+(function(){ if (!d.spot) return '<span style="color:var(--muted);font-size:.75rem">—</span>'; return f4(d.spot*(currRate())*(periodMult[period]||1))+' '+currSym(); })()+'</span></td>'
+        + '<td class="col-spotsav ec2-only">'+(function(){ if (!d.spot) return '<span style="color:var(--muted);font-size:.75rem">—</span>'; const sav = Math.round((1-d.spot/d.price)*100); return '<span style="padding:3px 8px;background:rgba(123,255,224,0.1);border:1px solid rgba(123,255,224,0.3);border-radius:4px;color:#7bffe0;font-weight:700;font-family:IBM Plex Mono,monospace;font-size:.82rem">\u2212'+sav+'%</span>'; })()+'</td>'
         + '<td class="col-score" style="padding:10px 16px;border-bottom:1px solid #1c2030;white-space:nowrap">'
         + '<div class="score-wrap" data-ti="'+_ti+'" onmouseenter="showTip(event,+this.dataset.ti)" onmousemove="moveTip(event)" onmouseleave="hideTip()">'
         + '<div style="position:relative;width:100px;height:8px;background:#1c2030;border-radius:4px;overflow:hidden">'
@@ -1755,7 +1827,20 @@ document.addEventListener('click', function(e) {
   const wrap = document.getElementById('colPickerWrap');
   if (wrap && !wrap.contains(e.target)) document.getElementById('colPicker').style.display = 'none';
 });
-const COL_KEYS = ['fam','vcpu','ram','pvcpu','price','month','savings','score'];
+const COL_KEYS = ['fam','vcpu','ram','pvcpu','price','month','savings','spot','spotsav','score'];
+const DEFAULT_HIDDEN_COLS = ['spot','spotsav'];
+function setDefaultCols() {
+  const tbl = document.getElementById('mainTable');
+  COL_KEYS.forEach(col => {
+    const hide = DEFAULT_HIDDEN_COLS.includes(col);
+    if (tbl) tbl.classList.toggle('hide-' + col, hide);
+    const cb = document.getElementById('cb-' + col);
+    if (cb) cb.checked = !hide;
+  });
+  const sa = document.getElementById('colSelectAll');
+  if (sa) sa.checked = false;
+  updateURL();
+}
 function toggleAllCols(visible) {
   COL_KEYS.forEach(col => {
     const tbl = document.getElementById('mainTable');
@@ -1779,8 +1864,6 @@ function updateURL() {
   if (view !== 'aws')           params.set('view', view);
   if (currentRegion !== 'eu-west-3') params.set('region', currentRegion);
   if (fam && fam !== 'all')     params.set('fam', fam);
-  const q = document.getElementById('q');
-  if (q && q.value)             params.set('q', q.value);
   if (period !== 'h')           params.set('period', period);
   if (_curr !== 'usd')          params.set('curr', _curr);
   const riKey = riYear + '_' + riUpfront;
@@ -1807,7 +1890,6 @@ function loadFromURL() {
   const per = p.get('period'); if (per) { period = per; document.getElementById('periodSel').value = per; }
   const c = p.get('curr'); if (c) setCurr(c);
   const f = p.get('fam'); if (f) { fam = f; const fs = document.getElementById('famSelect'); if(fs) fs.value = f; }
-  const q = p.get('q'); if (q) { const el = document.getElementById('q'); if(el) el.value = q; }
   const s = p.get('sort'); if (s) sortVal = s;
   const cols = p.get('cols');
   if (cols) cols.split(',').forEach(col => {
@@ -1824,8 +1906,6 @@ function resetFiltres() {
   // Reset famille
   fam = 'all'; currentFam = 'all';
   const famSelR = document.getElementById('famSelect'); if(famSelR) famSelR.value = 'all';
-  // Reset recherche
-  document.getElementById('q').value = '';
   // Reset filtres colonnes
   ['f-iname','f-fam','f-vcpu','f-ram','f-price','f-month','f-savings','f-pvcpu','f-score'].forEach(id => {
     const el = document.getElementById(id);
@@ -1919,10 +1999,12 @@ function qs(col) {
     pvcpu: cur === 'pvcpu-asc' ? 'pvcpu-desc' : 'pvcpu-asc',
     month:   cur === 'month-asc'   ? 'month-desc'   : 'month-asc',
     savings: cur === 'savings-desc' ? 'savings-asc' : 'savings-desc',
+    spot:    cur === 'spot-asc'    ? 'spot-desc'    : 'spot-asc',
+    spotsav: cur === 'spotsav-desc' ? 'spotsav-asc' : 'spotsav-desc',
   };
   if (next[col]) sortVal = next[col];
-  const colMap = {iname:'iname',fam:'fam',vcpu:'vcpu',ram:'ram',pvcpu:'pvcpu',price:'price',month:'month',savings:'savings',score:'score'};
-  ['iname','fam','vcpu','ram','pvcpu','price','month','savings','score'].forEach(k => {
+  const colMap = {iname:'iname',fam:'fam',vcpu:'vcpu',ram:'ram',pvcpu:'pvcpu',price:'price',month:'month',savings:'savings',spot:'spot',spotsav:'spotsav',score:'score'};
+  ['iname','fam','vcpu','ram','pvcpu','price','month','savings','spot','spotsav','score'].forEach(k => {
     const el = document.getElementById('si-'+k);
     if (!el) return;
     const active = sortVal.startsWith(colMap[k]);
@@ -3298,6 +3380,7 @@ console.log('%c[CloudPrice] Run checkRefInstances() to verify reference instance
   }
   updateHmFamButtons();
   window._dataLoaded = true;
+  setDefaultCols();
   loadFromURL();
   const tl = document.getElementById('topbarLeft'); if(tl) tl.style.opacity='1';
   (function(){ const tn = document.getElementById('topbarNav'); if(tn) tn.dataset.orig = tn.innerHTML; })();
@@ -3470,13 +3553,17 @@ def generate_html(aws_data, azure_data, rds_data, fetch_date, psql_data=None, aw
         if v.get("price_1yr_all"): d["price_1yr_all"] = v["price_1yr_all"]
         if v.get("price_3yr_all"): d["price_3yr_all"] = v["price_3yr_all"]
         return d
-    aws_list   = [{"iname": v["name"], "price": v["price"], "vcpu": v["vcpu"], "ram": v["ram"], "fam": v["fam"], **ri3(v)} for v in sorted(aws_data.values(),   key=lambda x: x["price"])]
+    def spot3(v):
+        d = {}
+        if v.get("spot"): d["spot"] = v["spot"]
+        return d
+    aws_list   = [{"iname": v["name"], "price": v["price"], "vcpu": v["vcpu"], "ram": v["ram"], "fam": v["fam"], **ri3(v), **spot3(v)} for v in sorted(aws_data.values(),   key=lambda x: x["price"])]
     azure_list = [{"iname": v["name"], "price": v["price"], "vcpu": v["vcpu"], "ram": v["ram"], "fam": v["fam"], **ri3(v)} for v in sorted(azure_data.values(), key=lambda x: x["price"])]
     rds_list   = [{"iname": v["name"], "price": v["price"], "vcpu": v["vcpu"], "ram": v["ram"], "fam": v["fam"], "engine": v.get("engine",""), "deploy": v.get("deploy",""), **ri3(v)} for v in sorted(rds_data.values(), key=lambda x: x["price"])]
     psql_data  = psql_data or {}
     psql_list  = [{"iname": v["name"], "price": v["price"], "vcpu": v["vcpu"], "ram": v["ram"], "fam": v["fam"], "engine": v.get("engine",""), "sku": v.get("sku",""), **ri3(v)} for v in sorted(psql_data.values(), key=lambda x: x["price"])]
 
-    def to_list(d):     return [{"iname": v["name"], "price": v["price"], "vcpu": v["vcpu"], "ram": v["ram"], "fam": v["fam"], **ri3(v)} for v in sorted(d.values(), key=lambda x: x["price"])]
+    def to_list(d):     return [{"iname": v["name"], "price": v["price"], "vcpu": v["vcpu"], "ram": v["ram"], "fam": v["fam"], **ri3(v), **spot3(v)} for v in sorted(d.values(), key=lambda x: x["price"])]
     def to_list_bdd(d): return [{"iname": v["name"], "price": v["price"], "vcpu": v["vcpu"], "ram": v["ram"], "fam": v["fam"], "engine": v.get("engine",""), "sku": v.get("sku",""), **ri3(v)} for v in sorted(d.values(), key=lambda x: x["price"])]
 
     aws_regions_data   = aws_regions_data   or {}
@@ -3674,6 +3761,15 @@ def main():
                 with open(aws_file, encoding="utf-8") as f: aws_regions_data[region] = json.load(f)
             else:
                 aws_regions_data[region] = {}
+    aws_data = aws_regions_data.get("eu-west-3", {})
+
+    # ── AWS Spot : toutes les régions ──
+    for region in AWS_REGIONS:
+        spot_prices = fetch_spot_aws(region)
+        for iname, sp in spot_prices.items():
+            if iname in aws_regions_data.get(region, {}):
+                aws_regions_data[region][iname]["spot"] = sp
+    # Refresh aws_data after spot enrichment
     aws_data = aws_regions_data.get("eu-west-3", {})
 
     # ── AWS EBS : toutes les régions ──
