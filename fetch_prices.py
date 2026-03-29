@@ -971,7 +971,7 @@ HTML_TEMPLATE = """
 </div>
 
 <div id="heatmapSection" style="display:none;padding:20px 36px 0;min-height:calc(100vh - 64px);display:none;flex-direction:column">
-  <div class="veille-title"><svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:12px;position:relative;top:-3px;color:#e8ecf4"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>Heatmap <em>Regions</em></div>
+  <div class="veille-title" style="color:#c8d0e8"><svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:12px;position:relative;top:-3px"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>Heatmap <em style="color:#c8d0e8">Regions</em></div>
   <div id="heatmapSub" style="margin-bottom:20px;font-family:'IBM Plex Mono',monospace;font-size:.9rem;color:#6b738f">AWS Regions \u2014 Linux On-Demand Cost</div>
 
   <div id="hmFilters" style="position:sticky;top:64px;z-index:20;background:rgba(6,7,9,0.85);backdrop-filter:blur(16px);padding:10px 0 10px 0;display:flex;gap:8px;flex-wrap:wrap;align-items:center;border-top:1px solid var(--b1);border-bottom:1px solid var(--b1)">
@@ -1001,7 +1001,6 @@ HTML_TEMPLATE = """
         <span style="width:1px;background:var(--b1)"></span>
         <button class="curr-btn" id="hmBtnEur" onclick="setHmCurr('eur')">&#x20AC; EUR</button>
       </div>
-      <button class="curr-btn on" id="hmViewAtl" onclick="setHmView('atl',this)">World</button>
     </div>
   </div>
 
@@ -1038,7 +1037,7 @@ HTML_TEMPLATE = """
 </div>
 
 <div id="veilleSection">
-  <div class="veille-title"><span style="position:relative;top:-2px;font-size:70%">&#x25C8;</span> Blog <em>FinOps</em></div>
+  <div class="veille-title" style="color:#c8d0e8"><span style="position:relative;top:-2px;font-size:70%">&#x25C8;</span> Blog <em style="color:#c8d0e8">FinOps</em></div>
   <div class="veille-sub" style="color:#c8d0e8">Latest articles</div>
   <div class="veille-filters" style="margin-top:28px">
     <button class="vsrc-btn on" onclick="veilleFilter('all',this)">ALL</button>
