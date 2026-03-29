@@ -527,11 +527,12 @@ def fetch_aws(region="eu-west-3"):
                 if lease == "1yr" and (price_1yr_all is None or p_ri < price_1yr_all): price_1yr_all = p_ri
                 if lease == "3yr" and (price_3yr_all is None or p_ri < price_3yr_all): price_3yr_all = p_ri
 
-        attr  = products[sku].get("attributes", {})
-        vcpu  = int(attr.get("vcpu", 0) or 0)
-        ram   = float((attr.get("memory") or "0").split()[0].replace(",","") or 0)
-        fam   = get_family_aws(itype)
-        entry = {"name": itype, "price": price, "vcpu": vcpu, "ram": ram, "fam": fam}
+        attr    = products[sku].get("attributes", {})
+        vcpu    = int(attr.get("vcpu", 0) or 0)
+        ram     = float((attr.get("memory") or "0").split()[0].replace(",","") or 0)
+        fam     = get_family_aws(itype)
+        storage = attr.get("storage", "")
+        entry   = {"name": itype, "price": price, "vcpu": vcpu, "ram": ram, "fam": fam, "storage": storage}
         if price_1yr_no:  entry["price_1yr"]     = price_1yr_no
         if price_3yr_no:  entry["price_3yr"]     = price_3yr_no
         if price_1yr_all: entry["price_1yr_all"] = price_1yr_all
@@ -823,6 +824,7 @@ HTML_TEMPLATE = """
       <label class="col-pick-row"><input type="checkbox" id="cb-price" checked onchange="toggleCol('price',this.checked)"> On Demand Cost</label>
       <label class="col-pick-row"><input type="checkbox" id="cb-month" checked onchange="toggleCol('month',this.checked)"> Reserved Cost</label>
       <label class="col-pick-row"><input type="checkbox" id="cb-savings" checked onchange="toggleCol('savings',this.checked)"> Savings RI</label>
+      <label class="col-pick-row" id="cb-storage-row"><input type="checkbox" id="cb-storage" checked onchange="toggleCol('storage',this.checked)"> Storage</label>
       <label class="col-pick-row" id="cb-spot-row"><input type="checkbox" id="cb-spot" checked onchange="toggleCol('spot',this.checked)"> Spot Cost</label>
       <label class="col-pick-row" id="cb-spotsav-row"><input type="checkbox" id="cb-spotsav" checked onchange="toggleCol('spotsav',this.checked)"> Savings Spot</label>
       <label class="col-pick-row"><input type="checkbox" id="cb-score" checked onchange="toggleCol('score',this.checked)"> FinOps Score</label>
@@ -847,6 +849,7 @@ HTML_TEMPLATE = """
       <th class="col-fam" onclick="qs(&apos;fam&apos;)"><div style="display:flex;align-items:center;justify-content:space-between"><span id="famHeader">FAMILY</span> <span class="sort-ico" id="si-fam">&#x2195;</span></div></th>
       <th class="col-vcpu" onclick="qs(&apos;vcpu&apos;)"><div style="display:flex;align-items:center;justify-content:space-between">VCPU <span class="sort-ico" id="si-vcpu">&#x2195;</span></div></th>
       <th class="col-ram" onclick="qs(&apos;ram&apos;)"><div style="display:flex;align-items:center;justify-content:space-between">RAM <span class="sort-ico" id="si-ram">&#x2195;</span></div></th>
+      <th class="col-storage ec2-only" onclick="qs(&apos;storage&apos;)"><div style="display:flex;align-items:center;justify-content:space-between">STORAGE <span class="sort-ico" id="si-storage">&#x2195;</span></div></th>
       <th class="col-pvcpu" onclick="qs(&apos;pvcpu&apos;)"><div style="display:flex;align-items:center;justify-content:space-between">COST/VCPU <span class="sort-ico" id="si-pvcpu">&#x2195;</span></div></th>
       <th class="col-price" onclick="qs(&apos;price&apos;)"><div style="display:flex;align-items:center;justify-content:space-between"><span id="thPriceOd" style="letter-spacing:.08em">ON DEMAND COST<span id="periodOdLabel" style="color:#7bffe0;font-size:.65rem;letter-spacing:0">/H</span><span id="discountBadgeHdr" style="display:none" class="discount-badge"></span></span> <span class="sort-ico active-ico" id="si-price">&#x2191;</span></div></th>
       <th class="col-month" onclick="qs(&apos;month&apos;)"><div style="display:flex;align-items:center;justify-content:space-between"><span style="letter-spacing:.08em">RESERVED COST<span id="periodRiLabel" style="color:#7bffe0;font-size:.65rem;letter-spacing:0">/H</span><span id="riYearLabel" style="font-size:.65rem;margin-left:9px;letter-spacing:0;font-family:'Syne',sans-serif;font-weight:700;color:#7bffe0;background:rgba(123,255,224,0.1);border:1px solid rgba(123,255,224,0.3);border-radius:4px;padding:1px 5px">1 YEAR</span></span> <span class="sort-ico" id="si-month">&#x2195;</span></div></th>
@@ -861,6 +864,7 @@ HTML_TEMPLATE = """
       <th class="col-fam"><input class="col-filter" oninput="render()" id="f-fam"   placeholder="ex: general..."></th>
       <th class="col-vcpu"><input class="col-filter" oninput="render()" id="f-vcpu"  placeholder="ex: 4"></th>
       <th class="col-ram"><input class="col-filter" oninput="render()" id="f-ram"   placeholder="ex: 32"></th>
+      <th class="col-storage ec2-only"><input class="col-filter" oninput="render()" id="f-storage" placeholder="ex: NVMe"></th>
       <th class="col-pvcpu"><input class="col-filter" oninput="render()" id="f-pvcpu" placeholder="ex: &lt;0.1"></th>
       <th class="col-price"><input class="col-filter" oninput="render()" id="f-price" placeholder="ex: &lt;0.5"></th>
       <th class="col-month"><input class="col-filter" oninput="render()" id="f-month" placeholder="ex: &lt;0.5"></th>
@@ -1243,6 +1247,8 @@ function setView(v) {
     }
   }
   if(fam !== 'all' || currentFam !== 'all'){ fam='all'; currentFam='all'; const fs=document.getElementById('famSelect'); if(fs) fs.value='all'; }
+  const cbStorageRow = document.getElementById('cb-storage-row');
+  if (cbStorageRow) cbStorageRow.style.display = v === 'aws' ? '' : 'none';
   const cbSpotRow = document.getElementById('cb-spot-row');
   if (cbSpotRow) cbSpotRow.style.display = v === 'aws' ? '' : 'none';
   const cbSpotsavRow = document.getElementById('cb-spotsav-row');
@@ -1283,6 +1289,7 @@ function getFiltered() {
   const fPrice = getColVal('f-price');
   const fMonth   = getColVal('f-month');
   const fSavings = getColVal('f-savings');
+  const fStorage = getColVal('f-storage');
   const fSpot    = getColVal('f-spot');
   const fSpotsav = getColVal('f-spotsav');
   const fScore   = getColVal('f-score');
@@ -1302,6 +1309,7 @@ function getFiltered() {
     (!fPrice || matchNum(d.price, fPrice)) &&
     (!fMonth || matchNum((d[getRiKey()]||0), fMonth)) &&
     (!fSavings || (() => { const rp = d[getRiKey()]; if (!rp) return false; return matchNum(Math.round((1-rp/d.price)*100), fSavings); })()) &&
+    (!fStorage || (d.storage||'').toLowerCase().includes(fStorage)) &&
     (!fSpot    || matchNum((d.spot||0), fSpot)) &&
     (!fSpotsav || matchNum(d.spot ? Math.round((1-d.spot/d.price)*100) : 0, fSpotsav)) &&
     (!fScore   || matchNum(getScore(d).score, fScore))
@@ -1332,6 +1340,8 @@ function getSorted(arr) {
     if (s === 'score-asc')  return (a.score||0) - (b.score||0);
     if (s === 'savings-desc') { const sa = a[getRiKey()]; const sb = b[getRiKey()]; const ra = sa?Math.round((1-sa/a.price)*100):0; const rb = sb?Math.round((1-sb/b.price)*100):0; return rb-ra; }
     if (s === 'savings-asc')  { const sa = a[getRiKey()]; const sb = b[getRiKey()]; const ra = sa?Math.round((1-sa/a.price)*100):0; const rb = sb?Math.round((1-sb/b.price)*100):0; return ra-rb; }
+    if (s === 'storage-asc')  return (a.storage||'').localeCompare(b.storage||'');
+    if (s === 'storage-desc') return (b.storage||'').localeCompare(a.storage||'');
     if (s === 'spot-asc')    return (a.spot||0) - (b.spot||0);
     if (s === 'spot-desc')   return (b.spot||0) - (a.spot||0);
     if (s === 'spotsav-asc')  { const ra = a.spot?Math.round((1-a.spot/a.price)*100):0; const rb = b.spot?Math.round((1-b.spot/b.price)*100):0; return ra-rb; }
@@ -1709,6 +1719,7 @@ function render() {
         + '<td class="col-fam"><span class="fam-badge '+(FC[d.fam]||'fam-other')+'">'+((view==='psql')?(d.engine||d.fam):(view==='rds'?FL_RDS:FL)[d.fam]||d.fam)+'</span></td>'
         + '<td class="col-vcpu"><span class="tag">'+d.vcpu+'</span></td>'
         + '<td class="col-ram"><span class="tag">'+ramFmt(d.ram)+'</span></td>'
+        + '<td class="col-storage ec2-only"><span class="tag">'+(d.storage||'—')+'</span></td>'
         + '<td class="col-pvcpu"><span class="ph-mo">'+(d.vcpu > 0 ? f4(d.price/d.vcpu)+' '+currSym() : '—')+'</span></td>'
         + '<td class="col-price">'+((view==='aws'||view==='rds') ? '<span style="display:inline-block;padding:5px 12px;background:rgba(255,153,0,0.1);border:1px solid rgba(255,153,0,0.3);border-radius:6px;font-weight:700;font-size:.92rem;color:#ff9900;font-family:IBM Plex Mono,monospace">'+f4(d.price*(periodMult[period]||1))+' ' + currSym() + '</span>' : '<span style="display:inline-block;padding:5px 12px;background:rgba(0,170,255,0.1);border:1px solid rgba(0,170,255,0.3);border-radius:6px;font-weight:700;font-size:.92rem;color:#00aaff;font-family:IBM Plex Mono,monospace">'+f4(d.price*(periodMult[period]||1))+' ' + currSym() + '</span>')+'</td>'
         + '<td class="col-month"><span class="ph-mo">'+(function(){ const rp = d[getRiKey()]; if (!rp) return '<span style="color:var(--muted);font-size:.75rem">—</span>'; return f4(rp*(periodMult[period]||1))+' '+currSym(); })()+'</span></td>'
@@ -1827,8 +1838,8 @@ document.addEventListener('click', function(e) {
   const wrap = document.getElementById('colPickerWrap');
   if (wrap && !wrap.contains(e.target)) document.getElementById('colPicker').style.display = 'none';
 });
-const COL_KEYS = ['fam','vcpu','ram','pvcpu','price','month','savings','spot','spotsav','score'];
-const DEFAULT_HIDDEN_COLS = ['spot','spotsav'];
+const COL_KEYS = ['fam','vcpu','ram','pvcpu','price','month','savings','storage','spot','spotsav','score'];
+const DEFAULT_HIDDEN_COLS = ['storage','spot','spotsav'];
 function setDefaultCols() {
   const tbl = document.getElementById('mainTable');
   COL_KEYS.forEach(col => {
@@ -1999,12 +2010,13 @@ function qs(col) {
     pvcpu: cur === 'pvcpu-asc' ? 'pvcpu-desc' : 'pvcpu-asc',
     month:   cur === 'month-asc'   ? 'month-desc'   : 'month-asc',
     savings: cur === 'savings-desc' ? 'savings-asc' : 'savings-desc',
+    storage: cur === 'storage-asc' ? 'storage-desc' : 'storage-asc',
     spot:    cur === 'spot-asc'    ? 'spot-desc'    : 'spot-asc',
     spotsav: cur === 'spotsav-desc' ? 'spotsav-asc' : 'spotsav-desc',
   };
   if (next[col]) sortVal = next[col];
-  const colMap = {iname:'iname',fam:'fam',vcpu:'vcpu',ram:'ram',pvcpu:'pvcpu',price:'price',month:'month',savings:'savings',spot:'spot',spotsav:'spotsav',score:'score'};
-  ['iname','fam','vcpu','ram','pvcpu','price','month','savings','spot','spotsav','score'].forEach(k => {
+  const colMap = {iname:'iname',fam:'fam',vcpu:'vcpu',ram:'ram',pvcpu:'pvcpu',price:'price',month:'month',savings:'savings',storage:'storage',spot:'spot',spotsav:'spotsav',score:'score'};
+  ['iname','fam','vcpu','ram','pvcpu','price','month','savings','storage','spot','spotsav','score'].forEach(k => {
     const el = document.getElementById('si-'+k);
     if (!el) return;
     const active = sortVal.startsWith(colMap[k]);
@@ -3557,13 +3569,13 @@ def generate_html(aws_data, azure_data, rds_data, fetch_date, psql_data=None, aw
         d = {}
         if v.get("spot"): d["spot"] = v["spot"]
         return d
-    aws_list   = [{"iname": v["name"], "price": v["price"], "vcpu": v["vcpu"], "ram": v["ram"], "fam": v["fam"], **ri3(v), **spot3(v)} for v in sorted(aws_data.values(),   key=lambda x: x["price"])]
+    aws_list   = [{"iname": v["name"], "price": v["price"], "vcpu": v["vcpu"], "ram": v["ram"], "fam": v["fam"], "storage": v.get("storage",""), **ri3(v), **spot3(v)} for v in sorted(aws_data.values(),   key=lambda x: x["price"])]
     azure_list = [{"iname": v["name"], "price": v["price"], "vcpu": v["vcpu"], "ram": v["ram"], "fam": v["fam"], **ri3(v)} for v in sorted(azure_data.values(), key=lambda x: x["price"])]
     rds_list   = [{"iname": v["name"], "price": v["price"], "vcpu": v["vcpu"], "ram": v["ram"], "fam": v["fam"], "engine": v.get("engine",""), "deploy": v.get("deploy",""), **ri3(v)} for v in sorted(rds_data.values(), key=lambda x: x["price"])]
     psql_data  = psql_data or {}
     psql_list  = [{"iname": v["name"], "price": v["price"], "vcpu": v["vcpu"], "ram": v["ram"], "fam": v["fam"], "engine": v.get("engine",""), "sku": v.get("sku",""), **ri3(v)} for v in sorted(psql_data.values(), key=lambda x: x["price"])]
 
-    def to_list(d):     return [{"iname": v["name"], "price": v["price"], "vcpu": v["vcpu"], "ram": v["ram"], "fam": v["fam"], **ri3(v), **spot3(v)} for v in sorted(d.values(), key=lambda x: x["price"])]
+    def to_list(d):     return [{"iname": v["name"], "price": v["price"], "vcpu": v["vcpu"], "ram": v["ram"], "fam": v["fam"], "storage": v.get("storage",""), **ri3(v), **spot3(v)} for v in sorted(d.values(), key=lambda x: x["price"])]
     def to_list_bdd(d): return [{"iname": v["name"], "price": v["price"], "vcpu": v["vcpu"], "ram": v["ram"], "fam": v["fam"], "engine": v.get("engine",""), "sku": v.get("sku",""), **ri3(v)} for v in sorted(d.values(), key=lambda x: x["price"])]
 
     aws_regions_data   = aws_regions_data   or {}
