@@ -96,5 +96,19 @@
     "mix": "Gas + Coal + Nuclear",
     "zone": "US-MIDA-PJM",
     "label": "US East"
+  },
+  "eu-south-1": {
+    "co2": 233,
+    "renew": 42,
+    "mix": "Gas + Hydro + Solar",
+    "zone": "IT",
+    "label": "Italy"
+  },
+  "eu-south-2": {
+    "co2": 165,
+    "renew": 57,
+    "mix": "Wind + Solar + Nuclear",
+    "zone": "ES",
+    "label": "Spain"
   }
 }

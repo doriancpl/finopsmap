@@ -3214,12 +3214,17 @@ console.log('%c[CloudPrice] Run checkRefInstances() to verify reference instance
   onPriceSlider();
   (function() {
     function fixStickyRows() {
-      const sortRow   = document.getElementById('sortRow');
-      const filterRow = document.getElementById('filterRow');
+      const sortRow    = document.getElementById('sortRow');
+      const filterRow  = document.getElementById('filterRow');
+      const filtersBar = document.getElementById('filters');
       if (!sortRow || !filterRow) return;
-      const sortH = sortRow.getBoundingClientRect().height;
-      sortRow.querySelectorAll('th').forEach(th => th.style.top = '0px');
-      filterRow.querySelectorAll('th').forEach(th => th.style.top = sortH + 'px');
+      const topbarH  = 64;
+      const filtersH = filtersBar ? filtersBar.getBoundingClientRect().height : 0;
+      const sortTop  = topbarH + filtersH;
+      const sortH    = sortRow.getBoundingClientRect().height;
+      const filterTop = sortTop + sortH;
+      sortRow.querySelectorAll('th').forEach(th => th.style.top = sortTop + 'px');
+      filterRow.querySelectorAll('th').forEach(th => th.style.top = filterTop + 'px');
     }
     fixStickyRows();
     window.addEventListener('resize', fixStickyRows);
