@@ -148,6 +148,10 @@ tbody tr:last-child td{border-bottom:none}
 footer{position:sticky;bottom:0;z-index:100;margin-top:auto;padding:16px 36px;border-top:1px solid rgba(255,255,255,0.06);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;background:rgba(13,17,26,0.96);backdrop-filter:blur(16px)}
 .fn{font-size:.8rem;color:var(--text2)}.fn a{color:var(--text2);text-decoration:none}.fn a:hover{color:var(--accent)}.fts{font-family:'IBM Plex Mono',monospace;font-size:.75rem;color:var(--text2)}
 @media(max-width:640px){#topbar,#hero,#filters,#tblwrap,footer{padding-left:16px;padding-right:16px}#statsrow{margin-left:16px;margin-right:16px}h1{font-size:1.6rem}}
+#mainTable.hide-fam .col-fam,#mainTable.hide-vcpu .col-vcpu,#mainTable.hide-ram .col-ram,#mainTable.hide-pvcpu .col-pvcpu,#mainTable.hide-price .col-price,#mainTable.hide-month .col-month,#mainTable.hide-savings .col-savings,#mainTable.hide-score .col-score{display:none}
+.col-pick-row{display:flex;align-items:center;gap:8px;padding:5px 0;font-family:'Syne',sans-serif;font-size:.82rem;color:#c8d0e8;cursor:pointer;white-space:nowrap}
+.col-pick-row:hover{color:var(--accent)}
+.col-pick-row input[type=checkbox]{accent-color:var(--accent);width:13px;height:13px;cursor:pointer}
 .score-bar-bg{display:inline-block;position:relative;width:100px;height:8px;background:var(--b1);border-radius:4px;overflow:hidden;vertical-align:middle}
 .score-bar-fill{height:100%;border-radius:4px;transition:width .3s}
 .score-val{font-size:.82rem;font-weight:700;font-family:'IBM Plex Mono',monospace;margin-left:6px;vertical-align:middle;min-width:32px;display:inline-block}

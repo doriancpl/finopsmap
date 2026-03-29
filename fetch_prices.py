@@ -745,6 +745,21 @@ HTML_TEMPLATE = """
 
   <button class="cmp-btn" id="cmpBtn" onclick="toggleCmp()">&#x229E; Compare <span class="cmp-count" id="cmpCount"></span></button>
   <button class="reset-btn" onclick="resetFiltres()">&#x2715; Reset</button>
+  <div style="position:relative;flex-shrink:0" id="colPickerWrap">
+    <button class="reset-btn" onclick="toggleColPicker()" id="colPickerBtn" style="display:flex;align-items:center;gap:6px">&#x229E; Columns</button>
+    <div id="colPicker" style="display:none;position:absolute;top:calc(100% + 6px);left:0;background:var(--s1);border:1px solid var(--b1);border-radius:8px;padding:10px 14px;z-index:200;min-width:180px;box-shadow:0 8px 24px rgba(0,0,0,.6)">
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:.65rem;letter-spacing:.12em;color:#6b738f;text-transform:uppercase;margin-bottom:8px">Columns</div>
+      <label class="col-pick-row" style="border-bottom:1px solid var(--b1);padding-bottom:8px;margin-bottom:4px"><input type="checkbox" id="colSelectAll" checked onchange="toggleAllCols(this.checked)"> All columns</label>
+      <label class="col-pick-row"><input type="checkbox" id="cb-fam" checked onchange="toggleCol('fam',this.checked)"> Family</label>
+      <label class="col-pick-row"><input type="checkbox" id="cb-vcpu" checked onchange="toggleCol('vcpu',this.checked)"> vCPU</label>
+      <label class="col-pick-row"><input type="checkbox" id="cb-ram" checked onchange="toggleCol('ram',this.checked)"> RAM</label>
+      <label class="col-pick-row"><input type="checkbox" id="cb-pvcpu" checked onchange="toggleCol('pvcpu',this.checked)"> Cost/vCPU</label>
+      <label class="col-pick-row"><input type="checkbox" id="cb-price" checked onchange="toggleCol('price',this.checked)"> On Demand Cost</label>
+      <label class="col-pick-row"><input type="checkbox" id="cb-month" checked onchange="toggleCol('month',this.checked)"> Reserved Cost</label>
+      <label class="col-pick-row"><input type="checkbox" id="cb-savings" checked onchange="toggleCol('savings',this.checked)"> Savings RI</label>
+      <label class="col-pick-row"><input type="checkbox" id="cb-score" checked onchange="toggleCol('score',this.checked)"> FinOps Score</label>
+    </div>
+  </div>
   <div style="display:flex;align-items:center;gap:8px;margin-left:auto">
   <div style="display:inline-flex;align-items:center;background:var(--s1);border:1px solid var(--b1);border-radius:6px;overflow:hidden;height:36px" id="riUpfrontToggle">
     <span style="padding:0 10px;background:var(--s2);font-family:'IBM Plex Mono',monospace;font-size:.72rem;font-weight:700;color:#c8d0e8;border-right:1px solid var(--b1);height:100%;display:flex;align-items:center">RI</span>
@@ -774,27 +789,27 @@ HTML_TEMPLATE = """
     <thead>
     <tr id="sortRow">
       <th id="thCmp" style="width:28px;background:var(--s1);border-bottom:1px solid var(--b1);display:none"></th>
-      <th onclick="qs(&apos;iname&apos;)"><div style="display:flex;align-items:center;justify-content:space-between">NAME <span class="sort-ico" id="si-iname">&#x2195;</span></div></th>
-      <th onclick="qs(&apos;fam&apos;)"><div style="display:flex;align-items:center;justify-content:space-between"><span id="famHeader">FAMILY</span> <span class="sort-ico" id="si-fam">&#x2195;</span></div></th>
-      <th onclick="qs(&apos;vcpu&apos;)"><div style="display:flex;align-items:center;justify-content:space-between">VCPU <span class="sort-ico" id="si-vcpu">&#x2195;</span></div></th>
-      <th onclick="qs(&apos;ram&apos;)"><div style="display:flex;align-items:center;justify-content:space-between">RAM <span class="sort-ico" id="si-ram">&#x2195;</span></div></th>
-      <th onclick="qs(&apos;pvcpu&apos;)"><div style="display:flex;align-items:center;justify-content:space-between">COST/VCPU <span class="sort-ico" id="si-pvcpu">&#x2195;</span></div></th>
-      <th onclick="qs(&apos;price&apos;)"><div style="display:flex;align-items:center;justify-content:space-between"><span id="thPriceOd" style="letter-spacing:.08em">ON DEMAND COST<span id="periodOdLabel" style="color:#7bffe0;font-size:.65rem;letter-spacing:0">/H</span><span id="discountBadgeHdr" style="display:none" class="discount-badge"></span></span> <span class="sort-ico active-ico" id="si-price">&#x2191;</span></div></th>
-      <th onclick="qs(&apos;month&apos;)"><div style="display:flex;align-items:center;justify-content:space-between"><span style="letter-spacing:.08em">RESERVED COST<span id="periodRiLabel" style="color:#7bffe0;font-size:.65rem;letter-spacing:0">/H</span><span id="riYearLabel" style="font-size:.65rem;margin-left:9px;letter-spacing:0;font-family:'Syne',sans-serif;font-weight:700;color:#7bffe0;background:rgba(123,255,224,0.1);border:1px solid rgba(123,255,224,0.3);border-radius:4px;padding:1px 5px">1 YEAR</span></span> <span class="sort-ico" id="si-month">&#x2195;</span></div></th>
-      <th onclick="qs(&apos;savings&apos;)"><div style="display:flex;align-items:center;justify-content:space-between">SAVINGS RI <span class="sort-ico" id="si-savings">&#x2195;</span></div></th>
-      <th onclick="qs(&apos;score&apos;)"><div style="display:flex;align-items:center;justify-content:space-between">FINOPS SCORE <span class="sort-ico" id="si-score">&#x2195;</span></div></th>
+      <th class="col-iname" onclick="qs(&apos;iname&apos;)"><div style="display:flex;align-items:center;justify-content:space-between">NAME <span class="sort-ico" id="si-iname">&#x2195;</span></div></th>
+      <th class="col-fam" onclick="qs(&apos;fam&apos;)"><div style="display:flex;align-items:center;justify-content:space-between"><span id="famHeader">FAMILY</span> <span class="sort-ico" id="si-fam">&#x2195;</span></div></th>
+      <th class="col-vcpu" onclick="qs(&apos;vcpu&apos;)"><div style="display:flex;align-items:center;justify-content:space-between">VCPU <span class="sort-ico" id="si-vcpu">&#x2195;</span></div></th>
+      <th class="col-ram" onclick="qs(&apos;ram&apos;)"><div style="display:flex;align-items:center;justify-content:space-between">RAM <span class="sort-ico" id="si-ram">&#x2195;</span></div></th>
+      <th class="col-pvcpu" onclick="qs(&apos;pvcpu&apos;)"><div style="display:flex;align-items:center;justify-content:space-between">COST/VCPU <span class="sort-ico" id="si-pvcpu">&#x2195;</span></div></th>
+      <th class="col-price" onclick="qs(&apos;price&apos;)"><div style="display:flex;align-items:center;justify-content:space-between"><span id="thPriceOd" style="letter-spacing:.08em">ON DEMAND COST<span id="periodOdLabel" style="color:#7bffe0;font-size:.65rem;letter-spacing:0">/H</span><span id="discountBadgeHdr" style="display:none" class="discount-badge"></span></span> <span class="sort-ico active-ico" id="si-price">&#x2191;</span></div></th>
+      <th class="col-month" onclick="qs(&apos;month&apos;)"><div style="display:flex;align-items:center;justify-content:space-between"><span style="letter-spacing:.08em">RESERVED COST<span id="periodRiLabel" style="color:#7bffe0;font-size:.65rem;letter-spacing:0">/H</span><span id="riYearLabel" style="font-size:.65rem;margin-left:9px;letter-spacing:0;font-family:'Syne',sans-serif;font-weight:700;color:#7bffe0;background:rgba(123,255,224,0.1);border:1px solid rgba(123,255,224,0.3);border-radius:4px;padding:1px 5px">1 YEAR</span></span> <span class="sort-ico" id="si-month">&#x2195;</span></div></th>
+      <th class="col-savings" onclick="qs(&apos;savings&apos;)"><div style="display:flex;align-items:center;justify-content:space-between">SAVINGS RI <span class="sort-ico" id="si-savings">&#x2195;</span></div></th>
+      <th class="col-score" onclick="qs(&apos;score&apos;)"><div style="display:flex;align-items:center;justify-content:space-between">FINOPS SCORE <span class="sort-ico" id="si-score">&#x2195;</span></div></th>
     </tr>
     <tr id="filterRow">
       <th id="thCmpFilter" style="background:var(--s2);border-bottom:1px solid var(--b1);display:none"></th>
-      <th><input class="col-filter" oninput="render()" id="f-iname" placeholder="ex: m6i..."></th>
-      <th><input class="col-filter" oninput="render()" id="f-fam"   placeholder="ex: general..."></th>
-      <th><input class="col-filter" oninput="render()" id="f-vcpu"  placeholder="ex: 4"></th>
-      <th><input class="col-filter" oninput="render()" id="f-ram"   placeholder="ex: 32"></th>
-      <th><input class="col-filter" oninput="render()" id="f-pvcpu" placeholder="ex: &lt;0.1"></th>
-      <th><input class="col-filter" oninput="render()" id="f-price" placeholder="ex: &lt;0.5"></th>
-      <th><input class="col-filter" oninput="render()" id="f-month" placeholder="ex: &lt;0.5"></th>
-      <th><input class="col-filter" oninput="render()" id="f-savings" placeholder="ex: &gt;30"></th>
-      <th><input class="col-filter" oninput="render()" id="f-score"   placeholder="ex: &gt;7"></th>
+      <th class="col-iname"><input class="col-filter" oninput="render()" id="f-iname" placeholder="ex: m6i..."></th>
+      <th class="col-fam"><input class="col-filter" oninput="render()" id="f-fam"   placeholder="ex: general..."></th>
+      <th class="col-vcpu"><input class="col-filter" oninput="render()" id="f-vcpu"  placeholder="ex: 4"></th>
+      <th class="col-ram"><input class="col-filter" oninput="render()" id="f-ram"   placeholder="ex: 32"></th>
+      <th class="col-pvcpu"><input class="col-filter" oninput="render()" id="f-pvcpu" placeholder="ex: &lt;0.1"></th>
+      <th class="col-price"><input class="col-filter" oninput="render()" id="f-price" placeholder="ex: &lt;0.5"></th>
+      <th class="col-month"><input class="col-filter" oninput="render()" id="f-month" placeholder="ex: &lt;0.5"></th>
+      <th class="col-savings"><input class="col-filter" oninput="render()" id="f-savings" placeholder="ex: &gt;30"></th>
+      <th class="col-score"><input class="col-filter" oninput="render()" id="f-score"   placeholder="ex: &gt;7"></th>
     </tr>
     </thead>
     <tbody id="tbody"></tbody>
@@ -811,8 +826,8 @@ HTML_TEMPLATE = """
 </div>
 
 <div id="tcoSection" style="display:none;padding:20px 36px 44px;flex:1;min-height:calc(100vh - 64px)">
-  <h2 style="font-size:clamp(1.4rem,2.5vw,2rem);font-weight:800;letter-spacing:-.04em;margin-bottom:4px"><span style="font-size:1.5rem;margin-right:8px;position:relative;top:-4px">∑</span>Total Cost of <span style="color:#7bffe0">Ownership</span></h2>
-  <p style="font-family:'IBM Plex Mono',monospace;font-size:.82rem;color:#6b738f;margin-bottom:28px">Compute &middot; Storage &middot; Network &middot; Support</p>
+  <h2 style="font-size:clamp(1.4rem,2.5vw,2rem);font-weight:800;letter-spacing:-.04em;margin-bottom:4px;color:#c8d0e8"><span style="font-size:1.5rem;margin-right:8px;position:relative;top:-4px">∑</span>TCO Calculator</h2>
+  <p style="font-family:'IBM Plex Mono',monospace;font-size:.82rem;color:#c8d0e8;margin-bottom:28px">Total Cost of Ownership</p>
 
   <div class="tco-layout">
     <!-- FORM -->
@@ -1620,15 +1635,15 @@ function render() {
       const isSel = cmpSel.has(view==='rds' ? d.iname+'||'+(d.fam||'') : view==='psql' ? (d.fam||'')+'||'+d.iname : d.iname);
       const chkTd = '';
       return '<tr class="' + (isSel?(view==='azure'||view==='psql'?'row-sel-azure':'row-sel-aws'):'') + '" data-iname="' + d.iname + '" data-fam="' + (d.fam||'') + '" style="animation-delay:' + Math.min(i*0.01,0.3) + 's;cursor:pointer" onclick="toggleRow(&apos;' + d.iname + '&apos;,&apos;' + (d.fam||'') + '&apos;)">' + chkTd
-        + '<td><span class="iname iname-clickable '+cls+'" onclick="event.stopPropagation();openSeriesModal(&apos;'+d.iname+'&apos;,&apos;'+(d.fam||'')+'&apos;)">'+d.iname+'</span>'
-        + '<td><span class="fam-badge '+(FC[d.fam]||'fam-other')+'">'+((view==='psql')?(d.engine||d.fam):(view==='rds'?FL_RDS:FL)[d.fam]||d.fam)+'</span></td>'
-        + '<td><span class="tag">'+d.vcpu+'</span></td>'
-        + '<td><span class="tag">'+ramFmt(d.ram)+'</span></td>'
-        + '<td><span class="ph-mo">'+(d.vcpu > 0 ? f4(d.price/d.vcpu)+' '+currSym() : '—')+'</span></td>'
-        + '<td>'+((view==='aws'||view==='rds') ? '<span style="display:inline-block;padding:5px 12px;background:rgba(255,153,0,0.1);border:1px solid rgba(255,153,0,0.3);border-radius:6px;font-weight:700;font-size:.92rem;color:#ff9900;font-family:IBM Plex Mono,monospace">'+f4(d.price*(periodMult[period]||1))+' ' + currSym() + '</span>' : '<span style="display:inline-block;padding:5px 12px;background:rgba(0,170,255,0.1);border:1px solid rgba(0,170,255,0.3);border-radius:6px;font-weight:700;font-size:.92rem;color:#00aaff;font-family:IBM Plex Mono,monospace">'+f4(d.price*(periodMult[period]||1))+' ' + currSym() + '</span>')+'</td>'
-        + '<td><span class="ph-mo">'+(function(){ const rp = d[getRiKey()]; if (!rp) return '<span style="color:var(--muted);font-size:.75rem">—</span>'; return f4(rp*(periodMult[period]||1))+' '+currSym(); })()+'</span></td>'
-        + '<td>'+(function(){ const rp = d[getRiKey()]; if (!rp) return '<span style="color:var(--muted);font-size:.75rem">—</span>'; const sav = Math.round((1-rp/d.price)*100); return '<span style="padding:3px 8px;background:rgba(123,255,224,0.1);border:1px solid rgba(123,255,224,0.3);border-radius:4px;color:#7bffe0;font-weight:700;font-family:IBM Plex Mono,monospace;font-size:.82rem">\u2212'+sav+'%</span>'; })()+'</td>'
-        + '<td style="padding:10px 16px;border-bottom:1px solid #1c2030;white-space:nowrap">'
+        + '<td class="col-iname"><span class="iname iname-clickable '+cls+'" onclick="event.stopPropagation();openSeriesModal(&apos;'+d.iname+'&apos;,&apos;'+(d.fam||'')+'&apos;)">'+d.iname+'</span>'
+        + '<td class="col-fam"><span class="fam-badge '+(FC[d.fam]||'fam-other')+'">'+((view==='psql')?(d.engine||d.fam):(view==='rds'?FL_RDS:FL)[d.fam]||d.fam)+'</span></td>'
+        + '<td class="col-vcpu"><span class="tag">'+d.vcpu+'</span></td>'
+        + '<td class="col-ram"><span class="tag">'+ramFmt(d.ram)+'</span></td>'
+        + '<td class="col-pvcpu"><span class="ph-mo">'+(d.vcpu > 0 ? f4(d.price/d.vcpu)+' '+currSym() : '—')+'</span></td>'
+        + '<td class="col-price">'+((view==='aws'||view==='rds') ? '<span style="display:inline-block;padding:5px 12px;background:rgba(255,153,0,0.1);border:1px solid rgba(255,153,0,0.3);border-radius:6px;font-weight:700;font-size:.92rem;color:#ff9900;font-family:IBM Plex Mono,monospace">'+f4(d.price*(periodMult[period]||1))+' ' + currSym() + '</span>' : '<span style="display:inline-block;padding:5px 12px;background:rgba(0,170,255,0.1);border:1px solid rgba(0,170,255,0.3);border-radius:6px;font-weight:700;font-size:.92rem;color:#00aaff;font-family:IBM Plex Mono,monospace">'+f4(d.price*(periodMult[period]||1))+' ' + currSym() + '</span>')+'</td>'
+        + '<td class="col-month"><span class="ph-mo">'+(function(){ const rp = d[getRiKey()]; if (!rp) return '<span style="color:var(--muted);font-size:.75rem">—</span>'; return f4(rp*(periodMult[period]||1))+' '+currSym(); })()+'</span></td>'
+        + '<td class="col-savings">'+(function(){ const rp = d[getRiKey()]; if (!rp) return '<span style="color:var(--muted);font-size:.75rem">—</span>'; const sav = Math.round((1-rp/d.price)*100); return '<span style="padding:3px 8px;background:rgba(123,255,224,0.1);border:1px solid rgba(123,255,224,0.3);border-radius:4px;color:#7bffe0;font-weight:700;font-family:IBM Plex Mono,monospace;font-size:.82rem">\u2212'+sav+'%</span>'; })()+'</td>'
+        + '<td class="col-score" style="padding:10px 16px;border-bottom:1px solid #1c2030;white-space:nowrap">'
         + '<div class="score-wrap" data-ti="'+_ti+'" onmouseenter="showTip(event,+this.dataset.ti)" onmousemove="moveTip(event)" onmouseleave="hideTip()">'
         + '<div style="position:relative;width:100px;height:8px;background:#1c2030;border-radius:4px;overflow:hidden">'
         + '<div style="position:absolute;left:0;top:0;height:100%;width:'+(d.score/10*100).toFixed(1)+'%;background:linear-gradient(90deg,'+scoreGrad(d.score)+');border-radius:4px"></div></div>'
@@ -1640,6 +1655,7 @@ function render() {
       }).join('');
 
   document.getElementById('heroSub').innerHTML = '<span style="font-family:IBM Plex Mono,monospace;font-size:1.05rem;color:#dde3f0;font-weight:700">'+arr.length+'<span style="color:#dde3f0">/</span>'+getData().length+'</span><span style="color:#c8d0e8"> — resources displayed</span>';
+  updateURL();
 }
 
 function discountRate() {
@@ -1731,6 +1747,79 @@ function setCurr(c) {
   render();
 }
 
+function toggleColPicker() {
+  const p = document.getElementById('colPicker');
+  p.style.display = p.style.display === 'none' ? 'block' : 'none';
+}
+document.addEventListener('click', function(e) {
+  const wrap = document.getElementById('colPickerWrap');
+  if (wrap && !wrap.contains(e.target)) document.getElementById('colPicker').style.display = 'none';
+});
+const COL_KEYS = ['fam','vcpu','ram','pvcpu','price','month','savings','score'];
+function toggleAllCols(visible) {
+  COL_KEYS.forEach(col => {
+    const tbl = document.getElementById('mainTable');
+    if (tbl) tbl.classList.toggle('hide-' + col, !visible);
+    const cb = document.getElementById('cb-' + col);
+    if (cb) cb.checked = visible;
+  });
+}
+function toggleCol(col, visible) {
+  const tbl = document.getElementById('mainTable');
+  if (!tbl) return;
+  tbl.classList.toggle('hide-' + col, !visible);
+  const allChecked = COL_KEYS.every(k => !tbl.classList.contains('hide-' + k));
+  const sa = document.getElementById('colSelectAll');
+  if (sa) sa.checked = allChecked;
+  updateURL();
+}
+function updateURL() {
+  if (!window._dataLoaded) return;
+  const params = new URLSearchParams();
+  if (view !== 'aws')           params.set('view', view);
+  if (currentRegion !== 'eu-west-3') params.set('region', currentRegion);
+  if (fam && fam !== 'all')     params.set('fam', fam);
+  const q = document.getElementById('q');
+  if (q && q.value)             params.set('q', q.value);
+  if (period !== 'h')           params.set('period', period);
+  if (_curr !== 'usd')          params.set('curr', _curr);
+  const riKey = riYear + '_' + riUpfront;
+  if (riKey !== '1yr_no')       params.set('ri', riKey);
+  if (sortVal !== 'price-asc')  params.set('sort', sortVal);
+  const tbl = document.getElementById('mainTable');
+  if (tbl) {
+    const hidden = COL_KEYS.filter(k => tbl.classList.contains('hide-' + k));
+    if (hidden.length) params.set('cols', hidden.join(','));
+  }
+  const str = params.toString();
+  history.replaceState(null, '', str ? '?' + str : location.pathname);
+}
+function loadFromURL() {
+  const p = new URLSearchParams(location.search);
+  const reg = p.get('region');
+  if (reg) {
+    currentRegion = reg;
+    const sel = document.getElementById('regionSelect');
+    if (sel) sel.value = reg;
+    loadRegionData(reg);
+  }
+  const ri = p.get('ri'); if (ri) onRiSelect(ri);
+  const per = p.get('period'); if (per) { period = per; document.getElementById('periodSel').value = per; }
+  const c = p.get('curr'); if (c) setCurr(c);
+  const f = p.get('fam'); if (f) { fam = f; const fs = document.getElementById('famSelect'); if(fs) fs.value = f; }
+  const q = p.get('q'); if (q) { const el = document.getElementById('q'); if(el) el.value = q; }
+  const s = p.get('sort'); if (s) sortVal = s;
+  const cols = p.get('cols');
+  if (cols) cols.split(',').forEach(col => {
+    if (COL_KEYS.includes(col)) {
+      const tbl = document.getElementById('mainTable');
+      if (tbl) tbl.classList.add('hide-' + col);
+      const cb = document.getElementById('cb-' + col); if (cb) cb.checked = false;
+      const sa = document.getElementById('colSelectAll'); if (sa) sa.checked = false;
+    }
+  });
+  setNav(p.get('view') || 'ec2');
+}
 function resetFiltres() {
   // Reset famille
   fam = 'all'; currentFam = 'all';
@@ -3208,7 +3297,8 @@ console.log('%c[CloudPrice] Run checkRefInstances() to verify reference instance
     if (loader) loader.style.display = 'none';
   }
   updateHmFamButtons();
-  setNav('ec2');
+  window._dataLoaded = true;
+  loadFromURL();
   const tl = document.getElementById('topbarLeft'); if(tl) tl.style.opacity='1';
   (function(){ const tn = document.getElementById('topbarNav'); if(tn) tn.dataset.orig = tn.innerHTML; })();
   onPriceSlider();
