@@ -101,12 +101,12 @@ thead th{position:sticky;top:var(--filters-h,56px);z-index:10;padding:12px 16px;
 thead th:last-child{box-shadow:inset -1px 0 0 #2a3050}
 #filterRow th:last-child{box-shadow:inset -1px 0 0 #2a3050}
 thead th:hover{color:var(--text)}thead th.sorted{color:var(--accent)}
-thead th.col-iname{position:sticky;left:0;z-index:12;box-shadow:-36px 0 0 0 #0c0e14,inset -1px 0 0 0 #4a5070;background:#0c0e14;border-left:1px solid var(--b1)}
+thead th.col-iname{position:sticky;left:36px;z-index:12;box-shadow:-36px 0 0 0 #0c0e14,inset -1px 0 0 0 #4a5070;background:#0c0e14;border-left:1px solid var(--b1)}
 #filterRow th{position:sticky;z-index:11;padding:6px 14px;background:rgba(16,19,26,0.85);backdrop-filter:blur(16px);border-bottom:2px solid var(--b1)}
-#filterRow th.col-iname{left:0;z-index:13;box-shadow:-36px 0 0 0 #10131a,inset -1px 0 0 0 #4a5070;background:#10131a;border-left:1px solid var(--b1)}
+#filterRow th.col-iname{left:36px;z-index:13;box-shadow:-36px 0 0 0 #10131a,inset -1px 0 0 0 #4a5070;background:#10131a;border-left:1px solid var(--b1)}
 tbody tr{transition:background .15s;animation:rowIn .18s ease both}tbody td{transition:background .15s}@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}#tbody{transition:opacity .2s}tbody tr:nth-child(even) td{background:#0d0f15}.view-aws tbody tr:hover td{background:rgba(255,153,0,0.08)}.view-rds tbody tr:hover td{background:rgba(255,153,0,0.08)}.view-azure tbody tr:hover td{background:rgba(0,170,255,0.08)}.view-psql tbody tr:hover td{background:rgba(0,170,255,0.08)}
 .col-proc,.col-storage{white-space:nowrap}
-tbody td.col-iname{position:sticky;left:0;z-index:1;background:var(--bg);box-shadow:-36px 0 0 0 var(--bg),inset -1px 0 0 0 #4a5070;border-left:1px solid var(--b1)}
+tbody td.col-iname{position:sticky;left:36px;z-index:1;background:var(--bg);box-shadow:-36px 0 0 0 var(--bg),inset -1px 0 0 0 #4a5070;border-left:1px solid var(--b1)}
 tbody tr:nth-child(even) td.col-iname{background:#0d0f15;box-shadow:-36px 0 0 0 var(--bg),inset -1px 0 0 0 #4a5070}
 .view-aws tbody tr:hover td.col-iname{background:#140e04;box-shadow:-36px 0 0 0 var(--bg),inset -1px 0 0 0 #4a5070}
 .view-rds tbody tr:hover td.col-iname{background:#140e04;box-shadow:-36px 0 0 0 var(--bg),inset -1px 0 0 0 #4a5070}
