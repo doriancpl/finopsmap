@@ -317,7 +317,7 @@
   <div class="veille-title" style="color:#c8d0e8"><svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:12px;position:relative;top:-3px"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>Heatmap <em style="color:#c8d0e8">Regions</em></div>
   <div id="heatmapSub" style="margin-bottom:20px;font-family:'IBM Plex Mono',monospace;font-size:.9rem;color:#6b738f">AWS Regions — Linux On-Demand Cost</div>
 
-  <div id="hmFilters" style="position:sticky;top:64px;z-index:20;background:rgba(6,7,9,0.85);backdrop-filter:blur(16px);padding:10px 0 10px 0;display:flex;gap:8px;flex-wrap:wrap;align-items:center;border-top:1px solid var(--b1);border-bottom:1px solid var(--b1)">
+  <div id="hmFilters" style="position:sticky;top:0;z-index:20;background:rgba(6,7,9,0.85);backdrop-filter:blur(16px);padding:10px 0 10px 0;display:flex;gap:8px;flex-wrap:wrap;align-items:center;border-top:1px solid var(--b1);border-bottom:1px solid var(--b1)">
     <div id="hmFamGrp" style="display:flex;gap:4px;flex-wrap:wrap">
       <button class="fbtn on hm-ec2-fam hm-rds-fam hm-az-fam hm-bdd-fam" onclick="setHmFam('',this)">All</button>
       <button class="fbtn hm-ec2-fam hm-az-fam" onclick="setHmFam('general',this)">General</button>
@@ -1940,6 +1940,7 @@ let hmEngine = '';  // filtre moteur pour Azure BDD
 
 function setHmFam(fam, btn) {
   hmFam = fam;
+  if (!fam) hmEngine = '';
   document.querySelectorAll('#hmFamGrp .fbtn').forEach(b => b.classList.remove('on'));
   if (btn) btn.classList.add('on');
   populateHmSizes();
