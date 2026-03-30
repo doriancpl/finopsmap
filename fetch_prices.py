@@ -944,6 +944,7 @@ HTML_TEMPLATE = """
             <option value="ri1y" selected>Reserved 1yr No Upfront</option>
             <option value="ri1y_all">Reserved 1yr All Upfront</option>
             <option value="ri3y">Reserved 3yr No Upfront</option>
+            <option value="ri3y_all">Reserved 3yr All Upfront</option>
           </select>
         </div>
 
@@ -2146,6 +2147,7 @@ function tcoSetDur(val, el) {
   el.classList.add('on');
 }
 
+function getTcoData() { return (view === 'azure' || view === 'psql') ? AZURE_DATA : AWS_DATA; }
 function initTcoInstanceSelect() {
   const cpuSel  = document.getElementById('tcoCpu');
   const ramSel  = document.getElementById('tcoRam');
@@ -2155,7 +2157,7 @@ function initTcoInstanceSelect() {
   const prevRam = ramSel.value;
 
   // CPU uniques triés
-  const cpuVals = AWS_DATA.map(function(d){ return d.vcpu; })
+  const cpuVals = getTcoData().map(function(d){ return d.vcpu; })
     .filter(function(v,i,a){ return a.indexOf(v)===i; })
     .sort(function(a,b){ return a-b; });
   cpuSel.innerHTML = '<option value="">Any vCPU</option>';
@@ -2167,7 +2169,7 @@ function initTcoInstanceSelect() {
   });
 
   // RAM uniques triés
-  const ramVals = AWS_DATA.map(function(d){ return d.ram; })
+  const ramVals = getTcoData().map(function(d){ return d.ram; })
     .filter(function(v,i,a){ return a.indexOf(v)===i; })
     .sort(function(a,b){ return a-b; });
   ramSel.innerHTML = '<option value="">Any RAM</option>';
@@ -2225,7 +2227,7 @@ function filterTcoInstances() {
   // Mettre à jour les RAM dispo selon le CPU sélectionné
   if (cpuSel && ramSel && cpu !== null) {
     const prevRam = ramSel.value;
-    const ramVals = AWS_DATA
+    const ramVals = getTcoData()
       .filter(function(d){ return d.vcpu === cpu; })
       .map(function(d){ return d.ram; })
       .filter(function(v,i,a){ return a.indexOf(v)===i; })
@@ -2242,7 +2244,7 @@ function filterTcoInstances() {
 
   const ramFinal = ramSel && ramSel.value ? parseFloat(ramSel.value) : null;
 
-  const filtered = AWS_DATA.filter(function(d){
+  const filtered = getTcoData().filter(function(d){
     if (cpu !== null && d.vcpu !== cpu) return false;
     if (ramFinal !== null && d.ram !== ramFinal) return false;
     return true;
@@ -2282,56 +2284,43 @@ function calcTco() {
   const supportType = 'none';
   const months      = tcoDurYears * 12;
 
-  const awsInst = AWS_DATA.find(function(d){ return d.iname === iname; });
-  if (!awsInst) { alert('Please select an instance'); return; }
+  const isAzure = view === 'azure' || view === 'psql';
+  const inst = getTcoData().find(function(d){ return d.iname === iname; });
+  if (!inst) { alert('Please select an instance'); return; }
 
-  // AWS hourly rate based on commitment
-  let awsRate = awsInst.price;
+  // Hourly rate based on commitment
+  let rate = inst.price;
   let commitLabel = 'On-Demand';
-  if (commit === 'ri1y')     { awsRate = awsInst.price_1yr     || awsInst.price; commitLabel = 'Reserved 1yr'; }
-  if (commit === 'ri1y_all') { awsRate = awsInst.price_1yr_all || awsInst.price_1yr || awsInst.price; commitLabel = 'Reserved 1yr All Up.'; }
-  if (commit === 'ri3y')     { awsRate = awsInst.price_3yr     || awsInst.price; commitLabel = 'Reserved 3yr'; }
-
-  // Find best matching Azure instance (same vCPU, closest RAM)
-  const azCandidates = AZURE_DATA.filter(function(d){ return d.vcpu === awsInst.vcpu; })
-    .sort(function(a,b){ return Math.abs(a.ram - awsInst.ram) - Math.abs(b.ram - awsInst.ram); });
-  const azInst = azCandidates[0] || null;
-  let azRate = azInst ? azInst.price : awsInst.price * 1.1;
-  if (azInst && commit !== 'od') {
-    if (commit === 'ri3y') azRate = azInst.price_3yr || azInst.price;
-    else                   azRate = azInst.price_1yr || azInst.price;
-  }
+  if (commit === 'ri1y')     { rate = inst.price_1yr     || inst.price; commitLabel = 'Reserved 1yr'; }
+  if (commit === 'ri1y_all') { rate = inst.price_1yr_all || inst.price_1yr || inst.price; commitLabel = 'Reserved 1yr All Up.'; }
+  if (commit === 'ri3y')     { rate = inst.price_3yr     || inst.price; commitLabel = 'Reserved 3yr'; }
+  if (commit === 'ri3y_all') { rate = inst.price_3yr_all || inst.price_3yr || inst.price; commitLabel = 'Reserved 3yr All Up.'; }
 
   // Compute cost
-  const awsCompute = awsRate * hpm * nbInst * months;
-  const azCompute  = azRate  * hpm * nbInst * months;
+  const compute = rate * hpm * nbInst * months;
 
-  // Storage — prix réels depuis DISK_REGIONS
+  // Storage
   const diskRegData = DISK_REGIONS[currentRegion] || DISK_REGIONS['eu-west-3'] || {};
   const diskInfo    = diskRegData[diskType] || {};
-  const awsDisk     = diskInfo.price_gb || 0.0928;
-  const azDiskInfo  = AZ_DISK_MAP[diskType] || { price_gb: 0.094 };
-  const azDisk      = azDiskInfo.price_gb;
-  const awsStorage = awsDisk * storageGB * nbInst * months;
-  const azStorage  = azDisk  * storageGB * nbInst * months;
+  const diskPrice   = isAzure ? (AZ_DISK_MAP[diskType] || { price_gb: 0.094 }).price_gb : (diskInfo.price_gb || 0.0928);
+  const storageCost = diskPrice * storageGB * nbInst * months;
 
   // Network egress (EU, $/GB)
-  const awsEgress = Math.min(egressGB, 10240) * 0.09  * months;
-  const azEgress  = Math.min(egressGB, 10240) * 0.087 * months;
+  const egressRate = isAzure ? 0.087 : 0.09;
+  const egressCost = Math.min(egressGB, 10240) * egressRate * months;
 
   // Support
-  const suppPct    = supportType === 'enterprise' ? 0.15 : supportType === 'business' ? 0.10 : 0;
-  const awsSupport = awsCompute * suppPct;
-  const azSupport  = azCompute  * suppPct;
+  const suppPct     = supportType === 'enterprise' ? 0.15 : supportType === 'business' ? 0.10 : 0;
+  const supportCost = compute * suppPct;
 
-  const awsTotal = awsCompute + awsStorage + awsEgress + awsSupport;
-  const azTotal  = azCompute  + azStorage  + azEgress  + azSupport;
+  const total = compute + storageCost + egressCost + supportCost;
 
   renderTcoResults({
-    awsTotal, azTotal, months, awsCompute, azCompute,
-    awsStorage, azStorage, awsEgress, azEgress, awsSupport, azSupport,
-    awsRate, azRate, nbInst, hpm, storageGB, diskType, egressGB,
-    commitLabel, awsInst, azInst, suppPct
+    cloud: isAzure ? 'Azure' : 'AWS',
+    cloudColor: isAzure ? 'var(--azure)' : 'var(--aws)',
+    total, months, compute, storageCost, egressCost, supportCost,
+    rate, nbInst, hpm, storageGB, diskType, egressGB,
+    commitLabel, inst, suppPct
   });
 }
 
@@ -2339,77 +2328,57 @@ function renderTcoResults(r) {
   const el = document.getElementById('tcoResults');
   if (!el) return;
 
-  const durLbl   = tcoDurYears + 'yr';
-  const isBetter = r.awsTotal <= r.azTotal;
-  const savings  = Math.abs(r.azTotal - r.awsTotal);
-  const savPct   = r.azTotal > 0 ? (savings / r.azTotal * 100).toFixed(1) : '0.0';
-  const savLabel = isBetter ? 'AWS saves vs Azure' : 'Azure saves vs AWS';
-  const savColor = isBetter ? 'var(--accent)' : '#00aaff';
+  const durLbl = tcoDurYears + 'yr';
 
-  // Summary cards
+  // Summary card — single cloud
   const sumHtml =
     '<div class="tco-sum-row">' +
-    '<div class="tco-sum-card"><div class="tco-sum-lbl">AWS Total (' + durLbl + ')</div>' +
-      '<div class="tco-sum-val" style="color:var(--aws)">' + tcoFmt(r.awsTotal) + '</div>' +
-      '<div class="tco-sum-sub">' + tcoFmt(r.awsTotal/r.months) + ' / month avg</div>' +
-      '<div class="tco-sum-badge tco-badge-aws">' + r.commitLabel + '</div></div>' +
-    '<div class="tco-sum-card"><div class="tco-sum-lbl">Azure Total (' + durLbl + ')</div>' +
-      '<div class="tco-sum-val" style="color:var(--azure)">' + tcoFmt(r.azTotal) + '</div>' +
-      '<div class="tco-sum-sub">' + tcoFmt(r.azTotal/r.months) + ' / month avg</div>' +
-      '<div class="tco-sum-badge tco-badge-az">' + (r.azInst ? r.azInst.iname : 'Estimated') + '</div></div>' +
-    '<div class="tco-sum-card hl"><div class="tco-sum-lbl">' + savLabel + '</div>' +
-      '<div class="tco-sum-val" style="color:' + savColor + '">' + tcoFmt(savings) + '</div>' +
-      '<div class="tco-sum-sub">over ' + r.months + ' months</div>' +
-      '<div class="tco-sum-badge tco-badge-save">\u2212' + savPct + '%</div></div>' +
+    '<div class="tco-sum-card"><div class="tco-sum-lbl">' + r.cloud + ' Total (' + durLbl + ')</div>' +
+      '<div class="tco-sum-val" style="color:' + r.cloudColor + '">' + tcoFmt(r.total) + '</div>' +
+      '<div class="tco-sum-sub">' + tcoFmt(r.total/r.months) + ' / month avg</div>' +
+      '<div class="tco-sum-badge" style="background:rgba(123,255,224,0.1);border:1px solid var(--accent);color:var(--accent)">' + r.commitLabel + '</div></div>' +
+    '<div class="tco-sum-card"><div class="tco-sum-lbl">Instance</div>' +
+      '<div class="tco-sum-val" style="color:' + r.cloudColor + ';font-size:1.1rem">' + r.inst.iname + '</div>' +
+      '<div class="tco-sum-sub">' + r.inst.vcpu + ' vCPU / ' + (r.inst.ram >= 1024 ? (r.inst.ram/1024).toFixed(0)+' TiB' : r.inst.ram+' GiB') + '</div></div>' +
+    '<div class="tco-sum-card"><div class="tco-sum-lbl">Hourly Rate</div>' +
+      '<div class="tco-sum-val" style="color:' + r.cloudColor + '">$' + r.rate.toFixed(4) + '/h</div>' +
+      '<div class="tco-sum-sub">' + r.nbInst + ' instance' + (r.nbInst>1?'s':'') + ' \u00d7 ' + r.hpm + ' h/mo</div></div>' +
     '</div>';
 
-  // Breakdown rows
+  // Breakdown rows — single cloud
   const bkRows = [
-    { name:'Compute',        sub: r.nbInst + '\u00d7 ' + r.awsInst.iname + ' \u00b7 ' + r.commitLabel, aws: r.awsCompute, az: r.azCompute },
-    { name:'Storage',        sub: r.storageGB + ' GB ' + r.diskType + ' \u00d7 ' + r.nbInst, aws: r.awsStorage, az: r.azStorage },
-    { name:'Network egress', sub: r.egressGB  + ' GB/mo EU', aws: r.awsEgress,   az: r.azEgress   },
-    { name:'Support',        sub: (r.suppPct*100).toFixed(0) + '% of compute',   aws: r.awsSupport, az: r.azSupport  },
-  ].filter(function(row){ return row.aws > 0 || row.az > 0; });
+    { name:'Compute',        sub: r.nbInst + '\u00d7 ' + r.inst.iname + ' \u00b7 ' + r.commitLabel, cost: r.compute },
+    { name:'Storage',        sub: r.storageGB + ' GB ' + r.diskType + ' \u00d7 ' + r.nbInst, cost: r.storageCost },
+    { name:'Network egress', sub: r.egressGB  + ' GB/mo EU', cost: r.egressCost },
+    { name:'Support',        sub: (r.suppPct*100).toFixed(0) + '% of compute', cost: r.supportCost },
+  ].filter(function(row){ return row.cost > 0; });
 
   const bkRowsHtml = bkRows.map(function(row) {
-    const d = row.az - row.aws;
-    const p = row.az > 0 ? (d/row.az*100) : 0;
-    const dStr = d === 0
-      ? '<span style="color:var(--muted);font-family:IBM Plex Mono,monospace;font-size:.7rem">=</span>'
-      : '<span style="color:' + (d>0?'var(--accent)':'#ff5566') + ';font-family:IBM Plex Mono,monospace;font-size:.7rem">'
-          + (d>0?'\u2212':'+') + Math.abs(p).toFixed(1) + '%</span>';
+    const pct = r.total > 0 ? (row.cost/r.total*100).toFixed(1) : '0';
     return '<div class="tco-bk-row"><div><div class="tco-row-name">' + row.name + '</div>'
       + '<div class="tco-row-sub">' + row.sub + '</div></div>'
-      + '<div class="tco-row-aws">' + tcoFmt(row.aws) + '</div>'
-      + '<div class="tco-row-az">'  + tcoFmt(row.az)  + '</div>'
-      + dStr + '</div>';
+      + '<div class="tco-row-aws">' + tcoFmt(row.cost) + '</div>'
+      + '<span style="color:var(--muted);font-family:IBM Plex Mono,monospace;font-size:.7rem">' + pct + '%</span></div>';
   }).join('');
-
-  const totDiff = r.azTotal - r.awsTotal;
-  const totPct  = r.azTotal > 0 ? (totDiff/r.azTotal*100) : 0;
-  const totStr  = '<span style="color:' + (totDiff>0?'var(--accent)':'#ff5566') + ';font-family:IBM Plex Mono,monospace;font-size:.8rem;font-weight:700">'
-    + (totDiff>0?'\u2212':'+') + Math.abs(totPct).toFixed(1) + '%</span>';
 
   const bkHtml =
     '<div class="tco-breakdown">' +
-    '<div class="tco-bk-hdr"><span>Cost category</span><span>AWS (' + durLbl + ')</span><span>Azure (' + durLbl + ')</span><span>Diff</span></div>' +
+    '<div class="tco-bk-hdr"><span>Cost category</span><span>' + r.cloud + ' (' + durLbl + ')</span><span>%</span></div>' +
     bkRowsHtml +
     '<div class="tco-bk-row total"><div><div class="tco-row-name" style="font-size:.88rem">Total ' + r.months + ' months</div></div>' +
-      '<div class="tco-row-aws" style="font-size:.95rem">' + tcoFmt(r.awsTotal) + '</div>' +
-      '<div class="tco-row-az"  style="font-size:.95rem">' + tcoFmt(r.azTotal)  + '</div>' +
-      totStr + '</div>' +
+      '<div class="tco-row-aws" style="font-size:.95rem">' + tcoFmt(r.total) + '</div>' +
+      '<span style="font-family:IBM Plex Mono,monospace;font-size:.8rem;font-weight:700;color:' + r.cloudColor + '">100%</span></div>' +
     '</div>';
 
-  // SVG chart (cumulative cost)
+  // SVG chart (cumulative cost — single cloud)
   var svgW=800,svgH=130,pL=44,pR=10,pT=14,pB=18;
   var cW=svgW-pL-pR, cH=svgH-pT-pB;
-  var maxV=Math.max(r.awsTotal,r.azTotal)*1.08;
+  var maxV=r.total*1.08;
   function tx(m){ return pL + (m/r.months)*cW; }
   function ty(v){ return pT + cH - (v/maxV)*cH; }
-  var awsPts='',azPts='';
+  var pts='';
   for(var m=0;m<=r.months;m++){
-    awsPts += tx(m).toFixed(1)+','+ty(r.awsTotal*m/r.months).toFixed(1)+' ';
-    azPts  += tx(m).toFixed(1)+','+ty(r.azTotal *m/r.months).toFixed(1)+' ';
+    pts += tx(m).toFixed(1)+','+ty(r.total*m/r.months).toFixed(1)+' ';
   }
   var grid='';
   [0.25,0.5,0.75].forEach(function(p){
@@ -2423,12 +2392,12 @@ function renderTcoResults(r) {
     mLabels+='<text x="'+tx(ml).toFixed(1)+'" y="'+(svgH).toFixed(0)+'" fill="#3a3f55" font-size="7" font-family="IBM Plex Mono" text-anchor="middle">M'+ml+'</text>';
   }
   var bLine=pT+cH;
+  var strokeColor = r.cloud === 'Azure' ? '#00aaff' : '#ff9900';
+  var fillColor   = r.cloud === 'Azure' ? 'rgba(0,170,255,0.06)' : 'rgba(255,153,0,0.06)';
   var chartSvg='<svg viewBox="0 0 '+svgW+' '+svgH+'" style="width:100%;height:140px" preserveAspectRatio="none">'
     +grid
-    +'<polygon points="'+azPts+' '+(svgW-pR)+','+bLine+' '+pL+','+bLine+'" fill="rgba(0,170,255,0.05)"/>'
-    +'<polygon points="'+awsPts+' '+(svgW-pR)+','+bLine+' '+pL+','+bLine+'" fill="rgba(255,153,0,0.06)"/>'
-    +'<polyline points="'+azPts+'" fill="none" stroke="#00aaff" stroke-width="1.8" opacity="0.8"/>'
-    +'<polyline points="'+awsPts+'" fill="none" stroke="#ff9900" stroke-width="2.2"/>'
+    +'<polygon points="'+pts+' '+(svgW-pR)+','+bLine+' '+pL+','+bLine+'" fill="'+fillColor+'"/>'
+    +'<polyline points="'+pts+'" fill="none" stroke="'+strokeColor+'" stroke-width="2.2"/>'
     +mLabels
     +'</svg>';
 
@@ -2437,8 +2406,7 @@ function renderTcoResults(r) {
     '<div class="tco-chart-title">Cumulative cost over ' + r.months + ' months</div>' +
     chartSvg +
     '<div class="tco-chart-legend">' +
-      '<div class="tco-legend-item"><div class="tco-legend-dot" style="background:var(--aws)"></div>AWS</div>' +
-      '<div class="tco-legend-item"><div class="tco-legend-dot" style="background:var(--azure)"></div>Azure</div>' +
+      '<div class="tco-legend-item"><div class="tco-legend-dot" style="background:'+strokeColor+'"></div>' + r.cloud + '</div>' +
     '</div></div>';
 
   el.innerHTML = sumHtml + bkHtml + chartHtml;
