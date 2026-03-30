@@ -262,7 +262,7 @@ select.tco-input{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://w
 .tco-row-sub{font-size:.67rem;color:var(--text2);font-family:'IBM Plex Mono',monospace;margin-top:2px}
 .tco-row-aws{font-family:'IBM Plex Mono',monospace;font-size:.85rem;font-weight:700;color:var(--aws)}
 .tco-row-az{font-family:'IBM Plex Mono',monospace;font-size:.85rem;font-weight:700;color:var(--azure)}
-.tco-chart-panel{background:var(--s1);border:1px solid var(--b1);border-radius:10px;padding:20px}
+.tco-chart-panel{background:var(--s1);border:1px solid var(--b1);border-radius:10px;padding:24px 24px 16px}
 .tco-chart-title{font-family:'IBM Plex Mono',monospace;font-size:.65rem;letter-spacing:.18em;text-transform:uppercase;color:var(--accent);margin-bottom:16px;display:flex;align-items:center;gap:7px}
 .tco-chart-title::before{content:'';display:inline-block;width:5px;height:5px;background:var(--accent);border-radius:50%}
 .tco-chart-legend{display:flex;gap:18px;justify-content:flex-end;margin-top:8px}

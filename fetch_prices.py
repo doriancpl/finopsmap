@@ -2315,12 +2315,19 @@ function calcTco() {
 
   const total = compute + storageCost + egressCost + supportCost;
 
+  // On-demand total for comparison (if reserved is selected)
+  let odTotal = null;
+  if (commit !== 'od') {
+    const odCompute = inst.price * hpm * nbInst * months;
+    odTotal = odCompute + storageCost + egressCost + (odCompute * suppPct);
+  }
+
   renderTcoResults({
     cloud: isAzure ? 'Azure' : 'AWS',
     cloudColor: isAzure ? 'var(--azure)' : 'var(--aws)',
     total, months, compute, storageCost, egressCost, supportCost,
     rate, nbInst, hpm, storageGB, diskType, egressGB,
-    commitLabel, inst, suppPct
+    commitLabel, inst, suppPct, odTotal
   });
 }
 
@@ -2370,44 +2377,123 @@ function renderTcoResults(r) {
       '<span style="font-family:IBM Plex Mono,monospace;font-size:.8rem;font-weight:700;color:' + r.cloudColor + '">100%</span></div>' +
     '</div>';
 
-  // SVG chart (cumulative cost — single cloud)
-  var svgW=800,svgH=130,pL=44,pR=10,pT=14,pB=18;
+  // SVG chart (cumulative cost — single cloud, enhanced)
+  var svgW=800,svgH=260,pL=70,pR=20,pT=30,pB=36;
   var cW=svgW-pL-pR, cH=svgH-pT-pB;
-  var maxV=r.total*1.08;
+  var hasOd = r.odTotal && r.odTotal > r.total;
+  var chartMax = hasOd ? r.odTotal : r.total;
+  var maxV=chartMax*1.12;
   function tx(m){ return pL + (m/r.months)*cW; }
   function ty(v){ return pT + cH - (v/maxV)*cH; }
+
+  var strokeColor = r.cloud === 'Azure' ? '#00aaff' : '#ff9900';
+  var odColor     = '#ff4d6a';
+  var gridColor   = '#2a3050';
+  var labelColor  = '#8890a8';
+
+  // Grid lines + Y-axis labels
+  var grid='';
+  var gridSteps = [0, 0.25, 0.5, 0.75, 1.0];
+  gridSteps.forEach(function(p){
+    var y=ty(maxV*p);
+    var dash = p === 0 ? '' : ' stroke-dasharray="4,4"';
+    grid+='<line x1="'+pL+'" y1="'+y.toFixed(1)+'" x2="'+(svgW-pR)+'" y2="'+y.toFixed(1)+'" stroke="'+gridColor+'" stroke-width="0.7"'+dash+'/>';
+    grid+='<text x="'+(pL-8)+'" y="'+(y+4).toFixed(1)+'" fill="'+labelColor+'" font-size="10" font-family="IBM Plex Mono,monospace" text-anchor="end">'+tcoFmt(maxV*p)+'</text>';
+  });
+
+  // Build reserved line points
   var pts='';
   for(var m=0;m<=r.months;m++){
     pts += tx(m).toFixed(1)+','+ty(r.total*m/r.months).toFixed(1)+' ';
   }
-  var grid='';
-  [0.25,0.5,0.75].forEach(function(p){
-    var y=ty(maxV*p);
-    grid+='<line x1="'+pL+'" y1="'+y.toFixed(1)+'" x2="'+(svgW-pR)+'" y2="'+y.toFixed(1)+'" stroke="#2a3050" stroke-width="0.5"/>';
-    grid+='<text x="'+(pL-4)+'" y="'+(y+3).toFixed(1)+'" fill="#3a3f55" font-size="8" font-family="IBM Plex Mono" text-anchor="end">'+tcoFmt(maxV*p)+'</text>';
-  });
-  var mLabels='';
-  var step=Math.max(1,Math.floor(r.months/6));
-  for(var ml=0;ml<=r.months;ml+=step){
-    mLabels+='<text x="'+tx(ml).toFixed(1)+'" y="'+(svgH).toFixed(0)+'" fill="#3a3f55" font-size="7" font-family="IBM Plex Mono" text-anchor="middle">M'+ml+'</text>';
-  }
   var bLine=pT+cH;
-  var strokeColor = r.cloud === 'Azure' ? '#00aaff' : '#ff9900';
-  var fillColor   = r.cloud === 'Azure' ? 'rgba(0,170,255,0.06)' : 'rgba(255,153,0,0.06)';
-  var chartSvg='<svg viewBox="0 0 '+svgW+' '+svgH+'" style="width:100%;height:140px" preserveAspectRatio="none">'
-    +grid
-    +'<polygon points="'+pts+' '+(svgW-pR)+','+bLine+' '+pL+','+bLine+'" fill="'+fillColor+'"/>'
-    +'<polyline points="'+pts+'" fill="none" stroke="'+strokeColor+'" stroke-width="2.2"/>'
-    +mLabels
+
+  // Build on-demand line points (if reserved selected)
+  var odPts='';
+  if(hasOd){
+    for(var mo=0;mo<=r.months;mo++){
+      odPts += tx(mo).toFixed(1)+','+ty(r.odTotal*mo/r.months).toFixed(1)+' ';
+    }
+  }
+
+  // Gradient definitions
+  var ts = Date.now();
+  var gradId = 'tcoGrad_' + ts;
+  var odGradId = 'tcoOdGrad_' + ts;
+  var defs = '<defs><linearGradient id="'+gradId+'" x1="0" y1="0" x2="0" y2="1">'
+    +'<stop offset="0%" stop-color="'+strokeColor+'" stop-opacity="0.25"/>'
+    +'<stop offset="100%" stop-color="'+strokeColor+'" stop-opacity="0.02"/>'
+    +'</linearGradient>';
+  if(hasOd){
+    defs+='<linearGradient id="'+odGradId+'" x1="0" y1="0" x2="0" y2="1">'
+      +'<stop offset="0%" stop-color="'+odColor+'" stop-opacity="0.10"/>'
+      +'<stop offset="100%" stop-color="'+odColor+'" stop-opacity="0.01"/>'
+      +'</linearGradient>';
+  }
+  defs+='</defs>';
+
+  // X-axis month labels
+  var mLabels='';
+  var step=Math.max(1,Math.ceil(r.months/8));
+  for(var ml=0;ml<=r.months;ml+=step){
+    mLabels+='<text x="'+tx(ml).toFixed(1)+'" y="'+(svgH-6)+'" fill="'+labelColor+'" font-size="10" font-family="IBM Plex Mono,monospace" text-anchor="middle">M'+ml+'</text>';
+  }
+
+  // Milestone dots + value labels for reserved line
+  var dots='';
+  var milestones = [0, Math.round(r.months*0.25), Math.round(r.months*0.5), Math.round(r.months*0.75), r.months];
+  milestones = milestones.filter(function(v,i,a){ return a.indexOf(v)===i; });
+  milestones.forEach(function(mm){
+    var cx=tx(mm), cy=ty(r.total*mm/r.months);
+    var val = r.total*mm/r.months;
+    dots+='<circle cx="'+cx.toFixed(1)+'" cy="'+cy.toFixed(1)+'" r="4" fill="'+strokeColor+'" stroke="var(--bg,#060709)" stroke-width="2"/>';
+    var labelY = cy - 12;
+    if(mm === 0) labelY = cy + 16;
+    dots+='<text x="'+cx.toFixed(1)+'" y="'+labelY.toFixed(1)+'" fill="'+strokeColor+'" font-size="11" font-weight="700" font-family="IBM Plex Mono,monospace" text-anchor="middle">'+tcoFmt(val)+'</text>';
+  });
+
+  // On-demand dots + labels (only start and end to avoid clutter)
+  var odDots='';
+  if(hasOd){
+    [r.months].forEach(function(mm){
+      var cx=tx(mm), cy=ty(r.odTotal*mm/r.months);
+      var val = r.odTotal*mm/r.months;
+      odDots+='<circle cx="'+cx.toFixed(1)+'" cy="'+cy.toFixed(1)+'" r="4" fill="'+odColor+'" stroke="var(--bg,#060709)" stroke-width="2"/>';
+      odDots+='<text x="'+cx.toFixed(1)+'" y="'+(cy-12).toFixed(1)+'" fill="'+odColor+'" font-size="11" font-weight="700" font-family="IBM Plex Mono,monospace" text-anchor="middle">'+tcoFmt(val)+'</text>';
+    });
+    // Savings annotation at end
+    var savPct = ((r.odTotal - r.total) / r.odTotal * 100).toFixed(0);
+    var savAmt = tcoFmt(r.odTotal - r.total);
+    var midY = (ty(r.total) + ty(r.odTotal)) / 2;
+    odDots+='<text x="'+(svgW-pR-5)+'" y="'+midY.toFixed(1)+'" fill="var(--accent,#7bffe0)" font-size="11" font-weight="700" font-family="IBM Plex Mono,monospace" text-anchor="end">▼ '+savPct+'% ('+savAmt+')</text>';
+  }
+
+  // Build SVG
+  var chartSvg='<svg viewBox="0 0 '+svgW+' '+svgH+'" style="width:100%;height:auto;max-height:280px" preserveAspectRatio="xMidYMid meet">'
+    +defs+grid;
+  // On-demand area + line (behind reserved)
+  if(hasOd){
+    chartSvg+='<polygon points="'+odPts+' '+(svgW-pR)+','+bLine+' '+pL+','+bLine+'" fill="url(#'+odGradId+')"/>';
+    chartSvg+='<polyline points="'+odPts+'" fill="none" stroke="'+odColor+'" stroke-width="1.8" stroke-dasharray="6,4" stroke-linejoin="round" opacity="0.8"/>';
+    chartSvg+=odDots;
+  }
+  // Reserved area + line (on top)
+  chartSvg+='<polygon points="'+pts+' '+(svgW-pR)+','+bLine+' '+pL+','+bLine+'" fill="url(#'+gradId+')"/>'
+    +'<polyline points="'+pts+'" fill="none" stroke="'+strokeColor+'" stroke-width="2.5" stroke-linejoin="round"/>'
+    +dots+mLabels
     +'</svg>';
+
+  // Legend
+  var legendHtml = '<div class="tco-legend-item"><div class="tco-legend-dot" style="background:'+strokeColor+'"></div>' + r.commitLabel + '</div>';
+  if(hasOd){
+    legendHtml += '<div class="tco-legend-item"><div class="tco-legend-dot" style="background:'+odColor+';opacity:0.8"></div>On-Demand</div>';
+  }
 
   const chartHtml =
     '<div class="tco-chart-panel">' +
     '<div class="tco-chart-title">Cumulative cost over ' + r.months + ' months</div>' +
     chartSvg +
-    '<div class="tco-chart-legend">' +
-      '<div class="tco-legend-item"><div class="tco-legend-dot" style="background:'+strokeColor+'"></div>' + r.cloud + '</div>' +
-    '</div></div>';
+    '<div class="tco-chart-legend">' + legendHtml + '</div></div>';
 
   el.innerHTML = sumHtml + bkHtml + chartHtml;
 }
