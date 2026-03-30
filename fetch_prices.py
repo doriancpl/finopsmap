@@ -531,8 +531,9 @@ def fetch_aws(region="eu-west-3"):
         vcpu    = int(attr.get("vcpu", 0) or 0)
         ram     = float((attr.get("memory") or "0").split()[0].replace(",","") or 0)
         fam     = get_family_aws(itype)
-        storage = attr.get("storage", "")
-        entry   = {"name": itype, "price": price, "vcpu": vcpu, "ram": ram, "fam": fam, "storage": storage}
+        storage   = attr.get("storage", "")
+        processor = attr.get("physicalProcessor", "")
+        entry     = {"name": itype, "price": price, "vcpu": vcpu, "ram": ram, "fam": fam, "storage": storage, "processor": processor}
         if price_1yr_no:  entry["price_1yr"]     = price_1yr_no
         if price_3yr_no:  entry["price_3yr"]     = price_3yr_no
         if price_1yr_all: entry["price_1yr_all"] = price_1yr_all
@@ -686,7 +687,7 @@ HTML_TEMPLATE = """
 </head>
 <body>
 <div id="topbar">
-  <div style="display:flex;align-items:center;gap:40px;flex-shrink:0">
+  <div id="topbarLeftGroup" style="display:flex;align-items:center;flex:1;min-width:0">
     <div id="topbarLogo" style="display:flex;align-items:center;flex-shrink:0;cursor:pointer" onclick="
       if(heatmapActive){setHeatmap();}
       if(veilleActive){setVeille();}
@@ -738,11 +739,11 @@ HTML_TEMPLATE = """
       </div>
     </div>
   </div>
-  <div style="position:absolute;right:20px;top:50%;transform:translateY(-50%);display:flex;gap:14px;align-items:center">
+  <div id="topbarActions" style="display:flex;gap:14px;align-items:center;flex:1;justify-content:flex-end">
     <button id="backBtn" onclick="goBack()" style="display:none;align-items:center;gap:6px;padding:6px 12px;background:transparent;border:1px solid #2a3050;border-radius:6px;color:#c8d0e8;font-family:'IBM Plex Mono',monospace;font-size:.72rem;cursor:pointer;transition:all .15s" onmouseenter="this.style.borderColor='#ff5566';this.style.color='#ff5566'" onmouseleave="this.style.borderColor='#2a3050';this.style.color='#c8d0e8'">&#x2190; Back</button>
-    <button class="veille-btn" id="heatmapBtn" onclick="setHeatmap()"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:5px;position:relative;top:-1px"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>Heatmap regions</button>
-    <button class="veille-btn" id="tcoBtn" onclick="setTco()"><span style="position:relative;top:-1px;margin-right:5px">∑</span>TCO</button>
-    <button class="veille-btn" id="veilleBtn" onclick="setVeille()"><span style="position:relative;top:-1px">&#x25C8;</span> Blog FinOps</button>
+    <button class="veille-btn" id="heatmapBtn" onclick="setHeatmap()"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:5px;position:relative;top:-1px"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg><span class="tb-label">Heatmap regions</span></button>
+    <button class="veille-btn" id="tcoBtn" onclick="setTco()"><span style="position:relative;top:-1px;margin-right:5px">∑</span><span class="tb-label">TCO</span></button>
+    <button class="veille-btn" id="veilleBtn" onclick="setVeille()"><span style="position:relative;top:-1px">&#x25C8;</span><span class="tb-label"> Blog FinOps</span></button>
   </div>
 </div>
 
@@ -818,6 +819,7 @@ HTML_TEMPLATE = """
       <label class="col-pick-row" style="padding-bottom:6px;margin-bottom:2px"><input type="checkbox" id="colSelectAll" checked onchange="toggleAllCols(this.checked)"> All columns</label>
       <label class="col-pick-row" style="border-bottom:1px solid var(--b1);padding-bottom:8px;margin-bottom:4px;cursor:pointer" onclick="setDefaultCols();return false;">&#x229E; Default columns</label>
       <label class="col-pick-row"><input type="checkbox" id="cb-fam" checked onchange="toggleCol('fam',this.checked)"> Family</label>
+      <label class="col-pick-row" id="cb-proc-row"><input type="checkbox" id="cb-proc" checked onchange="toggleCol('proc',this.checked)"> Processor</label>
       <label class="col-pick-row"><input type="checkbox" id="cb-vcpu" checked onchange="toggleCol('vcpu',this.checked)"> vCPU</label>
       <label class="col-pick-row"><input type="checkbox" id="cb-ram" checked onchange="toggleCol('ram',this.checked)"> RAM</label>
       <label class="col-pick-row"><input type="checkbox" id="cb-pvcpu" checked onchange="toggleCol('pvcpu',this.checked)"> Cost/vCPU</label>
@@ -847,6 +849,7 @@ HTML_TEMPLATE = """
       <th id="thCmp" style="width:28px;background:var(--s1);border-bottom:1px solid var(--b1);display:none"></th>
       <th class="col-iname" onclick="qs(&apos;iname&apos;)"><div style="display:flex;align-items:center;justify-content:space-between">NAME <span class="sort-ico" id="si-iname">&#x2195;</span></div></th>
       <th class="col-fam" onclick="qs(&apos;fam&apos;)"><div style="display:flex;align-items:center;justify-content:space-between"><span id="famHeader">FAMILY</span> <span class="sort-ico" id="si-fam">&#x2195;</span></div></th>
+      <th class="col-proc" onclick="qs(&apos;proc&apos;)"><div style="display:flex;align-items:center;justify-content:space-between">PROCESSOR <span class="sort-ico" id="si-proc">&#x2195;</span></div></th>
       <th class="col-vcpu" onclick="qs(&apos;vcpu&apos;)"><div style="display:flex;align-items:center;justify-content:space-between">VCPU <span class="sort-ico" id="si-vcpu">&#x2195;</span></div></th>
       <th class="col-ram" onclick="qs(&apos;ram&apos;)"><div style="display:flex;align-items:center;justify-content:space-between">RAM <span class="sort-ico" id="si-ram">&#x2195;</span></div></th>
       <th class="col-storage ec2-only" onclick="qs(&apos;storage&apos;)"><div style="display:flex;align-items:center;justify-content:space-between">STORAGE <span class="sort-ico" id="si-storage">&#x2195;</span></div></th>
@@ -862,6 +865,7 @@ HTML_TEMPLATE = """
       <th id="thCmpFilter" style="background:var(--s2);border-bottom:1px solid var(--b1);display:none"></th>
       <th class="col-iname"><input class="col-filter" oninput="render()" id="f-iname" placeholder="ex: m6i..."></th>
       <th class="col-fam"><input class="col-filter" oninput="render()" id="f-fam"   placeholder="ex: general..."></th>
+      <th class="col-proc"><input class="col-filter" oninput="render()" id="f-proc"  placeholder="ex: Graviton"></th>
       <th class="col-vcpu"><input class="col-filter" oninput="render()" id="f-vcpu"  placeholder="ex: 4"></th>
       <th class="col-ram"><input class="col-filter" oninput="render()" id="f-ram"   placeholder="ex: 32"></th>
       <th class="col-storage ec2-only"><input class="col-filter" oninput="render()" id="f-storage" placeholder="ex: NVMe"></th>
@@ -1142,6 +1146,10 @@ const AZURE_REGION_OPTIONS = [
 function adaptRegionWidth(sel) {
   const ruler = document.getElementById('regionRuler');
   if (!ruler || !sel) return;
+  if (window.matchMedia('(max-width:1300px)').matches) {
+    sel.style.width = '';
+    return;
+  }
   ruler.textContent = sel.options[sel.selectedIndex].text;
   sel.style.width = (ruler.offsetWidth + 48) + 'px';
 }
@@ -1246,6 +1254,8 @@ function setView(v) {
     }
   }
   if(fam !== 'all' || currentFam !== 'all'){ fam='all'; currentFam='all'; const fs=document.getElementById('famSelect'); if(fs) fs.value='all'; }
+  const cbProcRow = document.getElementById('cb-proc-row');
+  if (cbProcRow) cbProcRow.style.display = (v === 'aws' || v === 'rds') ? '' : 'none';
   const cbStorageRow = document.getElementById('cb-storage-row');
   if (cbStorageRow) cbStorageRow.style.display = v === 'aws' ? '' : 'none';
   const cbSpotRow = document.getElementById('cb-spot-row');
@@ -1288,6 +1298,7 @@ function getFiltered() {
   const fPrice = getColVal('f-price');
   const fMonth   = getColVal('f-month');
   const fSavings = getColVal('f-savings');
+  const fProc    = getColVal('f-proc');
   const fStorage = getColVal('f-storage');
   const fSpot    = getColVal('f-spot');
   const fSpotsav = getColVal('f-spotsav');
@@ -1302,6 +1313,7 @@ function getFiltered() {
     (!q      || d.iname.toLowerCase().includes(q)) &&
     (!fIname || d.iname.toLowerCase().includes(fIname)) &&
     (!fFam   || d.fam.toLowerCase().includes(fFam) || (FL[d.fam]||'').toLowerCase().includes(fFam)) &&
+    (!fProc  || (d.processor||'').toLowerCase().includes(fProc)) &&
     (!fVcpu  || matchNum(d.vcpu, fVcpu)) &&
     (!fRam   || matchNum(d.ram,  fRam)) &&
     (!fPvcpu || matchNum(d.vcpu > 0 ? d.price/d.vcpu : 0, fPvcpu)) &&
@@ -1333,6 +1345,8 @@ function getSorted(arr) {
     if (s === 'iname-desc') return b.iname.localeCompare(a.iname);
     if (s === 'fam-asc')    return (view==='psql'?(a.engine||a.fam):(a.fam)).localeCompare(view==='psql'?(b.engine||b.fam):(b.fam));
     if (s === 'fam-desc')   return (view==='psql'?(b.engine||b.fam):(b.fam)).localeCompare(view==='psql'?(a.engine||a.fam):(a.fam));
+    if (s === 'proc-asc')   return (a.processor||'').localeCompare(b.processor||'');
+    if (s === 'proc-desc')  return (b.processor||'').localeCompare(a.processor||'');
     if (s === 'pvcpu-asc')  return (a.vcpu > 0 ? a.price/a.vcpu : 0) - (b.vcpu > 0 ? b.price/b.vcpu : 0);
     if (s === 'pvcpu-desc') return (b.vcpu > 0 ? b.price/b.vcpu : 0) - (a.vcpu > 0 ? a.price/a.vcpu : 0);
     if (s === 'score-desc') return (b.score||0) - (a.score||0);
@@ -1716,6 +1730,7 @@ function render() {
       return '<tr class="' + (isSel?(view==='azure'||view==='psql'?'row-sel-azure':'row-sel-aws'):'') + '" data-iname="' + d.iname + '" data-fam="' + (d.fam||'') + '" style="animation-delay:' + Math.min(i*0.01,0.3) + 's;cursor:pointer" onclick="toggleRow(&apos;' + d.iname + '&apos;,&apos;' + (d.fam||'') + '&apos;)">' + chkTd
         + '<td class="col-iname"><span class="iname iname-clickable '+cls+'" onclick="event.stopPropagation();openSeriesModal(&apos;'+d.iname+'&apos;,&apos;'+(d.fam||'')+'&apos;)">'+d.iname+'</span>'
         + '<td class="col-fam"><span class="fam-badge '+(FC[d.fam]||'fam-other')+'">'+((view==='psql')?(d.engine||d.fam):(view==='rds'?FL_RDS:FL)[d.fam]||d.fam)+'</span></td>'
+        + '<td class="col-proc"><span class="tag">'+(d.processor||'—')+'</span></td>'
         + '<td class="col-vcpu"><span class="tag">'+d.vcpu+'</span></td>'
         + '<td class="col-ram"><span class="tag">'+ramFmt(d.ram)+'</span></td>'
         + '<td class="col-storage ec2-only"><span class="tag">'+(d.storage||'—')+'</span></td>'
@@ -1837,8 +1852,8 @@ document.addEventListener('click', function(e) {
   const wrap = document.getElementById('colPickerWrap');
   if (wrap && !wrap.contains(e.target)) document.getElementById('colPicker').style.display = 'none';
 });
-const COL_KEYS = ['fam','vcpu','ram','pvcpu','price','month','savings','storage','spot','spotsav','score'];
-const DEFAULT_HIDDEN_COLS = ['storage','spot','spotsav'];
+const COL_KEYS = ['fam','proc','vcpu','ram','pvcpu','price','month','savings','storage','spot','spotsav','score'];
+const DEFAULT_HIDDEN_COLS = ['proc','storage','spot','spotsav'];
 function setDefaultCols() {
   const tbl = document.getElementById('mainTable');
   COL_KEYS.forEach(col => {
@@ -1917,7 +1932,7 @@ function resetFiltres() {
   fam = 'all'; currentFam = 'all';
   const famSelR = document.getElementById('famSelect'); if(famSelR) famSelR.value = 'all';
   // Reset filtres colonnes
-  ['f-iname','f-fam','f-vcpu','f-ram','f-price','f-month','f-savings','f-pvcpu','f-score'].forEach(id => {
+  ['f-iname','f-fam','f-proc','f-vcpu','f-ram','f-price','f-month','f-savings','f-pvcpu','f-score'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.value = '';
   });
@@ -2003,6 +2018,7 @@ function qs(col) {
     score: cur === 'score-desc' ? 'score-asc'  : 'score-desc',
     iname: cur === 'iname-asc' ? 'iname-desc' : 'iname-asc',
     fam:   cur === 'fam-asc'   ? 'fam-desc'   : 'fam-asc',
+    proc:  cur === 'proc-asc'  ? 'proc-desc'  : 'proc-asc',
     vcpu:  cur === 'vcpu-asc'  ? 'vcpu-desc'  : 'vcpu-asc',
     ram:   cur === 'ram-asc'   ? 'ram-desc'   : 'ram-asc',
     price: cur === 'price-asc' ? 'price-desc' : 'price-asc',
@@ -2014,8 +2030,8 @@ function qs(col) {
     spotsav: cur === 'spotsav-desc' ? 'spotsav-asc' : 'spotsav-desc',
   };
   if (next[col]) sortVal = next[col];
-  const colMap = {iname:'iname',fam:'fam',vcpu:'vcpu',ram:'ram',pvcpu:'pvcpu',price:'price',month:'month',savings:'savings',storage:'storage',spot:'spot',spotsav:'spotsav',score:'score'};
-  ['iname','fam','vcpu','ram','pvcpu','price','month','savings','storage','spot','spotsav','score'].forEach(k => {
+  const colMap = {iname:'iname',fam:'fam',proc:'proc',vcpu:'vcpu',ram:'ram',pvcpu:'pvcpu',price:'price',month:'month',savings:'savings',storage:'storage',spot:'spot',spotsav:'spotsav',score:'score'};
+  ['iname','fam','proc','vcpu','ram','pvcpu','price','month','savings','storage','spot','spotsav','score'].forEach(k => {
     const el = document.getElementById('si-'+k);
     if (!el) return;
     const active = sortVal.startsWith(colMap[k]);
@@ -3534,8 +3550,9 @@ def fetch_rds(region="eu-west-3"):
         except: continue
         fam   = get_family_rds(engine)
         key   = itype + "||" + deploy + "||" + fam  # normaliser sur fam, pas engine brut
-        entry = {"name": itype, "price": price, "vcpu": vcpu, "ram": ram,
-                 "fam": fam, "engine": engine, "deploy": deploy}
+        processor = attr.get("physicalProcessor", "")
+        entry     = {"name": itype, "price": price, "vcpu": vcpu, "ram": ram,
+                 "fam": fam, "engine": engine, "deploy": deploy, "processor": processor}
         if price_1yr_no:  entry["price_1yr"]     = price_1yr_no
         if price_3yr_no:  entry["price_3yr"]     = price_3yr_no
         if price_1yr_all: entry["price_1yr_all"] = price_1yr_all
@@ -3568,13 +3585,13 @@ def generate_html(aws_data, azure_data, rds_data, fetch_date, psql_data=None, aw
         d = {}
         if v.get("spot"): d["spot"] = v["spot"]
         return d
-    aws_list   = [{"iname": v["name"], "price": v["price"], "vcpu": v["vcpu"], "ram": v["ram"], "fam": v["fam"], "storage": v.get("storage",""), **ri3(v), **spot3(v)} for v in sorted(aws_data.values(),   key=lambda x: x["price"])]
+    aws_list   = [{"iname": v["name"], "price": v["price"], "vcpu": v["vcpu"], "ram": v["ram"], "fam": v["fam"], "storage": v.get("storage",""), "processor": v.get("processor",""), **ri3(v), **spot3(v)} for v in sorted(aws_data.values(),   key=lambda x: x["price"])]
     azure_list = [{"iname": v["name"], "price": v["price"], "vcpu": v["vcpu"], "ram": v["ram"], "fam": v["fam"], **ri3(v)} for v in sorted(azure_data.values(), key=lambda x: x["price"])]
-    rds_list   = [{"iname": v["name"], "price": v["price"], "vcpu": v["vcpu"], "ram": v["ram"], "fam": v["fam"], "engine": v.get("engine",""), "deploy": v.get("deploy",""), **ri3(v)} for v in sorted(rds_data.values(), key=lambda x: x["price"])]
+    rds_list   = [{"iname": v["name"], "price": v["price"], "vcpu": v["vcpu"], "ram": v["ram"], "fam": v["fam"], "engine": v.get("engine",""), "deploy": v.get("deploy",""), "processor": v.get("processor",""), **ri3(v)} for v in sorted(rds_data.values(), key=lambda x: x["price"])]
     psql_data  = psql_data or {}
     psql_list  = [{"iname": v["name"], "price": v["price"], "vcpu": v["vcpu"], "ram": v["ram"], "fam": v["fam"], "engine": v.get("engine",""), "sku": v.get("sku",""), **ri3(v)} for v in sorted(psql_data.values(), key=lambda x: x["price"])]
 
-    def to_list(d):     return [{"iname": v["name"], "price": v["price"], "vcpu": v["vcpu"], "ram": v["ram"], "fam": v["fam"], "storage": v.get("storage",""), **ri3(v), **spot3(v)} for v in sorted(d.values(), key=lambda x: x["price"])]
+    def to_list(d):     return [{"iname": v["name"], "price": v["price"], "vcpu": v["vcpu"], "ram": v["ram"], "fam": v["fam"], "storage": v.get("storage",""), "processor": v.get("processor",""), **ri3(v), **spot3(v)} for v in sorted(d.values(), key=lambda x: x["price"])]
     def to_list_bdd(d): return [{"iname": v["name"], "price": v["price"], "vcpu": v["vcpu"], "ram": v["ram"], "fam": v["fam"], "engine": v.get("engine",""), "sku": v.get("sku",""), **ri3(v)} for v in sorted(d.values(), key=lambda x: x["price"])]
 
     aws_regions_data   = aws_regions_data   or {}

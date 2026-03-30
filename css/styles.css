@@ -2,9 +2,9 @@
 input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
 input[type=number]{-moz-appearance:textfield}
 *{margin:0;padding:0;box-sizing:border-box}html{scroll-behavior:smooth}
-body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;min-width:900px;display:flex;flex-direction:column}
+body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column;padding-top:64px;padding-bottom:54px}
 body::after{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;background-image:radial-gradient(circle,rgba(123,255,224,0.05) 1px,transparent 1px);background-size:32px 32px}
-#topbar{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:0 36px;height:64px;background:linear-gradient(135deg,#0a1520 0%,#0d111a 40%,#0d111a 60%,#0a1520 100%);border-bottom:1px solid #1e3050;flex-wrap:wrap}
+#topbar{position:fixed;top:0;left:0;width:100vw;z-index:100;display:flex;align-items:center;padding:0 36px;height:64px;background:linear-gradient(135deg,#0a1520 0%,#0d111a 40%,#0d111a 60%,#0a1520 100%);border-bottom:1px solid #1e3050;flex-wrap:nowrap;overflow:hidden}
 
 .chip{padding:5px 12px;background:var(--accent-d);border:1px solid var(--accent);border-radius:100px;font-family:'IBM Plex Mono',monospace;font-size:.62rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
 .veille-btn{font-family:'IBM Plex Mono',monospace;font-size:.72rem;color:#e8ecf4;padding:5px 14px;border-radius:6px;letter-spacing:.04em;cursor:pointer;background-color:rgba(16,19,26,0.15);border:1px solid #3a4468;outline:none;transition:border-color .15s, color .15s, background-color .15s;white-space:nowrap}
@@ -56,9 +56,10 @@ body::after{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;back
 .veille-row:hover .veille-row-title{color:#e8ecf4;text-decoration:underline;text-underline-offset:3px;text-decoration-color:rgba(200,208,232,0.3)}
 .veille-row:hover .veille-row-title::after{opacity:1}
 .veille-row-date{font-family:'IBM Plex Mono',monospace;font-size:.72rem;color:#c8d0e8;white-space:nowrap}
-.nav-outer{position:absolute;left:50%;transform:translateX(-50%);display:inline-flex;align-items:center;gap:24px;transition:opacity .25s ease}
-#topbarLeft{transition:opacity .25s ease}
+.nav-outer{flex-shrink:0;display:inline-flex;align-items:center;gap:24px;transition:opacity .25s ease}
+#topbarLeft{transition:opacity .25s ease;min-width:0}
 #topbarLogo{flex-shrink:0;z-index:1}
+#topbarLeftGroup{gap:20px;overflow:hidden}
 .nav-inline{display:inline-flex;align-items:center;gap:6px}
 .nav-cloud-label{font-family:'IBM Plex Mono',monospace;font-size:.68rem;letter-spacing:.2em;text-transform:uppercase;pointer-events:none;user-select:none}
 .nav-cloud-label.aws{color:var(--aws)}.nav-cloud-label.az{color:var(--azure)}
@@ -157,11 +158,14 @@ tbody tr:last-child td{border-bottom:none}
 .cmp-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-top:14px}
 .cmp-card{background:var(--bg);border:1px solid var(--b1);border-radius:6px;padding:14px}
 .cmp-card.best{border-color:var(--accent)}
-footer{position:sticky;bottom:0;z-index:100;margin-top:auto;padding:16px 36px;border-top:1px solid rgba(255,255,255,0.06);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;background:rgba(13,17,26,0.96);backdrop-filter:blur(16px)}
+footer{position:fixed;bottom:0;left:0;width:100vw;z-index:100;padding:16px 36px;border-top:1px solid rgba(255,255,255,0.06);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;background:rgba(13,17,26,0.96);backdrop-filter:blur(16px)}
 .fn{font-size:.8rem;color:var(--text2)}.fn a{color:var(--text2);text-decoration:none}.fn a:hover{color:var(--accent)}.fts{font-family:'IBM Plex Mono',monospace;font-size:.75rem;color:var(--text2)}
+@media(max-width:1300px){.tb-label{display:none}.veille-btn{padding:5px 10px}#topbarActions{gap:8px}#regionSelect{max-width:62px !important}}
+@media(max-width:920px){.nav-cloud-label{display:none}.nav-outer{gap:12px}.nav-btn{padding:8px 10px;font-size:.75rem}#topbar{padding:0 16px}#topbarActions{gap:6px}#topbarLeftGroup{gap:8px}#topbarLogo svg{width:140px;height:26px}}
+@media(max-width:720px){#topbarLogo svg{width:110px;height:20px}.nav-btn{padding:6px 8px;font-size:.7rem}.nav-outer{gap:6px}#regionSelect{max-width:70px}#topbarLeftGroup{gap:6px}}
 @media(max-width:640px){#topbar,#hero,#filters,#tblwrap,footer{padding-left:16px;padding-right:16px}#statsrow{margin-left:16px;margin-right:16px}h1{font-size:1.6rem}}
-#mainTable.hide-fam .col-fam,#mainTable.hide-vcpu .col-vcpu,#mainTable.hide-ram .col-ram,#mainTable.hide-pvcpu .col-pvcpu,#mainTable.hide-price .col-price,#mainTable.hide-month .col-month,#mainTable.hide-savings .col-savings,#mainTable.hide-storage .col-storage,#mainTable.hide-spot .col-spot,#mainTable.hide-spotsav .col-spotsav,#mainTable.hide-score .col-score{display:none}
-.view-rds .col-storage,.view-azure .col-storage,.view-psql .col-storage,.view-rds .col-spot,.view-azure .col-spot,.view-psql .col-spot,.view-rds .col-spotsav,.view-azure .col-spotsav,.view-psql .col-spotsav{display:none}
+#mainTable.hide-fam .col-fam,#mainTable.hide-proc .col-proc,#mainTable.hide-vcpu .col-vcpu,#mainTable.hide-ram .col-ram,#mainTable.hide-pvcpu .col-pvcpu,#mainTable.hide-price .col-price,#mainTable.hide-month .col-month,#mainTable.hide-savings .col-savings,#mainTable.hide-storage .col-storage,#mainTable.hide-spot .col-spot,#mainTable.hide-spotsav .col-spotsav,#mainTable.hide-score .col-score{display:none}
+.view-azure .col-proc,.view-psql .col-proc,.view-rds .col-storage,.view-azure .col-storage,.view-psql .col-storage,.view-rds .col-spot,.view-azure .col-spot,.view-psql .col-spot,.view-rds .col-spotsav,.view-azure .col-spotsav,.view-psql .col-spotsav{display:none}
 .col-pick-row{display:flex;align-items:center;gap:8px;padding:5px 0;font-family:'Syne',sans-serif;font-size:.82rem;color:#c8d0e8;cursor:pointer;white-space:nowrap}
 .col-pick-row:hover{color:var(--accent)}
 .col-pick-row input[type=checkbox]{accent-color:var(--accent);width:13px;height:13px;cursor:pointer}
