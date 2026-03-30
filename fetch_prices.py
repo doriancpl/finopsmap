@@ -1145,12 +1145,20 @@ const AZURE_REGION_OPTIONS = [
 
 function adjustLayout() {
   const filters = document.getElementById('filters');
-  if (!filters || window.getComputedStyle(filters).display === 'none') return;
-  const total = 64 + filters.offsetHeight;
+  const filtersH = (filters && window.getComputedStyle(filters).display !== 'none') ? filters.offsetHeight : 0;
+  const total = 64 + filtersH;
   document.body.style.paddingTop = total + 'px';
   document.documentElement.style.setProperty('--topbar-total', total + 'px');
 }
 window.addEventListener('resize', adjustLayout);
+(function(){
+  function fixHeroScroll() {
+    const hero = document.getElementById('hero');
+    if (hero) hero.style.transform = 'translateX(' + window.scrollX + 'px)';
+  }
+  window.addEventListener('scroll', fixHeroScroll, {passive: true});
+  window.addEventListener('resize', fixHeroScroll, {passive: true});
+}());
 
 function adaptRegionWidth(sel) {
   const ruler = document.getElementById('regionRuler');
