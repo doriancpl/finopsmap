@@ -3,7 +3,7 @@ input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-
 input[type=number]{-moz-appearance:textfield}
 *{margin:0;padding:0;box-sizing:border-box}html{scroll-behavior:smooth;overflow:hidden;height:100%}
 body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--text);height:100%;margin:0;padding:0;overflow:hidden}
-main{overflow:auto;height:calc(100% - 64px);margin-top:64px;padding-bottom:54px}
+main{overflow:auto;height:calc(100% - 64px - 54px);margin-top:64px}
 body::after{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;background-image:radial-gradient(circle,rgba(123,255,224,0.05) 1px,transparent 1px);background-size:32px 32px}
 #topbar{position:fixed;top:0;left:0;width:100vw;z-index:100;display:flex;align-items:center;padding:0 36px;height:64px;background:linear-gradient(135deg,#0a1520 0%,#0d111a 40%,#0d111a 60%,#0a1520 100%);border-bottom:1px solid #1e3050;flex-wrap:nowrap;overflow:hidden}
 

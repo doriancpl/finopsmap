@@ -747,6 +747,7 @@ HTML_TEMPLATE = """
   </div>
 </div>
 
+<main>
 <section id="hero">
   <div class="eyebrow" id="heroEyebrow"></div>
   <h1 id="heroTitle"></h1>
@@ -1052,6 +1053,7 @@ HTML_TEMPLATE = """
   </div>
   <div class="v-grid" id="veilleGrid"></div>
 </div>
+</main>
 <footer>
   <span style="font-size:.8rem;color:var(--text)">
     Sources : <a href="https://prices.azure.com/api/retail/prices" target="_blank" style="color:var(--text);text-decoration:none">Azure Retail Prices API</a> &mdash;
@@ -1144,21 +1146,11 @@ const AZURE_REGION_OPTIONS = [
 ];
 
 function adjustLayout() {
-  const filters = document.getElementById('filters');
-  const filtersH = (filters && window.getComputedStyle(filters).display !== 'none') ? filters.offsetHeight : 0;
-  const total = 64 + filtersH;
-  document.body.style.paddingTop = total + 'px';
-  document.documentElement.style.setProperty('--topbar-total', total + 'px');
+  var filters = document.getElementById('filters');
+  var filtersH = filters ? filters.getBoundingClientRect().height : 0;
+  document.documentElement.style.setProperty('--filters-h', filtersH + 'px');
 }
 window.addEventListener('resize', adjustLayout);
-(function(){
-  function fixHeroScroll() {
-    const hero = document.getElementById('hero');
-    if (hero) hero.style.transform = 'translateX(' + window.scrollX + 'px)';
-  }
-  window.addEventListener('scroll', fixHeroScroll, {passive: true});
-  window.addEventListener('resize', fixHeroScroll, {passive: true});
-}());
 
 function adaptRegionWidth(sel) {
   const ruler = document.getElementById('regionRuler');
@@ -3436,13 +3428,10 @@ console.log('%c[CloudPrice] Run checkRefInstances() to verify reference instance
       const filterRow  = document.getElementById('filterRow');
       const filtersBar = document.getElementById('filters');
       if (!sortRow || !filterRow) return;
-      const topbarH  = 64;
       const filtersH = filtersBar ? filtersBar.getBoundingClientRect().height : 0;
-      const sortTop  = topbarH + filtersH;
       const sortH    = sortRow.getBoundingClientRect().height;
-      const filterTop = sortTop + sortH;
-      sortRow.querySelectorAll('th').forEach(th => th.style.top = sortTop + 'px');
-      filterRow.querySelectorAll('th').forEach(th => th.style.top = filterTop + 'px');
+      sortRow.querySelectorAll('th').forEach(th => th.style.top = filtersH + 'px');
+      filterRow.querySelectorAll('th').forEach(th => th.style.top = (filtersH + sortH) + 'px');
     }
     fixStickyRows();
     window.addEventListener('resize', fixStickyRows);
