@@ -483,16 +483,24 @@ const AZURE_REGION_OPTIONS = [
 
 function adjustLayout() {
   const topbarH  = 64;
-  const hero    = document.getElementById('hero');
   const filters = document.getElementById('filters');
-  const heroH   = hero    ? hero.getBoundingClientRect().height    : 0;
-  if (filters) filters.style.top = (topbarH + heroH) + 'px';
   const filtersH = filters ? filters.getBoundingClientRect().height : 0;
-  const total = topbarH + heroH + filtersH;
-  document.body.style.paddingTop = total + 'px';
-  document.documentElement.style.setProperty('--topbar-total', total + 'px');
+  document.body.style.paddingTop = topbarH + 'px';
+  document.documentElement.style.setProperty('--topbar-total', (topbarH + filtersH) + 'px');
 }
 window.addEventListener('resize', adjustLayout);
+
+(function(){
+  function fixHeroScroll() {
+    const x = 'translateX(' + window.scrollX + 'px)';
+    const hero = document.getElementById('hero');
+    const filters = document.getElementById('filters');
+    if (hero) hero.style.transform = x;
+    if (filters) filters.style.transform = x;
+  }
+  window.addEventListener('scroll', fixHeroScroll, {passive:true});
+  window.addEventListener('resize', fixHeroScroll, {passive:true});
+}());
 
 function adaptRegionWidth(sel) {
   const ruler = document.getElementById('regionRuler');
@@ -2772,10 +2780,8 @@ console.log('%c[CloudPrice] Run checkRefInstances() to verify reference instance
       const filtersBar = document.getElementById('filters');
       if (!sortRow || !filterRow) return;
       const topbarH  = 64;
-      const heroEl   = document.getElementById('hero');
-      const heroH    = heroEl   ? heroEl.getBoundingClientRect().height   : 0;
       const filtersH = filtersBar ? filtersBar.getBoundingClientRect().height : 0;
-      const sortTop  = topbarH + heroH + filtersH;
+      const sortTop  = topbarH + filtersH;
       const sortH    = sortRow.getBoundingClientRect().height;
       const filterTop = sortTop + sortH;
       sortRow.querySelectorAll('th').forEach(th => th.style.top = sortTop + 'px');
