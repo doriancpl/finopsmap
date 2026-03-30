@@ -1143,6 +1143,15 @@ const AZURE_REGION_OPTIONS = [
   {v:'eastus',             l:'&#x1F1FA;&#x1F1F8; eastus \u2014 Virginie'},
 ];
 
+function adjustLayout() {
+  const filters = document.getElementById('filters');
+  if (!filters || window.getComputedStyle(filters).display === 'none') return;
+  const total = 64 + filters.offsetHeight;
+  document.body.style.paddingTop = total + 'px';
+  document.documentElement.style.setProperty('--topbar-total', total + 'px');
+}
+window.addEventListener('resize', adjustLayout);
+
 function adaptRegionWidth(sel) {
   const ruler = document.getElementById('regionRuler');
   if (!ruler || !sel) return;
@@ -3412,6 +3421,7 @@ console.log('%c[CloudPrice] Run checkRefInstances() to verify reference instance
   const tl = document.getElementById('topbarLeft'); if(tl) tl.style.opacity='1';
   (function(){ const tn = document.getElementById('topbarNav'); if(tn) tn.dataset.orig = tn.innerHTML; })();
   onPriceSlider();
+  adjustLayout();
   (function() {
     function fixStickyRows() {
       const sortRow    = document.getElementById('sortRow');
