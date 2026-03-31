@@ -1126,7 +1126,7 @@ function setNav(v) {
     active.className = 'nav-btn ' + (v === 'azure' || v === 'psql' ? 'active-azure' : 'active-aws');
   }
   setView(v === 'ec2' ? 'aws' : v);
-  if (tcoActive) initTcoInstanceSelect();
+  if (tcoActive) { initTcoInstanceSelect(); initTcoDiskSelect(); }
 }
 
 const AWS_REGION_OPTIONS = [
@@ -1207,12 +1207,14 @@ function loadAzureRegionData(region) {
 function setRegion(region) {
   loadRegionData(region);
   window._isViewChange = false;
+  if (tcoActive) { initTcoInstanceSelect(); initTcoDiskSelect(); }
   if (view === 'aws' || view === 'rds') render();
 }
 
 function setAzureRegion(region) {
   loadAzureRegionData(region);
   window._isViewChange = false;
+  if (tcoActive) { initTcoInstanceSelect(); initTcoDiskSelect(); }
   if (view === 'azure' || view === 'psql') render();
 }
 
@@ -2127,6 +2129,8 @@ function setTco() {
     if (filters)  filters.style.display  = 'none';
     if (tblwrap)  tblwrap.style.display  = 'none';
     if (statsrow) statsrow.style.display = 'none';
+    if (topLeft)  { topLeft.style.opacity = '1'; topLeft.style.pointerEvents = ''; }
+    if (topNav)   { topNav.style.opacity  = '1'; topNav.style.pointerEvents  = ''; }
     if (ts) ts.style.display = 'block';
     initTcoInstanceSelect();
     initTcoDiskSelect();
@@ -2136,6 +2140,8 @@ function setTco() {
     if (filters)  filters.style.display  = '';
     if (tblwrap)  tblwrap.style.display  = '';
     if (statsrow) statsrow.style.display = '';
+    if (topLeft)  { topLeft.style.opacity = '1'; topLeft.style.pointerEvents = ''; }
+    if (topNav)   { topNav.style.opacity  = '1'; topNav.style.pointerEvents  = ''; }
     if (ts) ts.style.display = 'none';
     showBackBtn(false);
   }
@@ -2147,7 +2153,7 @@ function tcoSetDur(val, el) {
   el.classList.add('on');
 }
 
-function getTcoData() { return (view === 'azure' || view === 'psql') ? AZURE_DATA : AWS_DATA; }
+function getTcoData() { return view === 'aws' ? AWS_DATA : view === 'rds' ? RDS_DATA : view === 'psql' ? PSQL_DATA : AZURE_DATA; }
 function initTcoInstanceSelect() {
   const cpuSel  = document.getElementById('tcoCpu');
   const ramSel  = document.getElementById('tcoRam');
@@ -2361,20 +2367,17 @@ function renderTcoResults(r) {
   ].filter(function(row){ return row.cost > 0; });
 
   const bkRowsHtml = bkRows.map(function(row) {
-    const pct = r.total > 0 ? (row.cost/r.total*100).toFixed(1) : '0';
     return '<div class="tco-bk-row"><div><div class="tco-row-name">' + row.name + '</div>'
       + '<div class="tco-row-sub">' + row.sub + '</div></div>'
-      + '<div class="tco-row-aws">' + tcoFmt(row.cost) + '</div>'
-      + '<span style="color:var(--muted);font-family:IBM Plex Mono,monospace;font-size:.7rem">' + pct + '%</span></div>';
+      + '<div class="tco-row-aws">' + tcoFmt(row.cost) + '</div></div>';
   }).join('');
 
   const bkHtml =
     '<div class="tco-breakdown">' +
-    '<div class="tco-bk-hdr"><span>Cost category</span><span>' + r.cloud + ' (' + durLbl + ')</span><span>%</span></div>' +
+    '<div class="tco-bk-hdr"><span>Cost category</span><span>' + r.cloud + ' (' + durLbl + ')</span></div>' +
     bkRowsHtml +
     '<div class="tco-bk-row total"><div><div class="tco-row-name" style="font-size:.88rem">Total ' + r.months + ' months</div></div>' +
-      '<div class="tco-row-aws" style="font-size:.95rem">' + tcoFmt(r.total) + '</div>' +
-      '<span style="font-family:IBM Plex Mono,monospace;font-size:.8rem;font-weight:700;color:' + r.cloudColor + '">100%</span></div>' +
+      '<div class="tco-row-aws" style="font-size:.95rem">' + tcoFmt(r.total) + '</div></div>' +
     '</div>';
 
   // SVG chart (cumulative cost — single cloud, enhanced)
