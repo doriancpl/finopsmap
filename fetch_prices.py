@@ -682,8 +682,8 @@ HTML_TEMPLATE = """
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%23060709'/><circle cx='16' cy='16' r='11' fill='none' stroke='%233a4468' stroke-width='1.2'/><line x1='16' y1='6' x2='16' y2='26' stroke='%233a4468' stroke-width='0.8'/><line x1='6' y1='16' x2='26' y2='16' stroke='%233a4468' stroke-width='0.8'/><polygon points='16,6 13,14 16,12 19,14' fill='%23ff9900'/><polygon points='16,26 13,18 16,20 19,18' fill='%232a3050'/><polygon points='26,16 18,13 20,16 18,19' fill='%2300aaff'/><polygon points='6,16 14,13 12,16 14,19' fill='%232a3050'/><circle cx='16' cy='16' r='2.5' fill='%237bffe0'/><circle cx='16' cy='16' r='1' fill='%23060709'/></svg>">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&family=DM+Mono:ital,wght@0,400;0,500&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
-<script>%%TOPOJSON_JS%%</script>
-<script>%%D3_JS%%</script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
 <link rel="stylesheet" href="css/styles.css?v=%%FETCH_DATE%%">
 </head>
 <body>
@@ -3757,8 +3757,6 @@ def generate_html(aws_data, azure_data, rds_data, fetch_date, psql_data=None, aw
             raw = f.read()
         return raw.decode("utf-8", errors="replace")
 
-    topojson_js  = read_lib("topojson.min.js")
-    d3_js        = read_lib("d3.min.js")
     world_topo   = read_lib("countries-110m.json", is_json=True)
 
     # Agrège les données disques par région
@@ -3771,8 +3769,6 @@ def generate_html(aws_data, azure_data, rds_data, fetch_date, psql_data=None, aw
 
     html = HTML_TEMPLATE
     html = html.replace("%%FETCH_DATE%%",          fetch_date)
-    html = html.replace("%%TOPOJSON_JS%%",         topojson_js)
-    html = html.replace("%%D3_JS%%",               d3_js)
     html = html.replace("%%WORLD_TOPO%%",          world_topo)
     html = html.replace("%%DISK_REGIONS%%",        json.dumps(disk_regions))
 
