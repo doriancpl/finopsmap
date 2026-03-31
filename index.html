@@ -233,7 +233,7 @@
   <div class="cmp-grid" id="cmpGrid"></div>
 </div>
 
-<div id="tcoSection" style="display:none;padding:20px 36px 44px;flex:1;min-height:calc(100vh - 64px)">
+<div id="tcoSection" style="display:none;padding:32px 36px 44px;flex:1;min-height:calc(100vh - 64px)">
   <h2 style="font-size:clamp(1.4rem,2.5vw,2rem);font-weight:800;letter-spacing:-.04em;margin-bottom:4px;color:#c8d0e8"><span style="font-size:1.5rem;margin-right:8px;position:relative;top:-4px">∑</span>TCO Calculator</h2>
   <p style="font-family:'IBM Plex Mono',monospace;font-size:.82rem;color:#c8d0e8;margin-bottom:28px">Total Cost of Ownership</p>
 
@@ -258,7 +258,7 @@
         </div>
         <div class="tco-field">
           <label class="tco-label">Instance type</label>
-          <select id="tcoInstance" class="tco-input"><option value="">&#x2014; loading instances &#x2014;</option></select>
+          <select id="tcoInstance" class="tco-input" onchange="updateTcoCommitOptions()"><option value="">&#x2014; loading instances &#x2014;</option></select>
         </div>
         <div class="tco-field-row">
           <div>
@@ -317,7 +317,7 @@
   </div>
 </div>
 
-<div id="heatmapSection" style="display:none;padding:20px 36px 0;min-height:calc(100vh - 64px);display:none;flex-direction:column">
+<div id="heatmapSection" style="display:none;padding:32px 36px 0;min-height:calc(100vh - 64px);display:none;flex-direction:column">
   <div class="veille-title" style="color:#c8d0e8"><svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:12px;position:relative;top:-3px"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>Heatmap <em style="color:#c8d0e8">Regions</em></div>
   <div id="heatmapSub" style="margin-bottom:20px;font-family:'IBM Plex Mono',monospace;font-size:.9rem;color:#6b738f">AWS Regions — Linux On-Demand Cost</div>
 
@@ -1607,6 +1607,32 @@ function filterTcoInstances() {
     o.textContent = d.iname + '  —  ' + d.vcpu + ' vCPU / ' + ramStr;
     instSel.appendChild(o);
   });
+  updateTcoCommitOptions();
+}
+
+function updateTcoCommitOptions() {
+  const instSel = document.getElementById('tcoInstance');
+  const commitSel = document.getElementById('tcoCommit');
+  if (!instSel || !commitSel) return;
+  const inst = getTcoData().find(function(d){ return d.iname === instSel.value; });
+  const prev = commitSel.value;
+  const opts = [{ v:'od', l:'On-Demand' }];
+  if (inst) {
+    if (inst.price_1yr)     opts.push({ v:'ri1y',     l:'Reserved 1yr No Upfront' });
+    if (inst.price_1yr_all) opts.push({ v:'ri1y_all', l:'Reserved 1yr All Upfront' });
+    if (inst.price_3yr)     opts.push({ v:'ri3y',     l:'Reserved 3yr No Upfront' });
+    if (inst.price_3yr_all) opts.push({ v:'ri3y_all', l:'Reserved 3yr All Upfront' });
+  }
+  commitSel.innerHTML = '';
+  opts.forEach(function(o){
+    const el = document.createElement('option');
+    el.value = o.v; el.textContent = o.l;
+    if (o.v === prev) el.selected = true;
+    commitSel.appendChild(el);
+  });
+  if (!opts.some(function(o){ return o.v === prev; })) {
+    commitSel.value = opts.length > 1 ? opts[1].v : 'od';
+  }
 }
 
 function tcoFmt(v) {

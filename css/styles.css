@@ -11,7 +11,7 @@ body::after{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;back
 .veille-btn{font-family:'IBM Plex Mono',monospace;font-size:.72rem;color:#e8ecf4;padding:5px 14px;border-radius:6px;letter-spacing:.04em;cursor:pointer;background-color:rgba(16,19,26,0.15);border:1px solid #3a4468;outline:none;transition:border-color .15s, color .15s, background-color .15s;white-space:nowrap}
 .veille-btn:hover{border-color:#7bffe0;color:#7bffe0}
 .veille-btn.active{border-color:#7bffe0;color:#7bffe0;background-color:rgba(123,255,224,0.08)}
-#veilleSection{display:none;padding:20px 36px 44px;flex:1}
+#veilleSection{display:none;padding:32px 36px 44px;flex:1}
 .veille-title{font-size:clamp(1.4rem,2.5vw,2rem);font-weight:800;letter-spacing:-.04em;margin-bottom:4px}
 .veille-title em{font-style:normal;color:var(--accent)}
 .veille-sub{font-size:.85rem;color:#6b738f;margin-bottom:16px;font-family:'IBM Plex Mono',monospace}
