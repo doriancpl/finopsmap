@@ -689,6 +689,8 @@ HTML_TEMPLATE = """
 <link rel="preload" href="data/agregations/azure_regions.json" as="fetch" crossorigin>
 <link rel="preload" href="data/agregations/bdd_regions.json" as="fetch" crossorigin>
 <link rel="preload" href="data/agregations/regions_meta.json" as="fetch" crossorigin>
+<link rel="preload" href="data/carbon.json" as="fetch" crossorigin>
+<link rel="preload" href="data/eur_rate.json" as="fetch" crossorigin>
 <link rel="stylesheet" href="css/styles.css?v=%%FETCH_DATE%%">
 </head>
 <body>
