@@ -684,6 +684,11 @@ HTML_TEMPLATE = """
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js"></script>
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+<link rel="preload" href="data/agregations/aws_regions.json" as="fetch" crossorigin>
+<link rel="preload" href="data/agregations/rds_regions.json" as="fetch" crossorigin>
+<link rel="preload" href="data/agregations/azure_regions.json" as="fetch" crossorigin>
+<link rel="preload" href="data/agregations/bdd_regions.json" as="fetch" crossorigin>
+<link rel="preload" href="data/agregations/regions_meta.json" as="fetch" crossorigin>
 <link rel="stylesheet" href="css/styles.css?v=%%FETCH_DATE%%">
 </head>
 <body>

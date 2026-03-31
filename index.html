@@ -18,7 +18,12 @@
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js"></script>
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
-<link rel="stylesheet" href="css/styles.css?v=3/31/2026 · 11:51 PM">
+<link rel="preload" href="data/agregations/aws_regions.json" as="fetch" crossorigin>
+<link rel="preload" href="data/agregations/rds_regions.json" as="fetch" crossorigin>
+<link rel="preload" href="data/agregations/azure_regions.json" as="fetch" crossorigin>
+<link rel="preload" href="data/agregations/bdd_regions.json" as="fetch" crossorigin>
+<link rel="preload" href="data/agregations/regions_meta.json" as="fetch" crossorigin>
+<link rel="stylesheet" href="css/styles.css?v=3/31/2026 · 11:57 PM">
 </head>
 <body>
 <div id="topbar">
@@ -399,7 +404,7 @@
     <a href="https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEC2/current/eu-west-3/index.json" target="_blank" style="color:var(--text);text-decoration:none">AWS Price List API</a>
   </span>
   <span class="fts" style="color:var(--text)"><a href="#" onclick="document.getElementById('aboutModal').style.display='flex';return false;" style="color:var(--text);text-decoration:none;border-bottom:1px dotted var(--muted)">FinOpsMap · About me</a></span>
-  <span class="fts" style="color:var(--text)">Updated 3/31/2026 · 11:51 PM</span>
+  <span class="fts" style="color:var(--text)">Updated 3/31/2026 · 11:57 PM</span>
 </footer>
 
 <div id="aboutModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;align-items:center;justify-content:center" onclick="if(event.target===this)this.style.display='none'">
