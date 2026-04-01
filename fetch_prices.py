@@ -3961,7 +3961,7 @@ console.log('%c[CloudPrice] Run checkRefInstances() to verify reference instance
   <div class="modal-box">
     <div class="modal-hdr">
       <div class="modal-tabs">
-        <button class="modal-tab active-aws" id="modalTabCard" onclick="switchModalTab('card')">Identity Card</button>
+        <button class="modal-tab active-aws" id="modalTabCard" onclick="switchModalTab('card')">Details</button>
         <button class="modal-tab" id="modalTabSerie" onclick="switchModalTab('serie')">vs Série</button>
       </div>
       <button class="modal-close" onclick="closeSeriesModal()">&#x2715; Fermer</button>
