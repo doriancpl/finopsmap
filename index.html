@@ -25,7 +25,7 @@
 <link rel="preload" href="data/agregations/regions_meta.json" as="fetch" crossorigin>
 <link rel="preload" href="data/carbon.json" as="fetch" crossorigin>
 <link rel="preload" href="data/eur_rate.json" as="fetch" crossorigin>
-<link rel="stylesheet" href="css/styles.css?v=4/1/2026 · 10:34 AM">
+<link rel="stylesheet" href="css/styles.css?v=4/1/2026 · 10:48 AM">
 </head>
 <body>
 <div id="topbar">
@@ -162,6 +162,7 @@
       <label class="col-pick-row" style="padding-bottom:6px;margin-bottom:2px"><input type="checkbox" id="colSelectAll" checked onchange="toggleAllCols(this.checked)"> All columns</label>
       <label class="col-pick-row" style="border-bottom:1px solid var(--b1);padding-bottom:8px;margin-bottom:4px;cursor:pointer" onclick="setDefaultCols();return false;">&#x229E; Default columns</label>
       <label class="col-pick-row"><input type="checkbox" id="cb-fam" checked onchange="toggleCol('fam',this.checked)"> Family</label>
+      <label class="col-pick-row" id="cb-curgen-row"><input type="checkbox" id="cb-curgen" checked onchange="toggleCol('curgen',this.checked)"> Generation</label>
       <label class="col-pick-row" id="cb-proc-row"><input type="checkbox" id="cb-proc" checked onchange="toggleCol('proc',this.checked)"> Processor</label>
       <label class="col-pick-row"><input type="checkbox" id="cb-vcpu" checked onchange="toggleCol('vcpu',this.checked)"> vCPU</label>
       <label class="col-pick-row"><input type="checkbox" id="cb-ram" checked onchange="toggleCol('ram',this.checked)"> RAM</label>
@@ -195,6 +196,7 @@
       <th id="thCmp" style="width:28px;background:var(--s1);border-bottom:1px solid var(--b1);display:none"></th>
       <th class="col-iname" onclick="qs(&apos;iname&apos;)"><div style="display:flex;align-items:center;justify-content:space-between">NAME <span class="sort-ico" id="si-iname">&#x2195;</span></div></th>
       <th class="col-fam" onclick="qs(&apos;fam&apos;)"><div style="display:flex;align-items:center;justify-content:space-between"><span id="famHeader">FAMILY</span> <span class="sort-ico" id="si-fam">&#x2195;</span></div></th>
+      <th class="col-curgen" onclick="qs(&apos;curgen&apos;)"><div style="display:flex;align-items:center;justify-content:space-between">GEN <span class="sort-ico" id="si-curgen">&#x2195;</span></div></th>
       <th class="col-proc" onclick="qs(&apos;proc&apos;)"><div style="display:flex;align-items:center;justify-content:space-between">PROCESSOR <span class="sort-ico" id="si-proc">&#x2195;</span></div></th>
       <th class="col-vcpu" onclick="qs(&apos;vcpu&apos;)"><div style="display:flex;align-items:center;justify-content:space-between">VCPU <span class="sort-ico" id="si-vcpu">&#x2195;</span></div></th>
       <th class="col-ram" onclick="qs(&apos;ram&apos;)"><div style="display:flex;align-items:center;justify-content:space-between">RAM <span class="sort-ico" id="si-ram">&#x2195;</span></div></th>
@@ -214,6 +216,7 @@
       <th id="thCmpFilter" style="background:var(--s2);border-bottom:1px solid var(--b1);display:none"></th>
       <th class="col-iname"><input class="col-filter" oninput="render()" id="f-iname" placeholder="ex: m6i..."></th>
       <th class="col-fam"><input class="col-filter" oninput="render()" id="f-fam"   placeholder="ex: general..."></th>
+      <th class="col-curgen"></th>
       <th class="col-proc"><input class="col-filter" oninput="render()" id="f-proc"  placeholder="ex: Graviton"></th>
       <th class="col-vcpu"><input class="col-filter" oninput="render()" id="f-vcpu"  placeholder="ex: 4"></th>
       <th class="col-ram"><input class="col-filter" oninput="render()" id="f-ram"   placeholder="ex: 32"></th>
@@ -412,7 +415,7 @@
     <a href="https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEC2/current/eu-west-3/index.json" target="_blank" style="color:var(--text);text-decoration:none">AWS Price List API</a>
   </span>
   <span class="fts" style="color:var(--text)"><a href="#" onclick="document.getElementById('aboutModal').style.display='flex';return false;" style="color:var(--text);text-decoration:none;border-bottom:1px dotted var(--muted)">FinOpsMap · About me</a></span>
-  <span class="fts" style="color:var(--text)">Updated 4/1/2026 · 10:34 AM</span>
+  <span class="fts" style="color:var(--text)">Updated 4/1/2026 · 10:48 AM</span>
 </footer>
 
 <div id="aboutModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;align-items:center;justify-content:center" onclick="if(event.target===this)this.style.display='none'">
@@ -625,6 +628,8 @@ function setView(v) {
   const cbNetworkRow = document.getElementById('cb-network-row');
   if (cbNetworkRow) cbNetworkRow.style.display = (v === 'azure' || v === 'psql') ? 'none' : '';
   if (v === 'azure' || v === 'psql') { toggleCol('network', false); const cb = document.getElementById('cb-network'); if (cb) cb.checked = false; }
+  const cbCurgenRow = document.getElementById('cb-curgen-row');
+  if (cbCurgenRow) cbCurgenRow.style.display = (v === 'azure' || v === 'psql') ? 'none' : '';
   const cbMaxdisksRow = document.getElementById('cb-maxdisks-row');
   if (cbMaxdisksRow) cbMaxdisksRow.style.display = v === 'azure' ? '' : 'none';
   const cbDiskiopsRow = document.getElementById('cb-diskiops-row');
@@ -730,6 +735,8 @@ function getSorted(arr) {
     if (s === 'storage-desc') return (b.storage||'').localeCompare(a.storage||'');
     if (s === 'network-asc')  return (a.network||'').localeCompare(b.network||'');
     if (s === 'network-desc') return (b.network||'').localeCompare(a.network||'');
+    if (s === 'curgen-asc')  return (a.curgen?1:0) - (b.curgen?1:0);
+    if (s === 'curgen-desc') return (b.curgen?1:0) - (a.curgen?1:0);
     if (s === 'maxdisks-asc')  return (a.max_disks||0) - (b.max_disks||0);
     if (s === 'maxdisks-desc') return (b.max_disks||0) - (a.max_disks||0);
     if (s === 'diskiops-asc')  return (a.disk_iops||0) - (b.disk_iops||0);
@@ -1127,6 +1134,7 @@ function render() {
       return '<tr class="' + (isSel?(view==='azure'||view==='psql'?'row-sel-azure':'row-sel-aws'):'') + '" data-iname="' + d.iname + '" data-fam="' + (d.fam||'') + '" style="animation-delay:' + Math.min(i*0.01,0.3) + 's;cursor:pointer" onclick="toggleRow(&apos;' + d.iname + '&apos;,&apos;' + (d.fam||'') + '&apos;)">' + chkTd
         + '<td class="col-iname"><span class="iname iname-clickable '+cls+'" onclick="event.stopPropagation();openSeriesModal(&apos;'+d.iname+'&apos;,&apos;'+(d.fam||'')+'&apos;)">'+d.iname+'</span>'
         + '<td class="col-fam"><span class="fam-badge '+(FC[d.fam]||'fam-other')+'">'+((view==='psql')?(d.engine||d.fam):(view==='rds'?FL_RDS:FL)[d.fam]||d.fam)+'</span></td>'
+        + '<td class="col-curgen"><span class="tag">'+(d.curgen ? 'Current' : 'Previous')+'</span></td>'
         + '<td class="col-proc"><span class="tag">'+(d.processor||'—')+'</span></td>'
         + '<td class="col-vcpu"><span class="tag">'+d.vcpu+'</span></td>'
         + '<td class="col-ram"><span class="tag">'+ramFmt(d.ram)+'</span></td>'
@@ -1252,8 +1260,8 @@ document.addEventListener('click', function(e) {
   const wrap = document.getElementById('colPickerWrap');
   if (wrap && !wrap.contains(e.target)) document.getElementById('colPicker').style.display = 'none';
 });
-const COL_KEYS = ['fam','proc','vcpu','ram','storage','network','maxdisks','diskiops','pvcpu','price','month','savings','spot','spotsav','score'];
-const DEFAULT_HIDDEN_COLS = ['proc','storage','network','maxdisks','diskiops','spot','spotsav'];
+const COL_KEYS = ['fam','curgen','proc','vcpu','ram','storage','network','maxdisks','diskiops','pvcpu','price','month','savings','spot','spotsav','score'];
+const DEFAULT_HIDDEN_COLS = ['curgen','proc','storage','network','maxdisks','diskiops','spot','spotsav'];
 function setDefaultCols() {
   const tbl = document.getElementById('mainTable');
   COL_KEYS.forEach(col => {
@@ -1428,12 +1436,13 @@ function qs(col) {
     storage: cur === 'storage-asc' ? 'storage-desc' : 'storage-asc',
     spot:    cur === 'spot-asc'    ? 'spot-desc'    : 'spot-asc',
     spotsav: cur === 'spotsav-desc' ? 'spotsav-asc' : 'spotsav-desc',
+    curgen: cur === 'curgen-desc' ? 'curgen-asc' : 'curgen-desc',
     maxdisks: cur === 'maxdisks-asc' ? 'maxdisks-desc' : 'maxdisks-asc',
     diskiops: cur === 'diskiops-asc' ? 'diskiops-desc' : 'diskiops-asc',
   };
   if (next[col]) sortVal = next[col];
-  const colMap = {iname:'iname',fam:'fam',proc:'proc',vcpu:'vcpu',ram:'ram',pvcpu:'pvcpu',price:'price',month:'month',savings:'savings',storage:'storage',spot:'spot',spotsav:'spotsav',score:'score',maxdisks:'maxdisks',diskiops:'diskiops'};
-  ['iname','fam','proc','vcpu','ram','pvcpu','price','month','savings','storage','spot','spotsav','score','maxdisks','diskiops'].forEach(k => {
+  const colMap = {iname:'iname',fam:'fam',curgen:'curgen',proc:'proc',vcpu:'vcpu',ram:'ram',pvcpu:'pvcpu',price:'price',month:'month',savings:'savings',storage:'storage',spot:'spot',spotsav:'spotsav',score:'score',maxdisks:'maxdisks',diskiops:'diskiops'};
+  ['iname','fam','curgen','proc','vcpu','ram','pvcpu','price','month','savings','storage','spot','spotsav','score','maxdisks','diskiops'].forEach(k => {
     const el = document.getElementById('si-'+k);
     if (!el) return;
     const active = sortVal.startsWith(colMap[k]);

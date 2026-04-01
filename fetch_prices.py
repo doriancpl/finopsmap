@@ -655,7 +655,8 @@ def fetch_aws(region="eu-west-3"):
         storage   = attr.get("storage", "")
         processor = attr.get("physicalProcessor", "")
         network   = attr.get("networkPerformance", "")
-        entry     = {"name": itype, "price": price, "vcpu": vcpu, "ram": ram, "fam": fam, "storage": storage, "processor": processor, "network": network}
+        curgen    = attr.get("currentGeneration", "") == "Yes"
+        entry     = {"name": itype, "price": price, "vcpu": vcpu, "ram": ram, "fam": fam, "storage": storage, "processor": processor, "network": network, "curgen": curgen}
         if price_1yr_no:  entry["price_1yr"]     = price_1yr_no
         if price_3yr_no:  entry["price_3yr"]     = price_3yr_no
         if price_1yr_all: entry["price_1yr_all"] = price_1yr_all
@@ -949,6 +950,7 @@ HTML_TEMPLATE = """
       <label class="col-pick-row" style="padding-bottom:6px;margin-bottom:2px"><input type="checkbox" id="colSelectAll" checked onchange="toggleAllCols(this.checked)"> All columns</label>
       <label class="col-pick-row" style="border-bottom:1px solid var(--b1);padding-bottom:8px;margin-bottom:4px;cursor:pointer" onclick="setDefaultCols();return false;">&#x229E; Default columns</label>
       <label class="col-pick-row"><input type="checkbox" id="cb-fam" checked onchange="toggleCol('fam',this.checked)"> Family</label>
+      <label class="col-pick-row" id="cb-curgen-row"><input type="checkbox" id="cb-curgen" checked onchange="toggleCol('curgen',this.checked)"> Generation</label>
       <label class="col-pick-row" id="cb-proc-row"><input type="checkbox" id="cb-proc" checked onchange="toggleCol('proc',this.checked)"> Processor</label>
       <label class="col-pick-row"><input type="checkbox" id="cb-vcpu" checked onchange="toggleCol('vcpu',this.checked)"> vCPU</label>
       <label class="col-pick-row"><input type="checkbox" id="cb-ram" checked onchange="toggleCol('ram',this.checked)"> RAM</label>
@@ -982,6 +984,7 @@ HTML_TEMPLATE = """
       <th id="thCmp" style="width:28px;background:var(--s1);border-bottom:1px solid var(--b1);display:none"></th>
       <th class="col-iname" onclick="qs(&apos;iname&apos;)"><div style="display:flex;align-items:center;justify-content:space-between">NAME <span class="sort-ico" id="si-iname">&#x2195;</span></div></th>
       <th class="col-fam" onclick="qs(&apos;fam&apos;)"><div style="display:flex;align-items:center;justify-content:space-between"><span id="famHeader">FAMILY</span> <span class="sort-ico" id="si-fam">&#x2195;</span></div></th>
+      <th class="col-curgen" onclick="qs(&apos;curgen&apos;)"><div style="display:flex;align-items:center;justify-content:space-between">GEN <span class="sort-ico" id="si-curgen">&#x2195;</span></div></th>
       <th class="col-proc" onclick="qs(&apos;proc&apos;)"><div style="display:flex;align-items:center;justify-content:space-between">PROCESSOR <span class="sort-ico" id="si-proc">&#x2195;</span></div></th>
       <th class="col-vcpu" onclick="qs(&apos;vcpu&apos;)"><div style="display:flex;align-items:center;justify-content:space-between">VCPU <span class="sort-ico" id="si-vcpu">&#x2195;</span></div></th>
       <th class="col-ram" onclick="qs(&apos;ram&apos;)"><div style="display:flex;align-items:center;justify-content:space-between">RAM <span class="sort-ico" id="si-ram">&#x2195;</span></div></th>
@@ -1001,6 +1004,7 @@ HTML_TEMPLATE = """
       <th id="thCmpFilter" style="background:var(--s2);border-bottom:1px solid var(--b1);display:none"></th>
       <th class="col-iname"><input class="col-filter" oninput="render()" id="f-iname" placeholder="ex: m6i..."></th>
       <th class="col-fam"><input class="col-filter" oninput="render()" id="f-fam"   placeholder="ex: general..."></th>
+      <th class="col-curgen"></th>
       <th class="col-proc"><input class="col-filter" oninput="render()" id="f-proc"  placeholder="ex: Graviton"></th>
       <th class="col-vcpu"><input class="col-filter" oninput="render()" id="f-vcpu"  placeholder="ex: 4"></th>
       <th class="col-ram"><input class="col-filter" oninput="render()" id="f-ram"   placeholder="ex: 32"></th>
@@ -1412,6 +1416,8 @@ function setView(v) {
   const cbNetworkRow = document.getElementById('cb-network-row');
   if (cbNetworkRow) cbNetworkRow.style.display = (v === 'azure' || v === 'psql') ? 'none' : '';
   if (v === 'azure' || v === 'psql') { toggleCol('network', false); const cb = document.getElementById('cb-network'); if (cb) cb.checked = false; }
+  const cbCurgenRow = document.getElementById('cb-curgen-row');
+  if (cbCurgenRow) cbCurgenRow.style.display = (v === 'azure' || v === 'psql') ? 'none' : '';
   const cbMaxdisksRow = document.getElementById('cb-maxdisks-row');
   if (cbMaxdisksRow) cbMaxdisksRow.style.display = v === 'azure' ? '' : 'none';
   const cbDiskiopsRow = document.getElementById('cb-diskiops-row');
@@ -1517,6 +1523,8 @@ function getSorted(arr) {
     if (s === 'storage-desc') return (b.storage||'').localeCompare(a.storage||'');
     if (s === 'network-asc')  return (a.network||'').localeCompare(b.network||'');
     if (s === 'network-desc') return (b.network||'').localeCompare(a.network||'');
+    if (s === 'curgen-asc')  return (a.curgen?1:0) - (b.curgen?1:0);
+    if (s === 'curgen-desc') return (b.curgen?1:0) - (a.curgen?1:0);
     if (s === 'maxdisks-asc')  return (a.max_disks||0) - (b.max_disks||0);
     if (s === 'maxdisks-desc') return (b.max_disks||0) - (a.max_disks||0);
     if (s === 'diskiops-asc')  return (a.disk_iops||0) - (b.disk_iops||0);
@@ -1914,6 +1922,7 @@ function render() {
       return '<tr class="' + (isSel?(view==='azure'||view==='psql'?'row-sel-azure':'row-sel-aws'):'') + '" data-iname="' + d.iname + '" data-fam="' + (d.fam||'') + '" style="animation-delay:' + Math.min(i*0.01,0.3) + 's;cursor:pointer" onclick="toggleRow(&apos;' + d.iname + '&apos;,&apos;' + (d.fam||'') + '&apos;)">' + chkTd
         + '<td class="col-iname"><span class="iname iname-clickable '+cls+'" onclick="event.stopPropagation();openSeriesModal(&apos;'+d.iname+'&apos;,&apos;'+(d.fam||'')+'&apos;)">'+d.iname+'</span>'
         + '<td class="col-fam"><span class="fam-badge '+(FC[d.fam]||'fam-other')+'">'+((view==='psql')?(d.engine||d.fam):(view==='rds'?FL_RDS:FL)[d.fam]||d.fam)+'</span></td>'
+        + '<td class="col-curgen"><span class="tag">'+(d.curgen ? 'Current' : 'Previous')+'</span></td>'
         + '<td class="col-proc"><span class="tag">'+(d.processor||'—')+'</span></td>'
         + '<td class="col-vcpu"><span class="tag">'+d.vcpu+'</span></td>'
         + '<td class="col-ram"><span class="tag">'+ramFmt(d.ram)+'</span></td>'
@@ -2039,8 +2048,8 @@ document.addEventListener('click', function(e) {
   const wrap = document.getElementById('colPickerWrap');
   if (wrap && !wrap.contains(e.target)) document.getElementById('colPicker').style.display = 'none';
 });
-const COL_KEYS = ['fam','proc','vcpu','ram','storage','network','maxdisks','diskiops','pvcpu','price','month','savings','spot','spotsav','score'];
-const DEFAULT_HIDDEN_COLS = ['proc','storage','network','maxdisks','diskiops','spot','spotsav'];
+const COL_KEYS = ['fam','curgen','proc','vcpu','ram','storage','network','maxdisks','diskiops','pvcpu','price','month','savings','spot','spotsav','score'];
+const DEFAULT_HIDDEN_COLS = ['curgen','proc','storage','network','maxdisks','diskiops','spot','spotsav'];
 function setDefaultCols() {
   const tbl = document.getElementById('mainTable');
   COL_KEYS.forEach(col => {
@@ -2215,12 +2224,13 @@ function qs(col) {
     storage: cur === 'storage-asc' ? 'storage-desc' : 'storage-asc',
     spot:    cur === 'spot-asc'    ? 'spot-desc'    : 'spot-asc',
     spotsav: cur === 'spotsav-desc' ? 'spotsav-asc' : 'spotsav-desc',
+    curgen: cur === 'curgen-desc' ? 'curgen-asc' : 'curgen-desc',
     maxdisks: cur === 'maxdisks-asc' ? 'maxdisks-desc' : 'maxdisks-asc',
     diskiops: cur === 'diskiops-asc' ? 'diskiops-desc' : 'diskiops-asc',
   };
   if (next[col]) sortVal = next[col];
-  const colMap = {iname:'iname',fam:'fam',proc:'proc',vcpu:'vcpu',ram:'ram',pvcpu:'pvcpu',price:'price',month:'month',savings:'savings',storage:'storage',spot:'spot',spotsav:'spotsav',score:'score',maxdisks:'maxdisks',diskiops:'diskiops'};
-  ['iname','fam','proc','vcpu','ram','pvcpu','price','month','savings','storage','spot','spotsav','score','maxdisks','diskiops'].forEach(k => {
+  const colMap = {iname:'iname',fam:'fam',curgen:'curgen',proc:'proc',vcpu:'vcpu',ram:'ram',pvcpu:'pvcpu',price:'price',month:'month',savings:'savings',storage:'storage',spot:'spot',spotsav:'spotsav',score:'score',maxdisks:'maxdisks',diskiops:'diskiops'};
+  ['iname','fam','curgen','proc','vcpu','ram','pvcpu','price','month','savings','storage','spot','spotsav','score','maxdisks','diskiops'].forEach(k => {
     const el = document.getElementById('si-'+k);
     if (!el) return;
     const active = sortVal.startsWith(colMap[k]);
@@ -3823,8 +3833,9 @@ def fetch_rds(region="eu-west-3"):
         key   = itype + "||" + deploy + "||" + fam  # normaliser sur fam, pas engine brut
         processor = attr.get("physicalProcessor", "")
         network   = attr.get("networkPerformance", "")
+        curgen    = attr.get("currentGeneration", "") == "Yes"
         entry     = {"name": itype, "price": price, "vcpu": vcpu, "ram": ram,
-                 "fam": fam, "engine": engine, "deploy": deploy, "processor": processor, "network": network}
+                 "fam": fam, "engine": engine, "deploy": deploy, "processor": processor, "network": network, "curgen": curgen}
         if price_1yr_no:  entry["price_1yr"]     = price_1yr_no
         if price_3yr_no:  entry["price_3yr"]     = price_3yr_no
         if price_1yr_all: entry["price_1yr_all"] = price_1yr_all
@@ -3857,13 +3868,13 @@ def generate_html(aws_data, azure_data, rds_data, fetch_date, psql_data=None, aw
         d = {}
         if v.get("spot"): d["spot"] = v["spot"]
         return d
-    aws_list   = [{"iname": v["name"], "price": v["price"], "vcpu": v["vcpu"], "ram": v["ram"], "fam": v["fam"], "storage": v.get("storage",""), "processor": v.get("processor",""), "network": v.get("network",""), **ri3(v), **spot3(v)} for v in sorted(aws_data.values(),   key=lambda x: x["price"])]
+    aws_list   = [{"iname": v["name"], "price": v["price"], "vcpu": v["vcpu"], "ram": v["ram"], "fam": v["fam"], "storage": v.get("storage",""), "processor": v.get("processor",""), "network": v.get("network",""), "curgen": v.get("curgen",False), **ri3(v), **spot3(v)} for v in sorted(aws_data.values(),   key=lambda x: x["price"])]
     azure_list = [{"iname": v["name"], "price": v["price"], "vcpu": v["vcpu"], "ram": v["ram"], "fam": v["fam"], "storage": v.get("storage",""), "processor": v.get("processor",""), "network": v.get("network",""), "max_disks": v.get("max_disks",0), "disk_iops": v.get("disk_iops",0), **ri3(v)} for v in sorted(azure_data.values(), key=lambda x: x["price"])]
-    rds_list   = [{"iname": v["name"], "price": v["price"], "vcpu": v["vcpu"], "ram": v["ram"], "fam": v["fam"], "engine": v.get("engine",""), "deploy": v.get("deploy",""), "processor": v.get("processor",""), "network": v.get("network",""), **ri3(v)} for v in sorted(rds_data.values(), key=lambda x: x["price"])]
+    rds_list   = [{"iname": v["name"], "price": v["price"], "vcpu": v["vcpu"], "ram": v["ram"], "fam": v["fam"], "engine": v.get("engine",""), "deploy": v.get("deploy",""), "processor": v.get("processor",""), "network": v.get("network",""), "curgen": v.get("curgen",False), **ri3(v)} for v in sorted(rds_data.values(), key=lambda x: x["price"])]
     psql_data  = psql_data or {}
     psql_list  = [{"iname": v["name"], "price": v["price"], "vcpu": v["vcpu"], "ram": v["ram"], "fam": v["fam"], "engine": v.get("engine",""), "sku": v.get("sku",""), **ri3(v)} for v in sorted(psql_data.values(), key=lambda x: x["price"])]
 
-    def to_list(d):     return [{"iname": v["name"], "price": v["price"], "vcpu": v["vcpu"], "ram": v["ram"], "fam": v["fam"], "storage": v.get("storage",""), "processor": v.get("processor",""), "network": v.get("network",""), "max_disks": v.get("max_disks",0), "disk_iops": v.get("disk_iops",0), **ri3(v), **spot3(v)} for v in sorted(d.values(), key=lambda x: x["price"])]
+    def to_list(d):     return [{"iname": v["name"], "price": v["price"], "vcpu": v["vcpu"], "ram": v["ram"], "fam": v["fam"], "storage": v.get("storage",""), "processor": v.get("processor",""), "network": v.get("network",""), "max_disks": v.get("max_disks",0), "disk_iops": v.get("disk_iops",0), "curgen": v.get("curgen",False), **ri3(v), **spot3(v)} for v in sorted(d.values(), key=lambda x: x["price"])]
     def to_list_bdd(d): return [{"iname": v["name"], "price": v["price"], "vcpu": v["vcpu"], "ram": v["ram"], "fam": v["fam"], "engine": v.get("engine",""), "sku": v.get("sku",""), **ri3(v)} for v in sorted(d.values(), key=lambda x: x["price"])]
 
     aws_regions_data   = aws_regions_data   or {}
