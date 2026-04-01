@@ -2,7 +2,7 @@
 
 > Compare AWS EC2, RDS and Azure VM, Database pricing in real time. Free, open-source FinOps tool.
 
-🌐 **[finopsmap.doriancpl.github.io/finopsmap](https://doriancpl.github.io/finopsmap/)**
+🌐 **[finopsmap.com](https://finopsmap.com)**
 
 ---
 
