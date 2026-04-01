@@ -2093,7 +2093,8 @@ function updateURL() {
   const tbl = document.getElementById('mainTable');
   if (tbl) {
     const hidden = COL_KEYS.filter(k => tbl.classList.contains('hide-' + k));
-    if (hidden.length) params.set('cols', hidden.join(','));
+    const isDefault = hidden.length === DEFAULT_HIDDEN_COLS.length && hidden.every(k => DEFAULT_HIDDEN_COLS.includes(k));
+    if (hidden.length && !isDefault) params.set('cols', hidden.join(','));
   }
   const str = params.toString();
   history.replaceState(null, '', str ? '?' + str : location.pathname);
