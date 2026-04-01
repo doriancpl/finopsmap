@@ -1214,7 +1214,7 @@ HTML_TEMPLATE = """
     <p style="font-size:.85rem;color:#c8d0e8;line-height:1.7;margin-bottom:12px"><em>I'm a FinOps engineer with hands-on experience optimizing cloud costs across AWS and Azure. I built FinOpsMap because comparing cloud pricing shouldn't require opening a dozen browser tabs — it should be instant, visual, and actionable.</em></p>
     <p style="font-size:.85rem;color:#c8d0e8;line-height:1.7;margin-bottom:12px"><em>This project is free and open-source. If it saves you time or money, consider supporting it.</em></p>
     <p style="font-size:.85rem;color:#c8d0e8;line-height:1.7;margin-bottom:12px"><em>Thank you for your support</em> &#x2665;</p>
-    <div style="margin-bottom:16px;font-family:'IBM Plex Mono',monospace;font-size:.72rem;color:var(--muted)">&#x2709; <a href="mailto:contact@finopsmap.com" style="color:#7bffe0;text-decoration:none;border-bottom:1px dotted #7bffe0">contact@finopsmap.com</a></div>
+    <div style="margin-bottom:16px;font-family:'IBM Plex Mono',monospace;font-size:.72rem;color:var(--muted)"><a href="mailto:contact@finopsmap.com" style="color:#7bffe0;text-decoration:none;border-bottom:1px dotted #7bffe0">contact@finopsmap.com</a></div>
     <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center">
       <a href="https://www.linkedin.com/in/dorian" target="_blank" style="font-family:'IBM Plex Mono',monospace;font-size:.72rem;padding:6px 14px;border:1px solid #3a4468;border-radius:4px;color:#c8d0e8;text-decoration:none">LinkedIn</a>
       <a href="https://github.com/doriancpl/finopsmap" target="_blank" style="font-family:'IBM Plex Mono',monospace;font-size:.72rem;padding:6px 14px;border:1px solid #3a4468;border-radius:4px;color:#c8d0e8;text-decoration:none">GitHub</a>
