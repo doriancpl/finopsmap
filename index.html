@@ -24,7 +24,7 @@
 <link rel="preload" href="data/agregations/regions_meta.json" as="fetch" crossorigin>
 <link rel="preload" href="data/carbon.json" as="fetch" crossorigin>
 <link rel="preload" href="data/eur_rate.json" as="fetch" crossorigin>
-<link rel="stylesheet" href="css/styles.css?v=4/1/2026 · 5:36 PM">
+<link rel="stylesheet" href="css/styles.css?v=4/1/2026 · 10:26 PM">
 </head>
 <body>
 <div id="topbar">
@@ -425,7 +425,7 @@
     <a href="https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEC2/current/eu-west-3/index.json" target="_blank" style="color:var(--text);text-decoration:none">AWS Price List API</a>
   </span>
   <span class="fts" style="color:var(--text)"><a href="#" onclick="document.getElementById('aboutModal').style.display='flex';return false;" style="color:var(--text);text-decoration:none;border-bottom:1px dotted var(--muted)">FinOpsMap · About me</a></span>
-  <span class="fts" style="color:var(--text)">Updated 4/1/2026 · 5:36 PM</span>
+  <span class="fts" style="color:var(--text)">Updated 4/1/2026 · 10:26 PM</span>
 </footer>
 
 <div id="aboutModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;align-items:center;justify-content:center" onclick="if(event.target===this)this.style.display='none'">
@@ -644,7 +644,7 @@ function setView(v) {
   const cbMaxdisksRow = document.getElementById('cb-maxdisks-row');
   if (cbMaxdisksRow) cbMaxdisksRow.style.display = v === 'azure' ? '' : 'none';
   const cbDiskiopsRow = document.getElementById('cb-diskiops-row');
-  if (cbDiskiopsRow) cbDiskiopsRow.style.display = v === 'azure' ? '' : 'none';
+  if (cbDiskiopsRow) cbDiskiopsRow.style.display = (v === 'azure' || v === 'psql') ? '' : 'none';
   const cbSpotRow = document.getElementById('cb-spot-row');
   if (cbSpotRow) cbSpotRow.style.display = v === 'aws' ? '' : 'none';
   const cbSpotsavRow = document.getElementById('cb-spotsav-row');
@@ -987,7 +987,8 @@ function openSeriesModal(iname, fam) {
   document.getElementById('seriesTable').innerHTML =
     (function(){
       let mSortCol = 'price', mSortDir = 'asc';
-      const cols = [{k:'iname',l:'NAME'},{k:'fam',l:(view==='rds'||view==='psql'?'ENGINE':'FAMILY')},{k:'vcpu',l:'VCPU'},{k:'ram',l:'RAM'},{k:'price',l:'ON DEMAND COST'},{k:'month',l:'RESERVED COST'},{k:'score',l:'FINOPS SCORE'}];
+      const riLabel = (function(){ const sel = document.getElementById('riSelect'); return sel ? sel.options[sel.selectedIndex].textContent : 'RESERVED'; })();
+      const cols = [{k:'iname',l:'NAME'},{k:'fam',l:(view==='rds'||view==='psql'?'ENGINE':'FAMILY')},{k:'vcpu',l:'VCPU'},{k:'ram',l:'RAM'},{k:'price',l:'ON DEMAND COST'},{k:'month',l:riLabel.toUpperCase() + ' COST'},{k:'score',l:'FINOPS SCORE'}];
       function mHead() {
         return '<thead><tr>' + cols.map(col => {
           const active = col.k === mSortCol || (col.k==='month' && mSortCol==='price');
@@ -1157,7 +1158,7 @@ function render() {
         + '<td class="col-storage ec2-only"><span class="tag">'+(d.storage||'—')+'</span></td>'
         + '<td class="col-network"><span class="tag" style="white-space:nowrap">'+(d.network||'—')+'</span></td>'
         + '<td class="col-maxdisks"><span class="tag">'+(d.max_disks ? d.max_disks : '—')+'</span></td>'
-        + '<td class="col-diskiops"><span class="tag">'+(d.disk_iops ? d.disk_iops.toLocaleString() : '—')+'</span></td>'
+        + '<td class="col-diskiops"><span class="tag">'+((d.disk_iops||d.iops) ? (d.disk_iops||d.iops).toLocaleString() : '—')+'</span></td>'
         + '<td class="col-pvcpu"><span class="ph-mo">'+(d.vcpu > 0 ? f4(d.price/d.vcpu)+' '+currSym() : '—')+'</span></td>'
         + '<td class="col-price">'+((view==='aws'||view==='rds') ? '<span style="display:inline-block;padding:5px 12px;background:rgba(255,153,0,0.1);border:1px solid rgba(255,153,0,0.3);border-radius:6px;font-weight:700;font-size:.92rem;color:#ff9900;font-family:IBM Plex Mono,monospace">'+f4(d.price*(periodMult[period]||1))+' ' + currSym() + '</span>' : '<span style="display:inline-block;padding:5px 12px;background:rgba(0,170,255,0.1);border:1px solid rgba(0,170,255,0.3);border-radius:6px;font-weight:700;font-size:.92rem;color:#00aaff;font-family:IBM Plex Mono,monospace">'+f4(d.price*(periodMult[period]||1))+' ' + currSym() + '</span>')+'</td>'
         + '<td class="col-month"><span class="ph-mo">'+(function(){ const rp = d[getRiKey()]; if (!rp) return '<span style="color:var(--muted);font-size:.75rem">—</span>'; return f4(rp*(periodMult[period]||1))+' '+currSym(); })()+'</span></td>'
@@ -1204,7 +1205,7 @@ function showAllRows() {
       + '<td class="col-storage ec2-only"><span class="tag">'+(d.storage||'—')+'</span></td>'
       + '<td class="col-network"><span class="tag" style="white-space:nowrap">'+(d.network||'—')+'</span></td>'
       + '<td class="col-maxdisks"><span class="tag">'+(d.max_disks ? d.max_disks : '—')+'</span></td>'
-      + '<td class="col-diskiops"><span class="tag">'+(d.disk_iops ? d.disk_iops.toLocaleString() : '—')+'</span></td>'
+      + '<td class="col-diskiops"><span class="tag">'+((d.disk_iops||d.iops) ? (d.disk_iops||d.iops).toLocaleString() : '—')+'</span></td>'
       + '<td class="col-pvcpu"><span class="ph-mo">'+(d.vcpu > 0 ? f4(d.price/d.vcpu)+' '+currSym() : '—')+'</span></td>'
       + '<td class="col-price">'+((view==='aws'||view==='rds') ? '<span style="display:inline-block;padding:5px 12px;background:rgba(255,153,0,0.1);border:1px solid rgba(255,153,0,0.3);border-radius:6px;font-weight:700;font-size:.92rem;color:#ff9900;font-family:IBM Plex Mono,monospace">'+f4(d.price*(periodMult[period]||1))+' '+currSym()+'</span>' : '<span style="display:inline-block;padding:5px 12px;background:rgba(0,170,255,0.1);border:1px solid rgba(0,170,255,0.3);border-radius:6px;font-weight:700;font-size:.92rem;color:#00aaff;font-family:IBM Plex Mono,monospace">'+f4(d.price*(periodMult[period]||1))+' '+currSym()+'</span>')+'</td>'
       + '<td class="col-month"><span class="ph-mo">'+(function(){ const rp = d[getRiKey()]; if (!rp) return '<span style="color:var(--muted);font-size:.75rem">—</span>'; return f4(rp*(periodMult[period]||1))+' '+currSym(); })()+'</span></td>'

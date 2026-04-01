@@ -522,8 +522,85 @@ def fetch_azure_disks(region="francecentral"):
     return result
 
 
+# ── AZURE DB CAPABILITIES ──
+def fetch_azure_db_capabilities(region="francecentral", az_available=True):
+    """Récupère les specs (vCPU, RAM, IOPS) des instances DB Azure via l'API capabilities."""
+    cache_file = os.path.join(DATA_DIR_AZ, "db-caps-" + region + ".json")
+    if is_fresh(cache_file, days=SKUS_CACHE_DAYS):
+        log("cache DB caps frais : " + cache_file)
+        with open(cache_file, encoding="utf-8") as f:
+            return json.load(f)
+
+    if not az_available:
+        if os.path.exists(cache_file):
+            log("utilisation du cache DB caps existant : " + cache_file)
+            with open(cache_file, encoding="utf-8") as f:
+                return json.load(f)
+        return {}
+
+    # Récupérer la subscription ID
+    try:
+        r = subprocess.run(["az", "account", "show", "--query", "id", "-o", "tsv"],
+                           capture_output=True, text=True, timeout=15, check=True)
+        sub_id = r.stdout.strip()
+    except (FileNotFoundError, subprocess.CalledProcessError, subprocess.TimeoutExpired):
+        if os.path.exists(cache_file):
+            with open(cache_file, encoding="utf-8") as f:
+                return json.load(f)
+        return {}
+
+    result = {}
+    apis = [
+        ("PostgreSQL", "Microsoft.DBforPostgreSQL", "2023-06-01-preview",
+         lambda d: (d.get("value", [{}])[0].get("supportedServerEditions", []) if d.get("value") else []),
+         lambda sku: (sku.get("vCores", 0), sku.get("supportedMemoryPerVcoreMb", 0), sku.get("supportedIops", 0))),
+        ("MySQL", "Microsoft.DBforMySQL", "2023-06-30",
+         lambda d: [e for fe in (d.get("value", [{}])[0].get("supportedFlexibleServerEditions", []) if d.get("value") else []) for e in [{"name": fe["name"], "supportedServerSkus": [s for v in fe.get("supportedServerVersions", []) for s in v.get("supportedSkus", [])]}]],
+         lambda sku: (sku.get("vCores", 0), sku.get("supportedMemoryPerVCoreMB", 0), sku.get("supportedIops", 0))),
+    ]
+
+    for engine, provider, api_ver, get_editions, get_specs in apis:
+        url = ("https://management.azure.com/subscriptions/" + sub_id +
+               "/providers/" + provider + "/locations/" + region +
+               "/capabilities?api-version=" + api_ver)
+        try:
+            log("appel Azure DB capabilities " + engine + " " + region + "...")
+            r = subprocess.run(["az", "rest", "--method", "get", "--url", url],
+                               capture_output=True, text=True, timeout=60, check=True)
+            data = json.loads(r.stdout)
+        except (subprocess.CalledProcessError, subprocess.TimeoutExpired, json.JSONDecodeError) as e:
+            log("Erreur DB caps " + engine + " : " + str(e))
+            continue
+
+        for edition in get_editions(data):
+            edition_name = edition.get("name", "")
+            for sku in edition.get("supportedServerSkus", []):
+                name = sku.get("name", "")
+                vcores, mem_per_vcore_mb, iops = get_specs(sku)
+                if vcores == 0:
+                    continue
+                ram_gb = round(vcores * mem_per_vcore_mb / 1024, 1)
+                # Clé normalisée : Standard_D2s_v3 → d2s_v3
+                key_norm = name.lower().replace("standard_", "")
+                result[engine.lower() + "||" + key_norm] = {
+                    "vcpu": vcores,
+                    "ram": ram_gb,
+                    "iops": iops,
+                    "edition": edition_name
+                }
+
+        log(engine + " DB caps : " + str(sum(1 for k in result if k.startswith(engine.lower()))) + " SKUs")
+
+    with open(cache_file, "w", encoding="utf-8") as f:
+        json.dump(result, f, ensure_ascii=False, indent=2)
+    log("sauvegarde DB caps -> " + cache_file)
+    return result
+
+
 # ── AZURE BDD ──
-def fetch_azure_bdd(region="francecentral"):
+def fetch_azure_bdd(region="francecentral", db_caps=None):
+    if db_caps is None:
+        db_caps = {}
     import urllib.parse
     location = AZURE_REGIONS.get(region, {}).get("location", "France Central")
     services = [
@@ -611,8 +688,18 @@ def fetch_azure_bdd(region="francecentral"):
             else:
                 display = engine + " " + str(vcpu) + "vCPU"
             key = engine + "||" + sku.strip()
+            # Enrichir avec les capabilities — match par engine + vcpu + edition
+            caps_match = None
+            for ck, cv in db_caps.items():
+                if ck.startswith(engine + "||") and cv.get("vcpu") == vcpu and cv.get("edition","").lower() == tier.replace("general","generalpurpose").replace("memory","memoryoptimized"):
+                    caps_match = cv
+                    break
+            if caps_match:
+                vcpu = caps_match.get("vcpu", vcpu)
+                ram  = caps_match.get("ram", ram)
+            iops = caps_match.get("iops", 0) if caps_match else 0
             if key not in result or price < result[key]["price"]:
-                result[key] = {"name": display, "price": price, "vcpu": vcpu, "ram": ram, "fam": tier, "engine": engine, "sku": sku_raw}
+                result[key] = {"name": display, "price": price, "vcpu": vcpu, "ram": ram, "fam": tier, "engine": engine, "sku": sku_raw, "iops": iops}
 
     log("instances BDD Azure uniques : " + str(len(result)))
 
@@ -1490,7 +1577,7 @@ function setView(v) {
   const cbMaxdisksRow = document.getElementById('cb-maxdisks-row');
   if (cbMaxdisksRow) cbMaxdisksRow.style.display = v === 'azure' ? '' : 'none';
   const cbDiskiopsRow = document.getElementById('cb-diskiops-row');
-  if (cbDiskiopsRow) cbDiskiopsRow.style.display = v === 'azure' ? '' : 'none';
+  if (cbDiskiopsRow) cbDiskiopsRow.style.display = (v === 'azure' || v === 'psql') ? '' : 'none';
   const cbSpotRow = document.getElementById('cb-spot-row');
   if (cbSpotRow) cbSpotRow.style.display = v === 'aws' ? '' : 'none';
   const cbSpotsavRow = document.getElementById('cb-spotsav-row');
@@ -1833,7 +1920,8 @@ function openSeriesModal(iname, fam) {
   document.getElementById('seriesTable').innerHTML =
     (function(){
       let mSortCol = 'price', mSortDir = 'asc';
-      const cols = [{k:'iname',l:'NAME'},{k:'fam',l:(view==='rds'||view==='psql'?'ENGINE':'FAMILY')},{k:'vcpu',l:'VCPU'},{k:'ram',l:'RAM'},{k:'price',l:'ON DEMAND COST'},{k:'month',l:'RESERVED COST'},{k:'score',l:'FINOPS SCORE'}];
+      const riLabel = (function(){ const sel = document.getElementById('riSelect'); return sel ? sel.options[sel.selectedIndex].textContent : 'RESERVED'; })();
+      const cols = [{k:'iname',l:'NAME'},{k:'fam',l:(view==='rds'||view==='psql'?'ENGINE':'FAMILY')},{k:'vcpu',l:'VCPU'},{k:'ram',l:'RAM'},{k:'price',l:'ON DEMAND COST'},{k:'month',l:riLabel.toUpperCase() + ' COST'},{k:'score',l:'FINOPS SCORE'}];
       function mHead() {
         return '<thead><tr>' + cols.map(col => {
           const active = col.k === mSortCol || (col.k==='month' && mSortCol==='price');
@@ -2003,7 +2091,7 @@ function render() {
         + '<td class="col-storage ec2-only"><span class="tag">'+(d.storage||'—')+'</span></td>'
         + '<td class="col-network"><span class="tag" style="white-space:nowrap">'+(d.network||'—')+'</span></td>'
         + '<td class="col-maxdisks"><span class="tag">'+(d.max_disks ? d.max_disks : '—')+'</span></td>'
-        + '<td class="col-diskiops"><span class="tag">'+(d.disk_iops ? d.disk_iops.toLocaleString() : '—')+'</span></td>'
+        + '<td class="col-diskiops"><span class="tag">'+((d.disk_iops||d.iops) ? (d.disk_iops||d.iops).toLocaleString() : '—')+'</span></td>'
         + '<td class="col-pvcpu"><span class="ph-mo">'+(d.vcpu > 0 ? f4(d.price/d.vcpu)+' '+currSym() : '—')+'</span></td>'
         + '<td class="col-price">'+((view==='aws'||view==='rds') ? '<span style="display:inline-block;padding:5px 12px;background:rgba(255,153,0,0.1);border:1px solid rgba(255,153,0,0.3);border-radius:6px;font-weight:700;font-size:.92rem;color:#ff9900;font-family:IBM Plex Mono,monospace">'+f4(d.price*(periodMult[period]||1))+' ' + currSym() + '</span>' : '<span style="display:inline-block;padding:5px 12px;background:rgba(0,170,255,0.1);border:1px solid rgba(0,170,255,0.3);border-radius:6px;font-weight:700;font-size:.92rem;color:#00aaff;font-family:IBM Plex Mono,monospace">'+f4(d.price*(periodMult[period]||1))+' ' + currSym() + '</span>')+'</td>'
         + '<td class="col-month"><span class="ph-mo">'+(function(){ const rp = d[getRiKey()]; if (!rp) return '<span style="color:var(--muted);font-size:.75rem">—</span>'; return f4(rp*(periodMult[period]||1))+' '+currSym(); })()+'</span></td>'
@@ -2050,7 +2138,7 @@ function showAllRows() {
       + '<td class="col-storage ec2-only"><span class="tag">'+(d.storage||'\u2014')+'</span></td>'
       + '<td class="col-network"><span class="tag" style="white-space:nowrap">'+(d.network||'\u2014')+'</span></td>'
       + '<td class="col-maxdisks"><span class="tag">'+(d.max_disks ? d.max_disks : '\u2014')+'</span></td>'
-      + '<td class="col-diskiops"><span class="tag">'+(d.disk_iops ? d.disk_iops.toLocaleString() : '\u2014')+'</span></td>'
+      + '<td class="col-diskiops"><span class="tag">'+((d.disk_iops||d.iops) ? (d.disk_iops||d.iops).toLocaleString() : '\u2014')+'</span></td>'
       + '<td class="col-pvcpu"><span class="ph-mo">'+(d.vcpu > 0 ? f4(d.price/d.vcpu)+' '+currSym() : '\u2014')+'</span></td>'
       + '<td class="col-price">'+((view==='aws'||view==='rds') ? '<span style="display:inline-block;padding:5px 12px;background:rgba(255,153,0,0.1);border:1px solid rgba(255,153,0,0.3);border-radius:6px;font-weight:700;font-size:.92rem;color:#ff9900;font-family:IBM Plex Mono,monospace">'+f4(d.price*(periodMult[period]||1))+' '+currSym()+'</span>' : '<span style="display:inline-block;padding:5px 12px;background:rgba(0,170,255,0.1);border:1px solid rgba(0,170,255,0.3);border-radius:6px;font-weight:700;font-size:.92rem;color:#00aaff;font-family:IBM Plex Mono,monospace">'+f4(d.price*(periodMult[period]||1))+' '+currSym()+'</span>')+'</td>'
       + '<td class="col-month"><span class="ph-mo">'+(function(){ const rp = d[getRiKey()]; if (!rp) return '<span style="color:var(--muted);font-size:.75rem">\u2014</span>'; return f4(rp*(periodMult[period]||1))+' '+currSym(); })()+'</span></td>'
@@ -4113,10 +4201,10 @@ def generate_html(aws_data, azure_data, rds_data, fetch_date, psql_data=None, aw
     azure_list = [{"iname": v["name"], "price": v["price"], "vcpu": v["vcpu"], "ram": v["ram"], "fam": v["fam"], "storage": v.get("storage",""), "processor": v.get("processor",""), "network": v.get("network",""), "max_disks": v.get("max_disks",0), "disk_iops": v.get("disk_iops",0), **ri3(v)} for v in sorted(azure_data.values(), key=lambda x: x["price"])]
     rds_list   = [{"iname": v["name"], "price": v["price"], "vcpu": v["vcpu"], "ram": v["ram"], "fam": v["fam"], "engine": v.get("engine",""), "deploy": v.get("deploy",""), "processor": v.get("processor",""), "network": v.get("network",""), "curgen": v.get("curgen",False), **ri3(v)} for v in sorted(rds_data.values(), key=lambda x: x["price"])]
     psql_data  = psql_data or {}
-    psql_list  = [{"iname": v["name"], "price": v["price"], "vcpu": v["vcpu"], "ram": v["ram"], "fam": v["fam"], "engine": v.get("engine",""), "sku": v.get("sku",""), **ri3(v)} for v in sorted(psql_data.values(), key=lambda x: x["price"])]
+    psql_list  = [{"iname": v["name"], "price": v["price"], "vcpu": v["vcpu"], "ram": v["ram"], "fam": v["fam"], "engine": v.get("engine",""), "sku": v.get("sku",""), "iops": v.get("iops",0), **ri3(v)} for v in sorted(psql_data.values(), key=lambda x: x["price"])]
 
     def to_list(d):     return [{"iname": v["name"], "price": v["price"], "vcpu": v["vcpu"], "ram": v["ram"], "fam": v["fam"], "storage": v.get("storage",""), "processor": v.get("processor",""), "network": v.get("network",""), "max_disks": v.get("max_disks",0), "disk_iops": v.get("disk_iops",0), "curgen": v.get("curgen",False), **ri3(v), **spot3(v)} for v in sorted(d.values(), key=lambda x: x["price"])]
-    def to_list_bdd(d): return [{"iname": v["name"], "price": v["price"], "vcpu": v["vcpu"], "ram": v["ram"], "fam": v["fam"], "engine": v.get("engine",""), "sku": v.get("sku",""), **ri3(v)} for v in sorted(d.values(), key=lambda x: x["price"])]
+    def to_list_bdd(d): return [{"iname": v["name"], "price": v["price"], "vcpu": v["vcpu"], "ram": v["ram"], "fam": v["fam"], "engine": v.get("engine",""), "sku": v.get("sku",""), "iops": v.get("iops",0), **ri3(v)} for v in sorted(d.values(), key=lambda x: x["price"])]
 
     aws_regions_data   = aws_regions_data   or {}
     azure_regions_data = azure_regions_data or {}
@@ -4310,16 +4398,36 @@ def main():
                 azure_regions_data[region] = {}
     azure_data = azure_regions_data.get("francecentral", {})
 
+    # ── Azure DB Capabilities (specs hardware) — cache 30j ──
+    azure_db_caps_by_region = {}
+    for region in AZURE_REGIONS:
+        azure_db_caps_by_region[region] = fetch_azure_db_capabilities(region, az_available=_az_available)
+
     # ── Azure BDD : toutes les régions ──
     bdd_regions_data = {}
     for region in AZURE_REGIONS:
+        db_caps = azure_db_caps_by_region.get(region, {})
         bdd_file = os.path.join(DATA_DIR_AZ, "bdd-" + region + ".json")
         if is_fresh(bdd_file):
             log("cache frais utilise : " + bdd_file)
-            with open(bdd_file, encoding="utf-8") as f: bdd_regions_data[region] = json.load(f)
+            with open(bdd_file, encoding="utf-8") as f: cached = json.load(f)
+            # Enrichir les données en cache avec les capabilities
+            if db_caps:
+                for key, vm in cached.items():
+                    engine = vm.get("engine", "")
+                    vcpu = vm.get("vcpu", 0)
+                    tier = vm.get("fam", "general")
+                    edition = tier.replace("general","generalpurpose").replace("memory","memoryoptimized")
+                    for ck, cv in db_caps.items():
+                        if ck.startswith(engine + "||") and cv.get("vcpu") == vcpu and cv.get("edition","").lower() == edition:
+                            vm["vcpu"] = cv.get("vcpu", vcpu)
+                            vm["ram"]  = cv.get("ram", vm.get("ram", 0))
+                            vm["iops"] = cv.get("iops", 0)
+                            break
+            bdd_regions_data[region] = cached
             continue
         try:
-            data = fetch_azure_bdd(region)
+            data = fetch_azure_bdd(region, db_caps=db_caps)
             with open(bdd_file, "w", encoding="utf-8") as f: json.dump(data, f, indent=2)
             log("sauvegarde -> " + bdd_file)
             bdd_regions_data[region] = data
