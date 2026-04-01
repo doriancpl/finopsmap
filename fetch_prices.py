@@ -464,6 +464,64 @@ def fetch_azure(region="francecentral", skus=None):
     log("Azure avec Reserved 1yr : " + str(ri1) + "  3yr : " + str(ri3))
     return result
 
+# ── AZURE DISKS ──
+AZURE_TIER_SIZES = {
+    'P1':4,'P2':8,'P3':16,'P4':32,'P6':64,'P10':128,'P15':256,'P20':512,'P30':1024,'P40':2048,'P50':4096,'P60':8192,'P70':16384,'P80':32767,
+    'E1':4,'E2':8,'E3':16,'E4':32,'E6':64,'E10':128,'E15':256,'E20':512,'E30':1024,'E40':2048,'E50':4096,'E60':8192,'E70':16384,'E80':32767,
+    'S4':32,'S6':64,'S10':128,'S15':256,'S20':512,'S30':1024,'S40':2048,'S50':4096,'S60':8192,'S70':16384,'S80':32767,
+}
+
+def fetch_azure_disks(region="francecentral"):
+    """Récupère les prix des Managed Disks Azure (Premium SSD, Standard SSD, Standard HDD)."""
+    print("\nAzure Disks " + region + "...")
+    products = [
+        ("Premium SSD Managed Disks",  "premium_ssd",  "Premium SSD",  "P"),
+        ("Standard SSD Managed Disks", "standard_ssd", "Standard SSD", "E"),
+        ("Standard HDD Managed Disks", "standard_hdd", "Standard HDD", "S"),
+    ]
+    result = {}
+    for prod_name, key, label, prefix in products:
+        filt = "armRegionName eq '" + region + "' and productName eq '" + prod_name + "' and priceType eq 'Consumption'"
+        encoded = filt.replace(" ", "%20").replace("'", "%27")
+        path = "/api/retail/prices?$filter=" + encoded + "&$top=200"
+        try:
+            conn = http.client.HTTPSConnection("prices.azure.com", timeout=30)
+            conn.request("GET", path, headers={"User-Agent": "cloudprice/1.0"})
+            r = conn.getresponse()
+            if r.status != 200:
+                conn.close()
+                continue
+            data = json.loads(r.read())
+            conn.close()
+        except Exception as e:
+            log("Erreur Azure Disks " + prod_name + " : " + str(e))
+            continue
+
+        tiers = []
+        for item in data.get("Items", []):
+            sku_name = item.get("skuName", "")
+            meter = item.get("meterName", "")
+            price = item.get("retailPrice", 0)
+            if price <= 0:
+                continue
+            if "LRS" not in sku_name:
+                continue
+            if "Mount" in meter or "Operations" in meter or "Snapshots" in meter or "Burst" in meter:
+                continue
+            tier = sku_name.replace(" LRS", "").strip()
+            size_gb = AZURE_TIER_SIZES.get(tier, 0)
+            if size_gb == 0:
+                continue
+            tiers.append({"tier": tier, "size": size_gb, "price": round(price, 4)})
+
+        tiers.sort(key=lambda t: t["size"])
+        if tiers:
+            result[key] = {"name": key, "type": label, "tiers": tiers}
+            log(label + " : " + str(len(tiers)) + " tiers")
+
+    return result
+
+
 # ── AZURE BDD ──
 def fetch_azure_bdd(region="francecentral"):
     import urllib.parse
@@ -1046,29 +1104,29 @@ HTML_TEMPLATE = """
         <div class="tco-field-row">
           <div>
             <label class="tco-label">vCPU</label>
-            <select id="tcoCpu" class="tco-input" onchange="filterTcoInstances()">
+            <select id="tcoCpu" class="tco-input" onchange="filterTcoInstances();autoCalcTco()">
               <option value="">Any</option>
             </select>
           </div>
           <div>
             <label class="tco-label">RAM (GiB)</label>
-            <select id="tcoRam" class="tco-input" onchange="filterTcoInstances()">
+            <select id="tcoRam" class="tco-input" onchange="filterTcoInstances();autoCalcTco()">
               <option value="">Any</option>
             </select>
           </div>
         </div>
         <div class="tco-field">
           <label class="tco-label">Instance type</label>
-          <select id="tcoInstance" class="tco-input" onchange="updateTcoCommitOptions()"><option value="">&#x2014; loading instances &#x2014;</option></select>
+          <select id="tcoInstance" class="tco-input" onchange="updateTcoCommitOptions();autoCalcTco()"><option value="">&#x2014; loading instances &#x2014;</option></select>
         </div>
         <div class="tco-field-row">
           <div>
             <label class="tco-label">Nb instances</label>
-            <input type="number" id="tcoNbInst" class="tco-input" value="5" min="1">
+            <input type="number" id="tcoNbInst" class="tco-input" value="1" min="1" oninput="autoCalcTco()">
           </div>
           <div>
             <label class="tco-label">Usage / month</label>
-            <select id="tcoUsage" class="tco-input">
+            <select id="tcoUsage" class="tco-input" onchange="autoCalcTco()">
               <option value="730">730h (24/7)</option>
               <option value="480">480h (16h/day)</option>
               <option value="160">160h (work hrs)</option>
@@ -1077,7 +1135,7 @@ HTML_TEMPLATE = """
         </div>
         <div class="tco-field">
           <label class="tco-label">Commitment</label>
-          <select id="tcoCommit" class="tco-input">
+          <select id="tcoCommit" class="tco-input" onchange="autoCalcTco()">
             <option value="od">On-Demand</option>
             <option value="ri1y" selected>Reserved 1yr No Upfront</option>
             <option value="ri1y_all">Reserved 1yr All Upfront</option>
@@ -1086,28 +1144,39 @@ HTML_TEMPLATE = """
           </select>
         </div>
 
+        <div id="tcoStorageSection">
         <hr class="tco-sep">
         <div class="tco-panel-title">Storage</div>
-        <div class="tco-field-row">
+        <div class="tco-field-row" id="tcoStorageRow-aws">
           <div>
-            <label class="tco-label">EBS / Managed Disk (GB)</label>
-            <input type="number" id="tcoStorage" class="tco-input" value="200" min="0">
+            <label class="tco-label">EBS Storage (GB)</label>
+            <input type="number" id="tcoStorage" class="tco-input" value="200" min="0" oninput="autoCalcTco()">
           </div>
           <div>
             <label class="tco-label">Disk type</label>
-            <select id="tcoDiskType" class="tco-input"></select>
+            <select id="tcoDiskType" class="tco-input" onchange="autoCalcTco()"></select>
           </div>
         </div>
-
+        <div class="tco-field-row" id="tcoStorageRow-azure" style="display:none">
+          <div>
+            <label class="tco-label">Disk type</label>
+            <select id="tcoAzureDiskType" class="tco-input" onchange="updateAzureDiskTiers();autoCalcTco()"></select>
+          </div>
+          <div>
+            <label class="tco-label">Disk size</label>
+            <select id="tcoAzureDisk" class="tco-input" onchange="autoCalcTco()"></select>
+          </div>
+        </div>
+        </div>
 
         <hr class="tco-sep">
         <div class="tco-panel-title">Duration</div>
         <div class="tco-dur-toggle">
-          <div class="tco-dur-btn" onclick="tcoSetDur(1,this)">1 yr</div>
-          <div class="tco-dur-btn on" onclick="tcoSetDur(2,this)">2 yr</div>
-          <div class="tco-dur-btn" onclick="tcoSetDur(3,this)">3 yr</div>
+          <div class="tco-dur-btn" onclick="tcoSetDur(1,this);autoCalcTco()">1 yr</div>
+          <div class="tco-dur-btn on" onclick="tcoSetDur(2,this);autoCalcTco()">2 yr</div>
+          <div class="tco-dur-btn" onclick="tcoSetDur(3,this);autoCalcTco()">3 yr</div>
         </div>
-        <button class="tco-calc-btn" onclick="calcTco()">&#x2192; Calculate TCO</button>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:.68rem;color:#6b738f;margin-top:12px;text-align:center">Results update automatically</div>
       </div>
     </div>
 
@@ -1229,6 +1298,7 @@ let AWS_ALL_REGIONS = {}, RDS_ALL_REGIONS = {}, AZURE_ALL_REGIONS = {}, BDD_ALL_
 let REGIONS_META = {}, AZURE_REGIONS_META = {}, CARBON_DATA = {}, VEILLE_DATA = [];
 let EUR_RATE = 0.92;
 const DISK_REGIONS = %%DISK_REGIONS%%;
+const AZURE_DISK_REGIONS = %%AZURE_DISK_REGIONS%%;
 let currentRegion      = 'eu-west-3';
 let currentAzureRegion = 'francecentral';
 
@@ -2394,35 +2464,73 @@ function initTcoInstanceSelect() {
   filterTcoInstances();
 }
 
-// Correspondance Azure par type EBS
-const AZ_DISK_MAP = {
-  gp3:      { name:'Premium SSD LRS',   price_gb: 0.115 },
-  gp2:      { name:'Standard SSD LRS',  price_gb: 0.094 },
-  io1:      { name:'Ultra Disk',        price_gb: 0.125 },
-  io2:      { name:'Ultra Disk',        price_gb: 0.125 },
-  st1:      { name:'Standard HDD LRS',  price_gb: 0.043 },
-  sc1:      { name:'Standard HDD LRS',  price_gb: 0.043 },
-  standard: { name:'Standard HDD LRS',  price_gb: 0.043 },
-};
+function updateAzureDiskTiers() {
+  const typeSel = document.getElementById('tcoAzureDiskType');
+  const tierSel = document.getElementById('tcoAzureDisk');
+  if (!typeSel || !tierSel) return;
+  const azType = typeSel.value;
+  const prev = tierSel.value;
+  tierSel.innerHTML = '';
+  const azDiskData = AZURE_DISK_REGIONS[currentAzureRegion] || AZURE_DISK_REGIONS['francecentral'] || {};
+  const azDisk = azDiskData[azType] || {};
+  (azDisk.tiers || []).forEach(function(t){
+    const o = document.createElement('option');
+    o.value = azType + '|' + t.tier;
+    o.textContent = t.tier + ' \u2014 ' + t.size + ' GB ($' + t.price.toFixed(2) + '/month)';
+    if (o.value === prev) o.selected = true;
+    tierSel.appendChild(o);
+  });
+}
 
 function initTcoDiskSelect() {
   const sel = document.getElementById('tcoDiskType');
+  const azSel = document.getElementById('tcoAzureDisk');
+  const awsRow = document.getElementById('tcoStorageRow-aws');
+  const azRow = document.getElementById('tcoStorageRow-azure');
   if (!sel) return;
-  const prev = sel.value;
-  const diskData = DISK_REGIONS[currentRegion] || DISK_REGIONS['eu-west-3'] || {};
-  const order = ['gp3','gp2','io1','io2','st1','sc1','standard'];
-  const keys = order.filter(function(k){ return diskData[k]; })
-    .concat(Object.keys(diskData).filter(function(k){ return order.indexOf(k)===-1; }));
-  sel.innerHTML = '';
-  keys.forEach(function(k){
-    const d = diskData[k];
-    const az = AZ_DISK_MAP[k] || { name:'Standard SSD', price_gb: 0.094 };
-    const o = document.createElement('option');
-    o.value = k;
-    o.textContent = k.toUpperCase() + ' — ' + d.type + ' ($' + d.price_gb.toFixed(4) + '/GB/mo)';
-    if (k === prev || (!prev && k === 'gp3')) o.selected = true;
-    sel.appendChild(o);
-  });
+  const isAzure = view === 'azure' || view === 'psql';
+
+  // Toggle visibility
+  const storageSection = document.getElementById('tcoStorageSection');
+  if (storageSection) storageSection.style.display = (view === 'psql') ? 'none' : '';
+  if (awsRow) awsRow.style.display = isAzure ? 'none' : '';
+  if (azRow) azRow.style.display = (view === 'azure') ? '' : 'none';
+
+  if (isAzure) {
+    const typeSel = document.getElementById('tcoAzureDiskType');
+    if (typeSel) {
+      const prevType = typeSel.value;
+      typeSel.innerHTML = '';
+      const azDiskData = AZURE_DISK_REGIONS[currentAzureRegion] || AZURE_DISK_REGIONS['francecentral'] || {};
+      ['premium_ssd','standard_ssd','standard_hdd'].forEach(function(k){
+        const d = azDiskData[k];
+        if (!d) return;
+        const o = document.createElement('option');
+        o.value = k;
+        o.textContent = d.type;
+        if (k === prevType || (!prevType && k === 'premium_ssd')) o.selected = true;
+        typeSel.appendChild(o);
+      });
+      updateAzureDiskTiers();
+    }
+  } else {
+    const prev = sel.value;
+    sel.innerHTML = '';
+    const diskData = DISK_REGIONS[currentRegion] || DISK_REGIONS['eu-west-3'] || {};
+    const isRds = view === 'rds';
+    const rdsDiskTypes = ['gp3','gp2','io1','io2'];
+    const order = ['gp3','gp2','io1','io2','st1','sc1','standard'];
+    const keys = order.filter(function(k){ return diskData[k] && (!isRds || rdsDiskTypes.indexOf(k) !== -1); })
+      .concat(Object.keys(diskData).filter(function(k){ return order.indexOf(k)===-1 && (!isRds || rdsDiskTypes.indexOf(k) !== -1); }));
+    keys.forEach(function(k){
+      const d = diskData[k];
+      const o = document.createElement('option');
+      o.value = k;
+      o.textContent = k.toUpperCase() + ' — ' + d.type;
+      if (k === prev || (!prev && k === 'gp3')) o.selected = true;
+      sel.appendChild(o);
+    });
+  }
 }
 
 function filterTcoInstances() {
@@ -2460,11 +2568,13 @@ function filterTcoInstances() {
     return true;
   }).sort(function(a,b){ return a.iname.localeCompare(b.iname); });
 
+  const prevVal = instSel.value;
   instSel.innerHTML = '';
+  const placeholder = document.createElement('option');
+  placeholder.value = ''; placeholder.textContent = '— Select an instance —';
+  instSel.appendChild(placeholder);
   if (filtered.length === 0) {
-    const o = document.createElement('option');
-    o.value = ''; o.textContent = '— no matching instances —';
-    instSel.appendChild(o);
+    placeholder.textContent = '— no matching instances —';
     return;
   }
   filtered.forEach(function(d){
@@ -2472,6 +2582,7 @@ function filterTcoInstances() {
     o.value = d.iname;
     const ramStr = d.ram >= 1024 ? (d.ram/1024).toFixed(0)+' TiB' : d.ram+' GiB';
     o.textContent = d.iname + '  \u2014  ' + d.vcpu + ' vCPU / ' + ramStr;
+    if (d.iname === prevVal) o.selected = true;
     instSel.appendChild(o);
   });
   updateTcoCommitOptions();
@@ -2510,13 +2621,17 @@ function tcoFmt(v) {
   return '$' + Math.round(v).toLocaleString();
 }
 
+function autoCalcTco() {
+  const iname = document.getElementById('tcoInstance').value;
+  if (!iname) return;
+  calcTco();
+}
+
 function calcTco() {
   const iname       = document.getElementById('tcoInstance').value;
   const nbInst      = Math.max(1, parseInt(document.getElementById('tcoNbInst').value) || 1);
   const hpm         = parseFloat(document.getElementById('tcoUsage').value) || 730;
   const commit      = document.getElementById('tcoCommit').value;
-  const storageGB   = parseFloat(document.getElementById('tcoStorage').value) || 0;
-  const diskType    = document.getElementById('tcoDiskType').value;
   const egressGB    = 0;
   const supportType = 'none';
   const months      = tcoDurYears * 12;
@@ -2537,10 +2652,33 @@ function calcTco() {
   const compute = rate * hpm * nbInst * months;
 
   // Storage
-  const diskRegData = DISK_REGIONS[currentRegion] || DISK_REGIONS['eu-west-3'] || {};
-  const diskInfo    = diskRegData[diskType] || {};
-  const diskPrice   = isAzure ? (AZ_DISK_MAP[diskType] || { price_gb: 0.094 }).price_gb : (diskInfo.price_gb || 0.0928);
-  const storageCost = diskPrice * storageGB * nbInst * months;
+  let storageCost = 0;
+  let storageGB = 0;
+  let diskLabel = '';
+  let diskType = '';
+  if (isAzure) {
+    const azDiskVal = document.getElementById('tcoAzureDisk').value || '';
+    const parts = azDiskVal.split('|');
+    const azType = parts[0] || 'premium_ssd';
+    const azTier = parts[1] || '';
+    const azDiskData = AZURE_DISK_REGIONS[currentAzureRegion] || AZURE_DISK_REGIONS['francecentral'] || {};
+    const azDisk = azDiskData[azType] || {};
+    const tiers = azDisk.tiers || [];
+    const tier = tiers.find(function(t){ return t.tier === azTier; }) || tiers[0];
+    diskLabel = (azDisk.type || azType) + ' ' + (tier ? tier.tier : '');
+    diskType = azType;
+    storageGB = tier ? tier.size : 0;
+    const tierPrice = tier ? tier.price : 0;
+    storageCost = tierPrice * nbInst * months;
+  } else {
+    storageGB = parseFloat(document.getElementById('tcoStorage').value) || 0;
+    diskType = document.getElementById('tcoDiskType').value;
+    const diskRegData = DISK_REGIONS[currentRegion] || DISK_REGIONS['eu-west-3'] || {};
+    const diskInfo = diskRegData[diskType] || {};
+    const diskPrice = diskInfo.price_gb || 0.0928;
+    storageCost = diskPrice * storageGB * nbInst * months;
+    diskLabel = diskType.toUpperCase();
+  }
 
   // Network egress (EU, $/GB)
   const egressRate = isAzure ? 0.087 : 0.09;
@@ -2563,7 +2701,7 @@ function calcTco() {
     cloud: isAzure ? 'Azure' : 'AWS',
     cloudColor: isAzure ? 'var(--azure)' : 'var(--aws)',
     total, months, compute, storageCost, egressCost, supportCost,
-    rate, nbInst, hpm, storageGB, diskType, egressGB,
+    rate, nbInst, hpm, storageGB, diskType, diskLabel, egressGB,
     commitLabel, inst, suppPct, odTotal
   });
 }
@@ -2592,7 +2730,7 @@ function renderTcoResults(r) {
   // Breakdown rows — single cloud
   const bkRows = [
     { name:'Compute',        sub: r.nbInst + '\u00d7 ' + r.inst.iname + ' \u00b7 ' + r.commitLabel, cost: r.compute },
-    { name:'Storage',        sub: r.storageGB + ' GB ' + r.diskType + ' \u00d7 ' + r.nbInst, cost: r.storageCost },
+    { name:'Storage',        sub: r.storageGB + ' GB ' + r.diskLabel + ' \u00d7 ' + r.nbInst, cost: r.storageCost },
     { name:'Network egress', sub: r.egressGB  + ' GB/mo EU', cost: r.egressCost },
     { name:'Support',        sub: (r.suppPct*100).toFixed(0) + '% of compute', cost: r.supportCost },
   ].filter(function(row){ return row.cost > 0; });
@@ -2702,8 +2840,10 @@ function renderTcoResults(r) {
     odDots+='<text x="'+(svgW-pR-5)+'" y="'+midY.toFixed(1)+'" fill="var(--accent,#7bffe0)" font-size="11" font-weight="700" font-family="IBM Plex Mono,monospace" text-anchor="end">▼ '+savPct+'% ('+savAmt+')</text>';
   }
 
-  // Build SVG
-  var chartSvg='<svg viewBox="0 0 '+svgW+' '+svgH+'" style="width:100%;height:auto;max-height:280px" preserveAspectRatio="xMidYMid meet">'
+  // Build SVG — store chart params for tooltip
+  window._tcoChart = { svgW:svgW, svgH:svgH, pL:pL, pR:pR, pT:pT, pB:pB, cW:cW, cH:cH, months:r.months, total:r.total, odTotal:hasOd?r.odTotal:null, maxV:maxV, strokeColor:strokeColor, odColor:hasOd?odColor:null, commitLabel:r.commitLabel };
+
+  var chartSvg='<svg id="tcoChartSvg" viewBox="0 0 '+svgW+' '+svgH+'" style="width:100%;height:auto;max-height:280px" preserveAspectRatio="xMidYMid meet">'
     +defs+grid;
   // On-demand area + line (behind reserved)
   if(hasOd){
@@ -2714,8 +2854,15 @@ function renderTcoResults(r) {
   // Reserved area + line (on top)
   chartSvg+='<polygon points="'+pts+' '+(svgW-pR)+','+bLine+' '+pL+','+bLine+'" fill="url(#'+gradId+')"/>'
     +'<polyline points="'+pts+'" fill="none" stroke="'+strokeColor+'" stroke-width="2.5" stroke-linejoin="round"/>'
-    +dots+mLabels
-    +'</svg>';
+    +dots+mLabels;
+  // Interactive overlay: vertical line + hover dots + invisible rect for mouse capture
+  chartSvg+='<line id="tcoHoverLine" x1="0" y1="'+pT+'" x2="0" y2="'+bLine+'" stroke="#c8d0e8" stroke-width="0.8" stroke-dasharray="3,3" opacity="0" pointer-events="none"/>';
+  chartSvg+='<circle id="tcoHoverDot" r="5" fill="'+strokeColor+'" stroke="var(--bg)" stroke-width="2" opacity="0" pointer-events="none"/>';
+  if(hasOd) chartSvg+='<circle id="tcoHoverDotOd" r="5" fill="'+odColor+'" stroke="var(--bg)" stroke-width="2" opacity="0" pointer-events="none"/>';
+  chartSvg+='<rect x="'+pL+'" y="'+pT+'" width="'+cW+'" height="'+cH+'" fill="transparent" style="cursor:crosshair" onmousemove="tcoChartHover(event)" onmouseleave="tcoChartLeave()"/>';
+  chartSvg+='</svg>';
+  // Tooltip div
+  chartSvg+='<div id="tcoChartTip" style="display:none;position:absolute;background:rgba(12,14,20,0.95);border:1px solid #2a3050;border-radius:6px;padding:8px 12px;font-family:IBM Plex Mono,monospace;font-size:.72rem;color:#c8d0e8;pointer-events:none;z-index:50;white-space:nowrap;box-shadow:0 4px 16px rgba(0,0,0,.6)"></div>';
 
   // Legend
   var legendHtml = '<div class="tco-legend-item"><div class="tco-legend-dot" style="background:'+strokeColor+'"></div>' + r.commitLabel + '</div>';
@@ -2731,6 +2878,57 @@ function renderTcoResults(r) {
 
   el.innerHTML = sumHtml + bkHtml + chartHtml;
 }
+function tcoChartHover(evt) {
+  var c = window._tcoChart; if (!c) return;
+  var svg = document.getElementById('tcoChartSvg'); if (!svg) return;
+  var pt = svg.createSVGPoint();
+  pt.x = evt.clientX; pt.y = evt.clientY;
+  var svgPt = pt.matrixTransform(svg.getScreenCTM().inverse());
+  var mouseX = svgPt.x;
+  var month = Math.round((mouseX - c.pL) / c.cW * c.months);
+  if (month < 0) month = 0; if (month > c.months) month = c.months;
+  var x = c.pL + (month / c.months) * c.cW;
+  var riVal = c.total * month / c.months;
+  var riY = c.pT + c.cH - (riVal / c.maxV) * c.cH;
+  // Vertical line
+  var line = document.getElementById('tcoHoverLine');
+  if (line) { line.setAttribute('x1', x); line.setAttribute('x2', x); line.setAttribute('opacity', '1'); }
+  // Reserved dot
+  var dot = document.getElementById('tcoHoverDot');
+  if (dot) { dot.setAttribute('cx', x); dot.setAttribute('cy', riY); dot.setAttribute('opacity', '1'); }
+  // OD dot
+  var tipHtml = '<div style="margin-bottom:4px;color:#6b738f;font-size:.65rem">Month ' + month + '</div>';
+  tipHtml += '<div style="color:' + c.strokeColor + '">' + c.commitLabel + ': ' + tcoFmt(riVal) + '</div>';
+  if (c.odTotal) {
+    var odVal = c.odTotal * month / c.months;
+    var odY = c.pT + c.cH - (odVal / c.maxV) * c.cH;
+    var dotOd = document.getElementById('tcoHoverDotOd');
+    if (dotOd) { dotOd.setAttribute('cx', x); dotOd.setAttribute('cy', odY); dotOd.setAttribute('opacity', '1'); }
+    tipHtml += '<div style="color:' + c.odColor + '">On-Demand: ' + tcoFmt(odVal) + '</div>';
+    var sav = odVal - riVal;
+    if (sav > 0) tipHtml += '<div style="color:var(--accent);margin-top:3px">Savings: ' + tcoFmt(sav) + '</div>';
+  }
+  // Position tooltip
+  var tip = document.getElementById('tcoChartTip');
+  if (tip) {
+    tip.innerHTML = tipHtml;
+    tip.style.display = 'block';
+    var panel = tip.parentElement;
+    var panelRect = panel.getBoundingClientRect();
+    var tipX = evt.clientX - panelRect.left + 16;
+    var tipY = evt.clientY - panelRect.top - 20;
+    if (tipX + 180 > panelRect.width) tipX = tipX - 200;
+    tip.style.left = tipX + 'px';
+    tip.style.top = tipY + 'px';
+  }
+}
+function tcoChartLeave() {
+  var line = document.getElementById('tcoHoverLine'); if (line) line.setAttribute('opacity', '0');
+  var dot = document.getElementById('tcoHoverDot'); if (dot) dot.setAttribute('opacity', '0');
+  var dotOd = document.getElementById('tcoHoverDotOd'); if (dotOd) dotOd.setAttribute('opacity', '0');
+  var tip = document.getElementById('tcoChartTip'); if (tip) tip.style.display = 'none';
+}
+
 let veilleFilterSrc = 'all';
 let _cmpRadarChart = null;
 
@@ -3900,7 +4098,7 @@ def fetch_rds(region="eu-west-3"):
     return result
 
 
-def generate_html(aws_data, azure_data, rds_data, fetch_date, psql_data=None, aws_regions_data=None, azure_regions_data=None, bdd_regions_data=None, veille_data=None, rds_regions_data=None, carbon_data=None, eur_rate=0.92):
+def generate_html(aws_data, azure_data, rds_data, fetch_date, psql_data=None, aws_regions_data=None, azure_regions_data=None, bdd_regions_data=None, veille_data=None, rds_regions_data=None, carbon_data=None, eur_rate=0.92, azure_disk_regions=None):
     def ri3(v):
         d = {}
         if v.get("price_1yr"):     d["price_1yr"]     = v["price_1yr"]
@@ -3975,6 +4173,7 @@ def generate_html(aws_data, azure_data, rds_data, fetch_date, psql_data=None, aw
     html = html.replace("%%FETCH_DATE%%",          fetch_date)
     html = html.replace("%%WORLD_TOPO%%",          world_topo)
     html = html.replace("%%DISK_REGIONS%%",        json.dumps(disk_regions))
+    html = html.replace("%%AZURE_DISK_REGIONS%%", json.dumps(azure_disk_regions or {}))
 
     out = os.path.join(os.path.dirname(os.path.abspath(__file__)), "index.html")
     with open(out, "w", encoding="utf-8", errors="surrogatepass") as f:
@@ -4134,6 +4333,25 @@ def main():
                 bdd_regions_data[region] = {}
     psql_data = bdd_regions_data.get("francecentral", {})
 
+    # ── Azure Disks : toutes les régions ──
+    azure_disk_regions = {}
+    for region in AZURE_REGIONS:
+        az_disk_file = os.path.join(DATA_DIR_AZ, "disk-" + region + ".json")
+        if is_fresh(az_disk_file):
+            log("cache frais utilise : " + az_disk_file)
+            with open(az_disk_file, encoding="utf-8") as f: azure_disk_regions[region] = json.load(f)
+            continue
+        try:
+            data = fetch_azure_disks(region)
+            with open(az_disk_file, "w", encoding="utf-8") as f: json.dump(data, f, indent=2)
+            log("sauvegarde -> " + az_disk_file)
+            azure_disk_regions[region] = data
+        except Exception as e:
+            print("  Erreur Azure Disks " + region + " : " + str(e))
+            if os.path.exists(az_disk_file):
+                log("cache utilise : " + az_disk_file)
+                with open(az_disk_file, encoding="utf-8") as f: azure_disk_regions[region] = json.load(f)
+
     # ── AWS EC2 : toutes les régions ──
     aws_regions_data = {}
     for region in AWS_REGIONS:
@@ -4184,7 +4402,7 @@ def main():
     veille_data  = fetch_veille()
     carbon_data  = fetch_carbon()
     eur_rate     = fetch_eur_rate()
-    html_path = generate_html(aws_data, azure_data, rds_data, fetch_date, psql_data, aws_regions_data, azure_regions_data, bdd_regions_data, veille_data, rds_regions_data, carbon_data, eur_rate)
+    html_path = generate_html(aws_data, azure_data, rds_data, fetch_date, psql_data, aws_regions_data, azure_regions_data, bdd_regions_data, veille_data, rds_regions_data, carbon_data, eur_rate, azure_disk_regions)
     log("genere -> " + html_path)
     print("\nTermine ! Ouvrez : " + html_path + "\n")
 
