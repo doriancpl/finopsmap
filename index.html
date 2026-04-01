@@ -25,7 +25,7 @@
 <link rel="preload" href="data/agregations/regions_meta.json" as="fetch" crossorigin>
 <link rel="preload" href="data/carbon.json" as="fetch" crossorigin>
 <link rel="preload" href="data/eur_rate.json" as="fetch" crossorigin>
-<link rel="stylesheet" href="css/styles.css?v=4/1/2026 · 10:58 AM">
+<link rel="stylesheet" href="css/styles.css?v=4/1/2026 · 11:08 AM">
 </head>
 <body>
 <div id="topbar">
@@ -128,7 +128,7 @@
       <div id="priceSliderThumb" style="position:absolute;width:12px;height:12px;background:#7bffe0;border-radius:50%;pointer-events:none;top:50%;transform:translate(-50%,-50%)"></div>
       <input type="range" id="priceSlider" min="0" max="100" step="1" value="100" oninput="onPriceSlider()" style="position:absolute;left:12px;right:12px;width:calc(100% - 24px);margin:0;opacity:0;cursor:pointer;height:36px">
     </div>
-    <span id="priceSliderLbl" style="padding:0 12px;font-family:'IBM Plex Mono',monospace;font-size:.75rem;font-weight:700;color:#3a3f55;min-width:52px;border-left:1px solid var(--b1);height:100%;display:flex;align-items:center">any</span>
+    <span id="priceSliderLbl" style="padding:0 12px;font-family:'IBM Plex Mono',monospace;font-size:.75rem;font-weight:700;color:#c8d0e8;min-width:52px;border-left:1px solid var(--b1);height:100%;display:flex;align-items:center">any</span>
   </div>
 
   <div style="display:inline-flex;align-items:center;background:var(--s1);border:1px solid var(--b1);border-radius:6px;overflow:hidden;height:36px" id="riUpfrontToggle">
@@ -415,7 +415,7 @@
     <a href="https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEC2/current/eu-west-3/index.json" target="_blank" style="color:var(--text);text-decoration:none">AWS Price List API</a>
   </span>
   <span class="fts" style="color:var(--text)"><a href="#" onclick="document.getElementById('aboutModal').style.display='flex';return false;" style="color:var(--text);text-decoration:none;border-bottom:1px dotted var(--muted)">FinOpsMap · About me</a></span>
-  <span class="fts" style="color:var(--text)">Updated 4/1/2026 · 10:58 AM</span>
+  <span class="fts" style="color:var(--text)">Updated 4/1/2026 · 11:08 AM</span>
 </footer>
 
 <div id="aboutModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;align-items:center;justify-content:center" onclick="if(event.target===this)this.style.display='none'">
@@ -1449,7 +1449,7 @@ function onPriceSlider() {
     lbl.style.color = '#7bffe0';
   } else {
     lbl.textContent = 'any';
-    lbl.style.color = '#3a3f55';
+    lbl.style.color = '#c8d0e8';
   }
   render();
 }

@@ -916,7 +916,7 @@ HTML_TEMPLATE = """
       <div id="priceSliderThumb" style="position:absolute;width:12px;height:12px;background:#7bffe0;border-radius:50%;pointer-events:none;top:50%;transform:translate(-50%,-50%)"></div>
       <input type="range" id="priceSlider" min="0" max="100" step="1" value="100" oninput="onPriceSlider()" style="position:absolute;left:12px;right:12px;width:calc(100% - 24px);margin:0;opacity:0;cursor:pointer;height:36px">
     </div>
-    <span id="priceSliderLbl" style="padding:0 12px;font-family:'IBM Plex Mono',monospace;font-size:.75rem;font-weight:700;color:#3a3f55;min-width:52px;border-left:1px solid var(--b1);height:100%;display:flex;align-items:center">any</span>
+    <span id="priceSliderLbl" style="padding:0 12px;font-family:'IBM Plex Mono',monospace;font-size:.75rem;font-weight:700;color:#c8d0e8;min-width:52px;border-left:1px solid var(--b1);height:100%;display:flex;align-items:center">any</span>
   </div>
 
   <div style="display:inline-flex;align-items:center;background:var(--s1);border:1px solid var(--b1);border-radius:6px;overflow:hidden;height:36px" id="riUpfrontToggle">
@@ -2237,7 +2237,7 @@ function onPriceSlider() {
     lbl.style.color = '#7bffe0';
   } else {
     lbl.textContent = 'any';
-    lbl.style.color = '#3a3f55';
+    lbl.style.color = '#c8d0e8';
   }
   render();
 }
