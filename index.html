@@ -25,7 +25,7 @@
 <link rel="preload" href="data/agregations/regions_meta.json" as="fetch" crossorigin>
 <link rel="preload" href="data/carbon.json" as="fetch" crossorigin>
 <link rel="preload" href="data/eur_rate.json" as="fetch" crossorigin>
-<link rel="stylesheet" href="css/styles.css?v=4/1/2026 · 7:17 AM">
+<link rel="stylesheet" href="css/styles.css?v=4/1/2026 · 10:23 AM">
 </head>
 <body>
 <div id="topbar">
@@ -170,7 +170,7 @@
       <label class="col-pick-row"><input type="checkbox" id="cb-month" checked onchange="toggleCol('month',this.checked)"> Reserved Cost</label>
       <label class="col-pick-row"><input type="checkbox" id="cb-savings" checked onchange="toggleCol('savings',this.checked)"> Savings RI</label>
       <label class="col-pick-row" id="cb-storage-row"><input type="checkbox" id="cb-storage" checked onchange="toggleCol('storage',this.checked)"> Storage</label>
-      <label class="col-pick-row"><input type="checkbox" id="cb-network" checked onchange="toggleCol('network',this.checked)"> Network</label>
+      <label class="col-pick-row" id="cb-network-row"><input type="checkbox" id="cb-network" checked onchange="toggleCol('network',this.checked)"> Network</label>
       <label class="col-pick-row" id="cb-spot-row"><input type="checkbox" id="cb-spot" checked onchange="toggleCol('spot',this.checked)"> Spot Cost</label>
       <label class="col-pick-row" id="cb-spotsav-row"><input type="checkbox" id="cb-spotsav" checked onchange="toggleCol('spotsav',this.checked)"> Savings Spot</label>
       <label class="col-pick-row"><input type="checkbox" id="cb-score" checked onchange="toggleCol('score',this.checked)"> FinOps Score</label>
@@ -406,7 +406,7 @@
     <a href="https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEC2/current/eu-west-3/index.json" target="_blank" style="color:var(--text);text-decoration:none">AWS Price List API</a>
   </span>
   <span class="fts" style="color:var(--text)"><a href="#" onclick="document.getElementById('aboutModal').style.display='flex';return false;" style="color:var(--text);text-decoration:none;border-bottom:1px dotted var(--muted)">FinOpsMap · About me</a></span>
-  <span class="fts" style="color:var(--text)">Updated 4/1/2026 · 7:17 AM</span>
+  <span class="fts" style="color:var(--text)">Updated 4/1/2026 · 10:23 AM</span>
 </footer>
 
 <div id="aboutModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;align-items:center;justify-content:center" onclick="if(event.target===this)this.style.display='none'">
@@ -613,9 +613,12 @@ function setView(v) {
   }
   if(fam !== 'all' || currentFam !== 'all'){ fam='all'; currentFam='all'; const fs=document.getElementById('famSelect'); if(fs) fs.value='all'; }
   const cbProcRow = document.getElementById('cb-proc-row');
-  if (cbProcRow) cbProcRow.style.display = (v === 'aws' || v === 'rds') ? '' : 'none';
+  if (cbProcRow) cbProcRow.style.display = (v === 'psql') ? 'none' : '';
   const cbStorageRow = document.getElementById('cb-storage-row');
-  if (cbStorageRow) cbStorageRow.style.display = v === 'aws' ? '' : 'none';
+  if (cbStorageRow) cbStorageRow.style.display = (v === 'rds' || v === 'psql') ? 'none' : '';
+  const cbNetworkRow = document.getElementById('cb-network-row');
+  if (cbNetworkRow) cbNetworkRow.style.display = (v === 'azure' || v === 'psql') ? 'none' : '';
+  if (v === 'azure' || v === 'psql') { toggleCol('network', false); const cb = document.getElementById('cb-network'); if (cb) cb.checked = false; }
   const cbSpotRow = document.getElementById('cb-spot-row');
   if (cbSpotRow) cbSpotRow.style.display = v === 'aws' ? '' : 'none';
   const cbSpotsavRow = document.getElementById('cb-spotsav-row');

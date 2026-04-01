@@ -4,7 +4,7 @@ CloudPrice - Telecharger les tarifs AWS Paris + Azure France Central
 Usage : python3 fetch_prices.py
 """
 
-import json, os, sys, http.client, urllib.parse, gzip, re
+import json, os, sys, http.client, urllib.parse, gzip, re, subprocess
 from datetime import datetime
 try:
     from xml.etree import ElementTree as ET
@@ -248,8 +248,103 @@ AZURE_REGIONS = {
     "eastus":             {"label": "Virginie",    "flag": "&#x1F1FA;&#x1F1F8;", "location": "East US"},
 }
 
-def fetch_azure(region="francecentral"):
+SKUS_CACHE_DAYS = 30
+
+def fetch_azure_skus(region="francecentral", az_available=True):
+    """Récupère les specs hardware Azure via l'API Resource SKUs (nécessite az login).
+    Retourne un dict { 'D2s v5': {vcpu, ram, storage, network, processor}, ... }
+    """
+    cache_file = os.path.join(DATA_DIR_AZ, "skus-" + region + ".json")
+    if is_fresh(cache_file, days=SKUS_CACHE_DAYS):
+        log("cache SKUs frais : " + cache_file)
+        with open(cache_file, encoding="utf-8") as f:
+            return json.load(f)
+
+    # az CLI non disponible — utiliser le cache existant ou retourner vide
+    if not az_available:
+        if os.path.exists(cache_file):
+            log("utilisation du cache SKUs existant : " + cache_file)
+            with open(cache_file, encoding="utf-8") as f:
+                return json.load(f)
+        return {}
+
+    # Récupérer la subscription ID
+    try:
+        r = subprocess.run(["az", "account", "show", "--query", "id", "-o", "tsv"],
+                           capture_output=True, text=True, timeout=15, check=True)
+        sub_id = r.stdout.strip()
+    except (FileNotFoundError, subprocess.CalledProcessError, subprocess.TimeoutExpired):
+        log("az account show échoué — token expiré ? Relancez az login")
+        if os.path.exists(cache_file):
+            with open(cache_file, encoding="utf-8") as f:
+                return json.load(f)
+        return {}
+
+    # Appeler l'API Resource SKUs
+    url = ("https://management.azure.com/subscriptions/" + sub_id +
+           "/providers/Microsoft.Compute/skus?api-version=2021-07-01"
+           "&$filter=location eq '" + region + "'")
+    try:
+        log("appel Azure Resource SKUs pour " + region + "...")
+        r = subprocess.run(["az", "rest", "--method", "get", "--url", url],
+                           capture_output=True, text=True, timeout=60, check=True)
+        data = json.loads(r.stdout)
+    except (subprocess.CalledProcessError, subprocess.TimeoutExpired, json.JSONDecodeError) as e:
+        log("Erreur Resource SKUs : " + str(e))
+        if os.path.exists(cache_file):
+            with open(cache_file, encoding="utf-8") as f:
+                return json.load(f)
+        return {}
+
+    # Parser les résultats
+    skus = {}
+    for item in data.get("value", []):
+        if item.get("resourceType") != "virtualMachines":
+            continue
+        name_raw = item.get("name", "")  # ex: Standard_D2s_v5
+        caps = {c["name"]: c["value"] for c in item.get("capabilities", [])}
+
+        vcpu = int(caps.get("vCPUs", 0))
+        ram  = float(caps.get("MemoryGB", 0))
+        temp_disk_mb = int(caps.get("MaxResourceVolumeMB", 0))
+        arch = caps.get("CpuArchitectureType", "")
+
+        # Formater le stockage temp
+        storage_str = ""
+        if temp_disk_mb > 0:
+            temp_gb = temp_disk_mb / 1024
+            storage_str = (str(int(temp_gb)) if temp_gb == int(temp_gb) else str(round(temp_gb, 1))) + " GiB temp"
+
+        # Déduire le processeur depuis le nom de la série + architecture
+        # Convention Azure : 'a' dans le suffixe = AMD, 'p' = ARM/Ampere, sinon Intel
+        key = name_raw.replace("Standard_", "").replace("_", " ").strip()
+        key_lower = key.lower().replace(" ", "")
+        if arch == "Arm64":
+            processor_str = "Arm64 (Ampere)"
+        elif "a" in re.sub(r'\d+', '', key_lower.split("v")[0] if "v" in key_lower else key_lower).replace("standard", ""):
+            processor_str = "AMD"
+        else:
+            processor_str = "Intel"
+
+        skus[key] = {
+            "vcpu": vcpu,
+            "ram": ram,
+            "storage": storage_str,
+            "network": "",
+            "processor": processor_str
+        }
+
+    log("SKUs parsés : " + str(len(skus)) + " VMs")
+    with open(cache_file, "w", encoding="utf-8") as f:
+        json.dump(skus, f, ensure_ascii=False, indent=2)
+    log("sauvegarde SKUs -> " + cache_file)
+    return skus
+
+
+def fetch_azure(region="francecentral", skus=None):
     print("\nAzure " + region + "...")
+    if skus is None:
+        skus = {}
     filt    = "armRegionName eq '" + region + "' and serviceName eq 'Virtual Machines' and priceType eq 'Consumption'"
     encoded = filt.replace(" ", "%20")
     base_path = "/api/retail/prices?$filter=" + encoded + "&$top=1000"
@@ -280,27 +375,48 @@ def fetch_azure(region="francecentral"):
         if price <= 0 or "spot" in sku or "low priority" in sku or "windows" in sku:
             continue
         key = item["skuName"].replace(" Linux","").replace("Linux","").replace("Standard_","").replace("standard_","").strip()
-        # Extraire vcpu depuis le nom
-        # Extraire vcpu : D2s v3 → 2, E32as v4 → 32, B1ms → 1
-        m = re.search(r'^[A-Za-z]+?(\d+)', key.replace('Standard_','').replace('standard_',''))
-        vcpu = int(m.group(1)) if m else 0
-        # RAM : ratio par famille
-        kl = key.lower().replace(' ','').replace('_','')
-        if kl.startswith('b'):
-            ram = vcpu * 4
-            if '1ls' in kl: ram = 0.5
-            elif '1s' in kl and '1ms' not in kl: ram = 1
-            elif '1ms' in kl: ram = 2
-            elif '2s' in kl and '2ms' not in kl: ram = 4
-            elif '2ms' in kl: ram = 8
-        elif kl.startswith('f'): ram = vcpu * 2
-        elif kl.startswith(('e','r','m')): ram = vcpu * 8
-        elif kl.startswith(('l',)): ram = vcpu * 8
-        else: ram = vcpu * 4
+        sku_meta = skus.get(key) or skus.get(key.replace("_", " "), {})
+        if sku_meta:
+            # Données exactes depuis l'API Resource SKUs
+            vcpu = sku_meta.get("vcpu", 0)
+            ram  = sku_meta.get("ram", 0)
+        else:
+            # Fallback : estimation par ratio depuis le nom
+            m = re.search(r'^[A-Za-z]+?(\d+)', key.replace('Standard_','').replace('standard_',''))
+            vcpu = int(m.group(1)) if m else 0
+            kl = key.lower().replace(' ','').replace('_','')
+            if kl.startswith('b'):
+                ram = vcpu * 4
+                if '1ls' in kl: ram = 0.5
+                elif '1s' in kl and '1ms' not in kl: ram = 1
+                elif '1ms' in kl: ram = 2
+                elif '2s' in kl and '2ms' not in kl: ram = 4
+                elif '2ms' in kl: ram = 8
+            elif kl.startswith('f'): ram = vcpu * 2
+            elif kl.startswith(('e','r','m')): ram = vcpu * 8
+            elif kl.startswith(('l',)): ram = vcpu * 8
+            else: ram = vcpu * 4
+        storage   = sku_meta.get("storage", "")
+        network   = sku_meta.get("network", "")
+        processor = sku_meta.get("processor", "")
+        # Déduire le processor depuis le nom si absent
+        if not processor:
+            kn = key.lower().replace(" ", "").replace("_", "")
+            # 'p' dans le suffixe (avant le numéro de version) = ARM/Ampere
+            # 'a' dans le suffixe = AMD, sinon Intel
+            base = re.sub(r'v\d+$', '', kn).rstrip()  # retirer "v5", "v6" etc.
+            letters = re.sub(r'\d+', '', base)  # garder que les lettres
+            if 'p' in letters[1:]:
+                processor = "Arm64 (Ampere)"
+            elif 'a' in letters[1:]:
+                processor = "AMD"
+            else:
+                processor = "Intel"
         fam = get_family_azure(key)
         if vcpu == 0: continue  # skip instances sans vCPU détecté
         if key not in result or price < result[key]["price"]:
-            result[key] = {"name": key, "price": price, "vcpu": vcpu, "ram": ram, "fam": fam}
+            result[key] = {"name": key, "price": price, "vcpu": vcpu, "ram": ram, "fam": fam,
+                           "storage": storage, "network": network, "processor": processor}
 
     log("instances uniques : " + str(len(result)))
 
@@ -836,7 +952,7 @@ HTML_TEMPLATE = """
       <label class="col-pick-row"><input type="checkbox" id="cb-month" checked onchange="toggleCol('month',this.checked)"> Reserved Cost</label>
       <label class="col-pick-row"><input type="checkbox" id="cb-savings" checked onchange="toggleCol('savings',this.checked)"> Savings RI</label>
       <label class="col-pick-row" id="cb-storage-row"><input type="checkbox" id="cb-storage" checked onchange="toggleCol('storage',this.checked)"> Storage</label>
-      <label class="col-pick-row"><input type="checkbox" id="cb-network" checked onchange="toggleCol('network',this.checked)"> Network</label>
+      <label class="col-pick-row" id="cb-network-row"><input type="checkbox" id="cb-network" checked onchange="toggleCol('network',this.checked)"> Network</label>
       <label class="col-pick-row" id="cb-spot-row"><input type="checkbox" id="cb-spot" checked onchange="toggleCol('spot',this.checked)"> Spot Cost</label>
       <label class="col-pick-row" id="cb-spotsav-row"><input type="checkbox" id="cb-spotsav" checked onchange="toggleCol('spotsav',this.checked)"> Savings Spot</label>
       <label class="col-pick-row"><input type="checkbox" id="cb-score" checked onchange="toggleCol('score',this.checked)"> FinOps Score</label>
@@ -1279,9 +1395,12 @@ function setView(v) {
   }
   if(fam !== 'all' || currentFam !== 'all'){ fam='all'; currentFam='all'; const fs=document.getElementById('famSelect'); if(fs) fs.value='all'; }
   const cbProcRow = document.getElementById('cb-proc-row');
-  if (cbProcRow) cbProcRow.style.display = (v === 'aws' || v === 'rds') ? '' : 'none';
+  if (cbProcRow) cbProcRow.style.display = (v === 'psql') ? 'none' : '';
   const cbStorageRow = document.getElementById('cb-storage-row');
-  if (cbStorageRow) cbStorageRow.style.display = v === 'aws' ? '' : 'none';
+  if (cbStorageRow) cbStorageRow.style.display = (v === 'rds' || v === 'psql') ? 'none' : '';
+  const cbNetworkRow = document.getElementById('cb-network-row');
+  if (cbNetworkRow) cbNetworkRow.style.display = (v === 'azure' || v === 'psql') ? 'none' : '';
+  if (v === 'azure' || v === 'psql') { toggleCol('network', false); const cb = document.getElementById('cb-network'); if (cb) cb.checked = false; }
   const cbSpotRow = document.getElementById('cb-spot-row');
   if (cbSpotRow) cbSpotRow.style.display = v === 'aws' ? '' : 'none';
   const cbSpotsavRow = document.getElementById('cb-spotsav-row');
@@ -3716,7 +3835,7 @@ def generate_html(aws_data, azure_data, rds_data, fetch_date, psql_data=None, aw
         if v.get("spot"): d["spot"] = v["spot"]
         return d
     aws_list   = [{"iname": v["name"], "price": v["price"], "vcpu": v["vcpu"], "ram": v["ram"], "fam": v["fam"], "storage": v.get("storage",""), "processor": v.get("processor",""), "network": v.get("network",""), **ri3(v), **spot3(v)} for v in sorted(aws_data.values(),   key=lambda x: x["price"])]
-    azure_list = [{"iname": v["name"], "price": v["price"], "vcpu": v["vcpu"], "ram": v["ram"], "fam": v["fam"], **ri3(v)} for v in sorted(azure_data.values(), key=lambda x: x["price"])]
+    azure_list = [{"iname": v["name"], "price": v["price"], "vcpu": v["vcpu"], "ram": v["ram"], "fam": v["fam"], "storage": v.get("storage",""), "processor": v.get("processor",""), "network": v.get("network",""), **ri3(v)} for v in sorted(azure_data.values(), key=lambda x: x["price"])]
     rds_list   = [{"iname": v["name"], "price": v["price"], "vcpu": v["vcpu"], "ram": v["ram"], "fam": v["fam"], "engine": v.get("engine",""), "deploy": v.get("deploy",""), "processor": v.get("processor",""), "network": v.get("network",""), **ri3(v)} for v in sorted(rds_data.values(), key=lambda x: x["price"])]
     psql_data  = psql_data or {}
     psql_list  = [{"iname": v["name"], "price": v["price"], "vcpu": v["vcpu"], "ram": v["ram"], "fam": v["fam"], "engine": v.get("engine",""), "sku": v.get("sku",""), **ri3(v)} for v in sorted(psql_data.values(), key=lambda x: x["price"])]
@@ -3851,16 +3970,56 @@ def main():
                 rds_regions_data[region] = {}
     rds_data = rds_regions_data.get("eu-west-3", {})
 
+    # ── Azure SKUs (specs hardware) — un appel par région, cache 30j ──
+    azure_skus_by_region = {}
+    # Vérifier si au moins une région a besoin de rafraîchir les SKUs
+    _need_skus_refresh = any(
+        not is_fresh(os.path.join(DATA_DIR_AZ, "skus-" + r + ".json"), days=SKUS_CACHE_DAYS)
+        for r in AZURE_REGIONS
+    )
+    _az_available = True
+    if _need_skus_refresh:
+        try:
+            subprocess.run(["az", "account", "show", "--query", "id", "-o", "tsv"],
+                           capture_output=True, text=True, timeout=15, check=True)
+        except (FileNotFoundError, subprocess.CalledProcessError, subprocess.TimeoutExpired):
+            _az_available = False
+            log("az CLI non disponible ou token expiré — les specs Azure (RAM, network, processor) utiliseront le cache ou les estimations. Lancez 'az login' pour rafraîchir.")
+    for region in AZURE_REGIONS:
+        azure_skus_by_region[region] = fetch_azure_skus(region, az_available=_az_available)
+
     # ── Azure VM : toutes les régions ──
     azure_regions_data = {}
     for region in AZURE_REGIONS:
+        skus = azure_skus_by_region.get(region, {})
         az_file = os.path.join(DATA_DIR_AZ, "vm-" + region + ".json")
         if is_fresh(az_file):
             log("cache frais utilise : " + az_file)
-            with open(az_file, encoding="utf-8") as f: azure_regions_data[region] = json.load(f)
+            with open(az_file, encoding="utf-8") as f: cached = json.load(f)
+            # Enrichir les données en cache avec les SKUs si disponibles
+            for key, vm in cached.items():
+                meta = skus.get(key) or skus.get(key.replace("_", " "), {}) if skus else {}
+                if meta:
+                    vm["vcpu"]      = meta.get("vcpu", vm.get("vcpu", 0))
+                    vm["ram"]       = meta.get("ram", vm.get("ram", 0))
+                    vm["storage"]   = meta.get("storage", "")
+                    vm["network"]   = meta.get("network", "")
+                    vm["processor"] = meta.get("processor", "")
+                # Déduire le processor si toujours absent
+                if not vm.get("processor"):
+                    kn = key.lower().replace(" ", "").replace("_", "")
+                    base = re.sub(r'v\d+$', '', kn).rstrip()
+                    letters = re.sub(r'\d+', '', base)
+                    if 'p' in letters[1:]:
+                        vm["processor"] = "Arm64 (Ampere)"
+                    elif 'a' in letters[1:]:
+                        vm["processor"] = "AMD"
+                    else:
+                        vm["processor"] = "Intel"
+            azure_regions_data[region] = cached
             continue
         try:
-            data = fetch_azure(region)
+            data = fetch_azure(region, skus=skus)
             with open(az_file, "w", encoding="utf-8") as f: json.dump(data, f, indent=2)
             log("sauvegarde -> " + az_file)
             azure_regions_data[region] = data
