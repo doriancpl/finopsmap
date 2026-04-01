@@ -307,6 +307,8 @@ def fetch_azure_skus(region="francecentral", az_available=True):
         vcpu = int(caps.get("vCPUs", 0))
         ram  = float(caps.get("MemoryGB", 0))
         temp_disk_mb = int(caps.get("MaxResourceVolumeMB", 0))
+        max_disks = int(caps.get("MaxDataDiskCount", 0))
+        disk_iops = int(caps.get("UncachedDiskIOPS", 0))
         arch = caps.get("CpuArchitectureType", "")
 
         # Formater le stockage temp
@@ -331,7 +333,9 @@ def fetch_azure_skus(region="francecentral", az_available=True):
             "ram": ram,
             "storage": storage_str,
             "network": "",
-            "processor": processor_str
+            "processor": processor_str,
+            "max_disks": max_disks,
+            "disk_iops": disk_iops
         }
 
     log("SKUs parsés : " + str(len(skus)) + " VMs")
@@ -396,16 +400,16 @@ def fetch_azure(region="francecentral", skus=None):
             elif kl.startswith(('e','r','m')): ram = vcpu * 8
             elif kl.startswith(('l',)): ram = vcpu * 8
             else: ram = vcpu * 4
-        storage   = sku_meta.get("storage", "")
-        network   = sku_meta.get("network", "")
-        processor = sku_meta.get("processor", "")
+        storage    = sku_meta.get("storage", "")
+        network    = sku_meta.get("network", "")
+        processor  = sku_meta.get("processor", "")
+        max_disks  = sku_meta.get("max_disks", 0)
+        disk_iops  = sku_meta.get("disk_iops", 0)
         # Déduire le processor depuis le nom si absent
         if not processor:
             kn = key.lower().replace(" ", "").replace("_", "")
-            # 'p' dans le suffixe (avant le numéro de version) = ARM/Ampere
-            # 'a' dans le suffixe = AMD, sinon Intel
-            base = re.sub(r'v\d+$', '', kn).rstrip()  # retirer "v5", "v6" etc.
-            letters = re.sub(r'\d+', '', base)  # garder que les lettres
+            base = re.sub(r'v\d+$', '', kn).rstrip()
+            letters = re.sub(r'\d+', '', base)
             if 'p' in letters[1:]:
                 processor = "Arm64 (Ampere)"
             elif 'a' in letters[1:]:
@@ -416,7 +420,8 @@ def fetch_azure(region="francecentral", skus=None):
         if vcpu == 0: continue  # skip instances sans vCPU détecté
         if key not in result or price < result[key]["price"]:
             result[key] = {"name": key, "price": price, "vcpu": vcpu, "ram": ram, "fam": fam,
-                           "storage": storage, "network": network, "processor": processor}
+                           "storage": storage, "network": network, "processor": processor,
+                           "max_disks": max_disks, "disk_iops": disk_iops}
 
     log("instances uniques : " + str(len(result)))
 
@@ -953,6 +958,8 @@ HTML_TEMPLATE = """
       <label class="col-pick-row"><input type="checkbox" id="cb-savings" checked onchange="toggleCol('savings',this.checked)"> Savings RI</label>
       <label class="col-pick-row" id="cb-storage-row"><input type="checkbox" id="cb-storage" checked onchange="toggleCol('storage',this.checked)"> Storage</label>
       <label class="col-pick-row" id="cb-network-row"><input type="checkbox" id="cb-network" checked onchange="toggleCol('network',this.checked)"> Network</label>
+      <label class="col-pick-row" id="cb-maxdisks-row"><input type="checkbox" id="cb-maxdisks" checked onchange="toggleCol('maxdisks',this.checked)"> Max Disks</label>
+      <label class="col-pick-row" id="cb-diskiops-row"><input type="checkbox" id="cb-diskiops" checked onchange="toggleCol('diskiops',this.checked)"> Disk IOPS</label>
       <label class="col-pick-row" id="cb-spot-row"><input type="checkbox" id="cb-spot" checked onchange="toggleCol('spot',this.checked)"> Spot Cost</label>
       <label class="col-pick-row" id="cb-spotsav-row"><input type="checkbox" id="cb-spotsav" checked onchange="toggleCol('spotsav',this.checked)"> Savings Spot</label>
       <label class="col-pick-row"><input type="checkbox" id="cb-score" checked onchange="toggleCol('score',this.checked)"> FinOps Score</label>
@@ -980,6 +987,8 @@ HTML_TEMPLATE = """
       <th class="col-ram" onclick="qs(&apos;ram&apos;)"><div style="display:flex;align-items:center;justify-content:space-between">RAM <span class="sort-ico" id="si-ram">&#x2195;</span></div></th>
       <th class="col-storage ec2-only" onclick="qs(&apos;storage&apos;)"><div style="display:flex;align-items:center;justify-content:space-between">STORAGE <span class="sort-ico" id="si-storage">&#x2195;</span></div></th>
       <th class="col-network" onclick="qs(&apos;network&apos;)"><div style="display:flex;align-items:center;justify-content:space-between">NETWORK <span class="sort-ico" id="si-network">&#x2195;</span></div></th>
+      <th class="col-maxdisks" onclick="qs(&apos;maxdisks&apos;)"><div style="display:flex;align-items:center;justify-content:space-between">MAX DISKS <span class="sort-ico" id="si-maxdisks">&#x2195;</span></div></th>
+      <th class="col-diskiops" onclick="qs(&apos;diskiops&apos;)"><div style="display:flex;align-items:center;justify-content:space-between">DISK IOPS <span class="sort-ico" id="si-diskiops">&#x2195;</span></div></th>
       <th class="col-pvcpu" onclick="qs(&apos;pvcpu&apos;)"><div style="display:flex;align-items:center;justify-content:space-between">COST/VCPU <span class="sort-ico" id="si-pvcpu">&#x2195;</span></div></th>
       <th class="col-price" onclick="qs(&apos;price&apos;)"><div style="display:flex;align-items:center;justify-content:space-between"><span id="thPriceOd" style="letter-spacing:.08em">ON DEMAND COST<span id="periodOdLabel" style="color:#7bffe0;font-size:.65rem;letter-spacing:0">/H</span><span id="discountBadgeHdr" style="display:none" class="discount-badge"></span></span> <span class="sort-ico active-ico" id="si-price">&#x2191;</span></div></th>
       <th class="col-month" onclick="qs(&apos;month&apos;)"><div style="display:flex;align-items:center;justify-content:space-between"><span style="letter-spacing:.08em">RESERVED COST<span id="periodRiLabel" style="color:#7bffe0;font-size:.65rem;letter-spacing:0">/H</span><span id="riYearLabel" style="font-size:.65rem;margin-left:9px;letter-spacing:0;font-family:'Syne',sans-serif;font-weight:700;color:#7bffe0;background:rgba(123,255,224,0.1);border:1px solid rgba(123,255,224,0.3);border-radius:4px;padding:1px 5px">1 YEAR</span></span> <span class="sort-ico" id="si-month">&#x2195;</span></div></th>
@@ -997,6 +1006,8 @@ HTML_TEMPLATE = """
       <th class="col-ram"><input class="col-filter" oninput="render()" id="f-ram"   placeholder="ex: 32"></th>
       <th class="col-storage ec2-only"><input class="col-filter" oninput="render()" id="f-storage" placeholder="ex: NVMe"></th>
       <th class="col-network"><input class="col-filter" oninput="render()" id="f-network" placeholder="ex: 25 Gbps"></th>
+      <th class="col-maxdisks"></th>
+      <th class="col-diskiops"></th>
       <th class="col-pvcpu"><input class="col-filter" oninput="render()" id="f-pvcpu" placeholder="ex: &lt;0.1"></th>
       <th class="col-price"><input class="col-filter" oninput="render()" id="f-price" placeholder="ex: &lt;0.5"></th>
       <th class="col-month"><input class="col-filter" oninput="render()" id="f-month" placeholder="ex: &lt;0.5"></th>
@@ -1401,6 +1412,10 @@ function setView(v) {
   const cbNetworkRow = document.getElementById('cb-network-row');
   if (cbNetworkRow) cbNetworkRow.style.display = (v === 'azure' || v === 'psql') ? 'none' : '';
   if (v === 'azure' || v === 'psql') { toggleCol('network', false); const cb = document.getElementById('cb-network'); if (cb) cb.checked = false; }
+  const cbMaxdisksRow = document.getElementById('cb-maxdisks-row');
+  if (cbMaxdisksRow) cbMaxdisksRow.style.display = v === 'azure' ? '' : 'none';
+  const cbDiskiopsRow = document.getElementById('cb-diskiops-row');
+  if (cbDiskiopsRow) cbDiskiopsRow.style.display = v === 'azure' ? '' : 'none';
   const cbSpotRow = document.getElementById('cb-spot-row');
   if (cbSpotRow) cbSpotRow.style.display = v === 'aws' ? '' : 'none';
   const cbSpotsavRow = document.getElementById('cb-spotsav-row');
@@ -1502,6 +1517,10 @@ function getSorted(arr) {
     if (s === 'storage-desc') return (b.storage||'').localeCompare(a.storage||'');
     if (s === 'network-asc')  return (a.network||'').localeCompare(b.network||'');
     if (s === 'network-desc') return (b.network||'').localeCompare(a.network||'');
+    if (s === 'maxdisks-asc')  return (a.max_disks||0) - (b.max_disks||0);
+    if (s === 'maxdisks-desc') return (b.max_disks||0) - (a.max_disks||0);
+    if (s === 'diskiops-asc')  return (a.disk_iops||0) - (b.disk_iops||0);
+    if (s === 'diskiops-desc') return (b.disk_iops||0) - (a.disk_iops||0);
     if (s === 'spot-asc')    return (a.spot||0) - (b.spot||0);
     if (s === 'spot-desc')   return (b.spot||0) - (a.spot||0);
     if (s === 'spotsav-asc')  { const ra = a.spot?Math.round((1-a.spot/a.price)*100):0; const rb = b.spot?Math.round((1-b.spot/b.price)*100):0; return ra-rb; }
@@ -1900,6 +1919,8 @@ function render() {
         + '<td class="col-ram"><span class="tag">'+ramFmt(d.ram)+'</span></td>'
         + '<td class="col-storage ec2-only"><span class="tag">'+(d.storage||'—')+'</span></td>'
         + '<td class="col-network"><span class="tag" style="white-space:nowrap">'+(d.network||'—')+'</span></td>'
+        + '<td class="col-maxdisks"><span class="tag">'+(d.max_disks ? d.max_disks : '—')+'</span></td>'
+        + '<td class="col-diskiops"><span class="tag">'+(d.disk_iops ? d.disk_iops.toLocaleString() : '—')+'</span></td>'
         + '<td class="col-pvcpu"><span class="ph-mo">'+(d.vcpu > 0 ? f4(d.price/d.vcpu)+' '+currSym() : '—')+'</span></td>'
         + '<td class="col-price">'+((view==='aws'||view==='rds') ? '<span style="display:inline-block;padding:5px 12px;background:rgba(255,153,0,0.1);border:1px solid rgba(255,153,0,0.3);border-radius:6px;font-weight:700;font-size:.92rem;color:#ff9900;font-family:IBM Plex Mono,monospace">'+f4(d.price*(periodMult[period]||1))+' ' + currSym() + '</span>' : '<span style="display:inline-block;padding:5px 12px;background:rgba(0,170,255,0.1);border:1px solid rgba(0,170,255,0.3);border-radius:6px;font-weight:700;font-size:.92rem;color:#00aaff;font-family:IBM Plex Mono,monospace">'+f4(d.price*(periodMult[period]||1))+' ' + currSym() + '</span>')+'</td>'
         + '<td class="col-month"><span class="ph-mo">'+(function(){ const rp = d[getRiKey()]; if (!rp) return '<span style="color:var(--muted);font-size:.75rem">—</span>'; return f4(rp*(periodMult[period]||1))+' '+currSym(); })()+'</span></td>'
@@ -2018,8 +2039,8 @@ document.addEventListener('click', function(e) {
   const wrap = document.getElementById('colPickerWrap');
   if (wrap && !wrap.contains(e.target)) document.getElementById('colPicker').style.display = 'none';
 });
-const COL_KEYS = ['fam','proc','vcpu','ram','storage','network','pvcpu','price','month','savings','spot','spotsav','score'];
-const DEFAULT_HIDDEN_COLS = ['proc','storage','network','spot','spotsav'];
+const COL_KEYS = ['fam','proc','vcpu','ram','storage','network','maxdisks','diskiops','pvcpu','price','month','savings','spot','spotsav','score'];
+const DEFAULT_HIDDEN_COLS = ['proc','storage','network','maxdisks','diskiops','spot','spotsav'];
 function setDefaultCols() {
   const tbl = document.getElementById('mainTable');
   COL_KEYS.forEach(col => {
@@ -2194,10 +2215,12 @@ function qs(col) {
     storage: cur === 'storage-asc' ? 'storage-desc' : 'storage-asc',
     spot:    cur === 'spot-asc'    ? 'spot-desc'    : 'spot-asc',
     spotsav: cur === 'spotsav-desc' ? 'spotsav-asc' : 'spotsav-desc',
+    maxdisks: cur === 'maxdisks-asc' ? 'maxdisks-desc' : 'maxdisks-asc',
+    diskiops: cur === 'diskiops-asc' ? 'diskiops-desc' : 'diskiops-asc',
   };
   if (next[col]) sortVal = next[col];
-  const colMap = {iname:'iname',fam:'fam',proc:'proc',vcpu:'vcpu',ram:'ram',pvcpu:'pvcpu',price:'price',month:'month',savings:'savings',storage:'storage',spot:'spot',spotsav:'spotsav',score:'score'};
-  ['iname','fam','proc','vcpu','ram','pvcpu','price','month','savings','storage','spot','spotsav','score'].forEach(k => {
+  const colMap = {iname:'iname',fam:'fam',proc:'proc',vcpu:'vcpu',ram:'ram',pvcpu:'pvcpu',price:'price',month:'month',savings:'savings',storage:'storage',spot:'spot',spotsav:'spotsav',score:'score',maxdisks:'maxdisks',diskiops:'diskiops'};
+  ['iname','fam','proc','vcpu','ram','pvcpu','price','month','savings','storage','spot','spotsav','score','maxdisks','diskiops'].forEach(k => {
     const el = document.getElementById('si-'+k);
     if (!el) return;
     const active = sortVal.startsWith(colMap[k]);
@@ -3835,12 +3858,12 @@ def generate_html(aws_data, azure_data, rds_data, fetch_date, psql_data=None, aw
         if v.get("spot"): d["spot"] = v["spot"]
         return d
     aws_list   = [{"iname": v["name"], "price": v["price"], "vcpu": v["vcpu"], "ram": v["ram"], "fam": v["fam"], "storage": v.get("storage",""), "processor": v.get("processor",""), "network": v.get("network",""), **ri3(v), **spot3(v)} for v in sorted(aws_data.values(),   key=lambda x: x["price"])]
-    azure_list = [{"iname": v["name"], "price": v["price"], "vcpu": v["vcpu"], "ram": v["ram"], "fam": v["fam"], "storage": v.get("storage",""), "processor": v.get("processor",""), "network": v.get("network",""), **ri3(v)} for v in sorted(azure_data.values(), key=lambda x: x["price"])]
+    azure_list = [{"iname": v["name"], "price": v["price"], "vcpu": v["vcpu"], "ram": v["ram"], "fam": v["fam"], "storage": v.get("storage",""), "processor": v.get("processor",""), "network": v.get("network",""), "max_disks": v.get("max_disks",0), "disk_iops": v.get("disk_iops",0), **ri3(v)} for v in sorted(azure_data.values(), key=lambda x: x["price"])]
     rds_list   = [{"iname": v["name"], "price": v["price"], "vcpu": v["vcpu"], "ram": v["ram"], "fam": v["fam"], "engine": v.get("engine",""), "deploy": v.get("deploy",""), "processor": v.get("processor",""), "network": v.get("network",""), **ri3(v)} for v in sorted(rds_data.values(), key=lambda x: x["price"])]
     psql_data  = psql_data or {}
     psql_list  = [{"iname": v["name"], "price": v["price"], "vcpu": v["vcpu"], "ram": v["ram"], "fam": v["fam"], "engine": v.get("engine",""), "sku": v.get("sku",""), **ri3(v)} for v in sorted(psql_data.values(), key=lambda x: x["price"])]
 
-    def to_list(d):     return [{"iname": v["name"], "price": v["price"], "vcpu": v["vcpu"], "ram": v["ram"], "fam": v["fam"], "storage": v.get("storage",""), "processor": v.get("processor",""), "network": v.get("network",""), **ri3(v), **spot3(v)} for v in sorted(d.values(), key=lambda x: x["price"])]
+    def to_list(d):     return [{"iname": v["name"], "price": v["price"], "vcpu": v["vcpu"], "ram": v["ram"], "fam": v["fam"], "storage": v.get("storage",""), "processor": v.get("processor",""), "network": v.get("network",""), "max_disks": v.get("max_disks",0), "disk_iops": v.get("disk_iops",0), **ri3(v), **spot3(v)} for v in sorted(d.values(), key=lambda x: x["price"])]
     def to_list_bdd(d): return [{"iname": v["name"], "price": v["price"], "vcpu": v["vcpu"], "ram": v["ram"], "fam": v["fam"], "engine": v.get("engine",""), "sku": v.get("sku",""), **ri3(v)} for v in sorted(d.values(), key=lambda x: x["price"])]
 
     aws_regions_data   = aws_regions_data   or {}
@@ -4005,6 +4028,8 @@ def main():
                     vm["storage"]   = meta.get("storage", "")
                     vm["network"]   = meta.get("network", "")
                     vm["processor"] = meta.get("processor", "")
+                    vm["max_disks"] = meta.get("max_disks", 0)
+                    vm["disk_iops"] = meta.get("disk_iops", 0)
                 # Déduire le processor si toujours absent
                 if not vm.get("processor"):
                     kn = key.lower().replace(" ", "").replace("_", "")
