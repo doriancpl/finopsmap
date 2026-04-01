@@ -1913,9 +1913,14 @@ function render() {
   const phcls = (view === 'aws' || view === 'rds') ? 'ph-aws' : 'ph-azure';
 
   window._tipData = [];
+  const RENDER_LIMIT = 100;
+  window._fullArr = arr;
+  const displayArr = arr.slice(0, RENDER_LIMIT);
+  const hasMore = arr.length > RENDER_LIMIT;
+
   document.getElementById('tbody').innerHTML = arr.length === 0
     ? '<tr><td colspan="6" style="text-align:center;padding:48px;color:var(--muted);font-family:IBM Plex Mono,monospace;font-size:.75rem">Aucune instance.</td></tr>'
-    : arr.map((d,i) => {
+    : displayArr.map((d,i) => {
       const _ti = _tipData.push(d) - 1;
       const isSel = cmpSel.has(view==='rds' ? d.iname+'||'+(d.fam||'') : view==='psql' ? (d.fam||'')+'||'+d.iname : d.iname);
       const chkTd = '';
@@ -1945,10 +1950,48 @@ function render() {
         + '</div>'
         + '</div></div></td>'
         + '</tr>';
-      }).join('');
+      }).join('')
+      + (hasMore ? '<tr id="showAllRow"><td colspan="20" style="text-align:center;padding:16px;border-bottom:1px solid var(--b1)"><button onclick="showAllRows()" style="font-family:IBM Plex Mono,monospace;font-size:.78rem;padding:8px 20px;background:var(--s1);border:1px solid var(--b1);border-radius:6px;color:var(--accent);cursor:pointer;transition:border-color .15s">Show all ' + arr.length + ' instances</button></td></tr>' : '');
 
   document.getElementById('heroSub').innerHTML = '<span style="font-family:IBM Plex Mono,monospace;font-size:1.05rem;color:#dde3f0;font-weight:700">'+arr.length+'<span style="color:#dde3f0">/</span>'+getData().length+'</span><span style="color:#c8d0e8"> — resources displayed</span>';
   updateURL();
+}
+
+function showAllRows() {
+  const arr = window._fullArr;
+  if (!arr) return;
+  const cls   = (view === 'aws' || view === 'rds') ? 'iname-aws' : 'iname-azure';
+  const tbody = document.getElementById('tbody');
+  const row = document.getElementById('showAllRow');
+  if (row) row.remove();
+  const remaining = arr.slice(100);
+  const frag = document.createDocumentFragment();
+  const temp = document.createElement('tbody');
+  temp.innerHTML = remaining.map((d,i) => {
+    const idx = i + 100;
+    const _ti = _tipData.push(d) - 1;
+    const isSel = cmpSel.has(view==='rds' ? d.iname+'||'+(d.fam||'') : view==='psql' ? (d.fam||'')+'||'+d.iname : d.iname);
+    return '<tr class="' + (isSel?(view==='azure'||view==='psql'?'row-sel-azure':'row-sel-aws'):'') + '" data-iname="' + d.iname + '" data-fam="' + (d.fam||'') + '" style="cursor:pointer" onclick="toggleRow(&apos;' + d.iname + '&apos;,&apos;' + (d.fam||'') + '&apos;)">'
+      + '<td class="col-iname"><span class="iname iname-clickable '+cls+'" onclick="event.stopPropagation();openSeriesModal(&apos;'+d.iname+'&apos;,&apos;'+(d.fam||'')+'&apos;)">'+d.iname+'</span>'
+      + '<td class="col-fam"><span class="fam-badge '+(FC[d.fam]||'fam-other')+'">'+((view==='psql')?(d.engine||d.fam):(view==='rds'?FL_RDS:FL)[d.fam]||d.fam)+'</span></td>'
+      + '<td class="col-curgen"><span class="tag">'+(d.curgen ? 'Current' : 'Previous')+'</span></td>'
+      + '<td class="col-proc"><span class="tag">'+(d.processor||'\u2014')+'</span></td>'
+      + '<td class="col-vcpu"><span class="tag">'+d.vcpu+'</span></td>'
+      + '<td class="col-ram"><span class="tag">'+ramFmt(d.ram)+'</span></td>'
+      + '<td class="col-storage ec2-only"><span class="tag">'+(d.storage||'\u2014')+'</span></td>'
+      + '<td class="col-network"><span class="tag" style="white-space:nowrap">'+(d.network||'\u2014')+'</span></td>'
+      + '<td class="col-maxdisks"><span class="tag">'+(d.max_disks ? d.max_disks : '\u2014')+'</span></td>'
+      + '<td class="col-diskiops"><span class="tag">'+(d.disk_iops ? d.disk_iops.toLocaleString() : '\u2014')+'</span></td>'
+      + '<td class="col-pvcpu"><span class="ph-mo">'+(d.vcpu > 0 ? f4(d.price/d.vcpu)+' '+currSym() : '\u2014')+'</span></td>'
+      + '<td class="col-price">'+((view==='aws'||view==='rds') ? '<span style="display:inline-block;padding:5px 12px;background:rgba(255,153,0,0.1);border:1px solid rgba(255,153,0,0.3);border-radius:6px;font-weight:700;font-size:.92rem;color:#ff9900;font-family:IBM Plex Mono,monospace">'+f4(d.price*(periodMult[period]||1))+' '+currSym()+'</span>' : '<span style="display:inline-block;padding:5px 12px;background:rgba(0,170,255,0.1);border:1px solid rgba(0,170,255,0.3);border-radius:6px;font-weight:700;font-size:.92rem;color:#00aaff;font-family:IBM Plex Mono,monospace">'+f4(d.price*(periodMult[period]||1))+' '+currSym()+'</span>')+'</td>'
+      + '<td class="col-month"><span class="ph-mo">'+(function(){ const rp = d[getRiKey()]; if (!rp) return '<span style="color:var(--muted);font-size:.75rem">\u2014</span>'; return f4(rp*(periodMult[period]||1))+' '+currSym(); })()+'</span></td>'
+      + '<td class="col-savings">'+(function(){ const rp = d[getRiKey()]; if (!rp) return '<span style="color:var(--muted);font-size:.75rem">\u2014</span>'; const sav = Math.round((1-rp/d.price)*100); return '<span style="padding:3px 8px;background:rgba(123,255,224,0.1);border:1px solid rgba(123,255,224,0.3);border-radius:4px;color:#7bffe0;font-weight:700;font-family:IBM Plex Mono,monospace;font-size:.82rem">\u2212'+sav+'%</span>'; })()+'</td>'
+      + '<td class="col-spot ec2-only"><span class="ph-mo">'+(function(){ if (!d.spot) return '<span style="color:var(--muted);font-size:.75rem">\u2014</span>'; return f4(d.spot*(currRate())*(periodMult[period]||1))+' '+currSym(); })()+'</span></td>'
+      + '<td class="col-spotsav ec2-only">'+(function(){ if (!d.spot) return '<span style="color:var(--muted);font-size:.75rem">\u2014</span>'; const sav = Math.round((1-d.spot/d.price)*100); return '<span style="padding:3px 8px;background:rgba(123,255,224,0.1);border:1px solid rgba(123,255,224,0.3);border-radius:4px;color:#7bffe0;font-weight:700;font-family:IBM Plex Mono,monospace;font-size:.82rem">\u2212'+sav+'%</span>'; })()+'</td>'
+      + '<td class="col-score" style="padding:10px 16px;border-bottom:1px solid #1c2030;white-space:nowrap"><div class="score-wrap" data-ti="'+_ti+'" onmouseenter="showTip(event,+this.dataset.ti)" onmousemove="moveTip(event)" onmouseleave="hideTip()"><div style="position:relative;width:100px;height:8px;background:#1c2030;border-radius:4px;overflow:hidden"><div style="position:absolute;left:0;top:0;height:100%;width:'+(d.score/10*100).toFixed(1)+'%;background:linear-gradient(90deg,'+scoreGrad(d.score)+');border-radius:4px"></div></div><span class="score-val" style="color:'+scoreColor(d.score)+'">'+d.score+'</span></div></td>'
+      + '</tr>';
+  }).join('');
+  while (temp.firstChild) tbody.appendChild(temp.firstChild);
 }
 
 function discountRate() {
