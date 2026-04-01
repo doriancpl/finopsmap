@@ -1077,7 +1077,7 @@ HTML_TEMPLATE = """
     <span style="width:1px;background:var(--b1)"></span>
     <button class="curr-btn" id="btnEur" onclick="setCurr(&apos;eur&apos;)">&#x20AC; EUR</button>
   </div>
-  <div id="discountBtn" onclick="toggleDiscount()" onmouseenter="if(!discount){document.getElementById('discountLbl').style.color='var(--accent)'}" onmouseleave="if(!discount){document.getElementById('discountLbl').style.color='#c8d0e8'}" style="display:inline-flex;align-items:center;background:var(--s1);border:1px solid var(--b1);border-radius:6px;overflow:hidden;cursor:pointer;transition:border-color .2s,color .2s">
+  <div id="discountBtn" onclick="toggleDiscount()" onmouseenter="if(!discount){document.getElementById('discountLbl').style.color='var(--accent)'}" onmouseleave="if(!discount){document.getElementById('discountLbl').style.color='#c8d0e8'}" style="display:inline-flex;align-items:center;background:transparent;border:1px solid var(--b1);border-radius:6px;overflow:hidden;cursor:pointer;transition:border-color .2s,color .2s">
     <span id="discountLbl" style="padding:8px 15px;color:#c8d0e8;font-family:'Syne',sans-serif;font-size:.9rem;font-weight:700;white-space:nowrap;transition:color .2s;display:flex;align-items:center;gap:7px">Discount EDP</span>
     <div id="discountFieldWrap" style="display:none;align-items:center;border-left:1px solid var(--b1);height:100%">
       <input type="number" id="discountInput" min="0" max="99" placeholder="%" oninput="setDiscountRate(this.value)" onclick="event.stopPropagation()" style="width:58px;padding:8px 10px;background:transparent;border:none;color:#7bffe0;font-family:'IBM Plex Mono',monospace;font-size:.82rem;font-weight:700;outline:none;text-align:center;-moz-appearance:textfield;appearance:textfield">
@@ -3632,14 +3632,14 @@ function renderHeatmap() {
   const totalRegs = Object.keys(hmCloud === 'azure' ? (hmService === 'bdd' ? BDD_ALL_REGIONS : AZURE_ALL_REGIONS) : (hmService === 'rds' ? RDS_ALL_REGIONS : AWS_ALL_REGIONS)).length;
   const famLabel2 = hmEngine ? hmEngine.charAt(0).toUpperCase()+hmEngine.slice(1) : (fam ? fam.charAt(0).toUpperCase()+fam.slice(1) : 'All');
   const commonUnit = 'instances';
-  const svcLabel = hmService === 'rds' ? 'RDS' : hmService === 'bdd' ? 'DB' : hmService.toUpperCase();
+  const svcLabel = hmService === 'rds' ? 'RDS' : hmService === 'bdd' ? 'DB' : (hmCloud === 'azure' ? 'VM' : 'EC2');
   document.getElementById('heatmapSub').innerHTML =
     '<span style="font-family:IBM Plex Mono,monospace;font-size:.82rem;color:#c8d0e8">Comparing </span>'
     + '<span style="font-family:IBM Plex Mono,monospace;font-size:.92rem;color:#7bffe0;font-weight:700">'+activeRegs.length+'</span>'
-    + '<span style="font-family:IBM Plex Mono,monospace;font-size:.82rem;color:#c8d0e8"> '+cloudName+' '+svcLabel+' regions</span>'
+    + '<span style="font-family:IBM Plex Mono,monospace;font-size:.82rem;color:#c8d0e8"> '+cloudName+' regions</span>'
     + '<span style="font-family:IBM Plex Mono,monospace;font-size:.82rem;color:#c8d0e8"> · </span>'
     + '<span style="font-family:IBM Plex Mono,monospace;font-size:.92rem;color:#7bffe0;font-weight:700">'+_commonCount+'</span>'
-    + '<span style="font-family:IBM Plex Mono,monospace;font-size:.82rem;color:#c8d0e8"> common instances</span>'
+    + '<span style="font-family:IBM Plex Mono,monospace;font-size:.82rem;color:#c8d0e8"> '+svcLabel+' common instances</span>'
     + '<span style="font-family:IBM Plex Mono,monospace;font-size:.82rem;color:#c8d0e8"> · </span>'
     + '<span style="font-family:IBM Plex Mono,monospace;font-size:.82rem;color:#c8d0e8">'+(famLabel2==='All' ? 'All families' : famLabel2+' family')+'</span>';
   const cFill = {};
