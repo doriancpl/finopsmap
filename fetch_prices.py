@@ -239,13 +239,13 @@ def fetch_eur_rate():
 # ── AZURE ──
 AZURE_REGIONS = {
     "francecentral":      {"label": "Paris",       "flag": "&#x1F1EB;&#x1F1F7;", "location": "France Central"},
-    "northeurope":        {"label": "Irlande",     "flag": "&#x1F1EE;&#x1F1EA;", "location": "North Europe"},
-    "westeurope":         {"label": "Pays-Bas",    "flag": "&#x1F1F3;&#x1F1F1;", "location": "West Europe"},
-    "germanywestcentral": {"label": "Francfort",   "flag": "&#x1F1E9;&#x1F1EA;", "location": "Germany West Central"},
-    "uksouth":            {"label": "Londres",     "flag": "&#x1F1EC;&#x1F1E7;", "location": "UK South"},
-    "swedencentral":      {"label": "Su\u00e8de",  "flag": "&#x1F1F8;&#x1F1EA;", "location": "Sweden Central"},
+    "northeurope":        {"label": "Ireland",     "flag": "&#x1F1EE;&#x1F1EA;", "location": "North Europe"},
+    "westeurope":         {"label": "Netherlands", "flag": "&#x1F1F3;&#x1F1F1;", "location": "West Europe"},
+    "germanywestcentral": {"label": "Frankfurt",   "flag": "&#x1F1E9;&#x1F1EA;", "location": "Germany West Central"},
+    "uksouth":            {"label": "London",      "flag": "&#x1F1EC;&#x1F1E7;", "location": "UK South"},
+    "swedencentral":      {"label": "Sweden",      "flag": "&#x1F1F8;&#x1F1EA;", "location": "Sweden Central"},
     "italynorth":         {"label": "Milan",       "flag": "&#x1F1EE;&#x1F1F9;", "location": "Italy North"},
-    "eastus":             {"label": "Virginie",    "flag": "&#x1F1FA;&#x1F1F8;", "location": "East US"},
+    "eastus":             {"label": "Virginia",    "flag": "&#x1F1FA;&#x1F1F8;", "location": "East US"},
 }
 
 SKUS_CACHE_DAYS = 30
@@ -709,13 +709,13 @@ def fetch_azure_bdd(region="francecentral", db_caps=None):
 # ── AWS ──
 AWS_REGIONS = {
     "eu-west-3":    {"label": "Paris",      "flag": "&#x1F1EB;&#x1F1F7;"},
-    "eu-west-1":    {"label": "Irlande",    "flag": "&#x1F1EE;&#x1F1EA;"},
-    "eu-central-1": {"label": "Francfort",  "flag": "&#x1F1E9;&#x1F1EA;"},
-    "eu-west-2":    {"label": "Londres",    "flag": "&#x1F1EC;&#x1F1E7;"},
-    "eu-north-1":   {"label": "Su\u00e8de", "flag": "&#x1F1F8;&#x1F1EA;"},
+    "eu-west-1":    {"label": "Ireland",     "flag": "&#x1F1EE;&#x1F1EA;"},
+    "eu-central-1": {"label": "Frankfurt",  "flag": "&#x1F1E9;&#x1F1EA;"},
+    "eu-west-2":    {"label": "London",     "flag": "&#x1F1EC;&#x1F1E7;"},
+    "eu-north-1":   {"label": "Sweden",     "flag": "&#x1F1F8;&#x1F1EA;"},
     "eu-south-1":   {"label": "Milan",      "flag": "&#x1F1EE;&#x1F1F9;"},
-    "eu-south-2":   {"label": "Espagne",    "flag": "&#x1F1EA;&#x1F1F8;"},
-    "us-east-1":    {"label": "Virginie",   "flag": "&#x1F1FA;&#x1F1F8;"},
+    "eu-south-2":   {"label": "Spain",      "flag": "&#x1F1EA;&#x1F1F8;"},
+    "us-east-1":    {"label": "Virginia",   "flag": "&#x1F1FA;&#x1F1F8;"},
 }
 
 def fetch_aws(region="eu-west-3"):
@@ -988,13 +988,13 @@ HTML_TEMPLATE = """
       <span id="regionRuler"></span>
       <select class="region-select" id="regionSelect" onchange="onRegionChange(this.value)">
       <option value="eu-west-3">&#x1F1EB;&#x1F1F7; eu-west-3 &mdash; Paris</option>
-      <option value="eu-west-1">&#x1F1EE;&#x1F1EA; eu-west-1 &mdash; Irlande</option>
-      <option value="eu-central-1">&#x1F1E9;&#x1F1EA; eu-central-1 &mdash; Francfort</option>
-      <option value="eu-west-2">&#x1F1EC;&#x1F1E7; eu-west-2 &mdash; Londres</option>
+      <option value="eu-west-1">&#x1F1EE;&#x1F1EA; eu-west-1 &mdash; Ireland</option>
+      <option value="eu-central-1">&#x1F1E9;&#x1F1EA; eu-central-1 &mdash; Frankfurt</option>
+      <option value="eu-west-2">&#x1F1EC;&#x1F1E7; eu-west-2 &mdash; London</option>
       <option value="eu-north-1">&#x1F1F8;&#x1F1EA; eu-north-1 &mdash; Su&egrave;de</option>
       <option value="eu-south-1">&#x1F1EE;&#x1F1F9; eu-south-1 &mdash; Milan</option>
-      <option value="eu-south-2">&#x1F1EA;&#x1F1F8; eu-south-2 &mdash; Espagne</option>
-      <option value="us-east-1">&#x1F1FA;&#x1F1F8; us-east-1 &mdash; Virginie</option>
+      <option value="eu-south-2">&#x1F1EA;&#x1F1F8; eu-south-2 &mdash; Spain</option>
+      <option value="us-east-1">&#x1F1FA;&#x1F1F8; us-east-1 &mdash; Virginia</option>
     </select>
   </div>
   </div>
@@ -1429,23 +1429,23 @@ function setNav(v) {
 
 const AWS_REGION_OPTIONS = [
   {v:'eu-west-3',   l:'&#x1F1EB;&#x1F1F7; eu-west-3 \u2014 Paris'},
-  {v:'eu-west-1',   l:'&#x1F1EE;&#x1F1EA; eu-west-1 \u2014 Irlande'},
-  {v:'eu-central-1',l:'&#x1F1E9;&#x1F1EA; eu-central-1 \u2014 Francfort'},
-  {v:'eu-west-2',   l:'&#x1F1EC;&#x1F1E7; eu-west-2 \u2014 Londres'},
-  {v:'eu-north-1',  l:'&#x1F1F8;&#x1F1EA; eu-north-1 \u2014 Su\u00e8de'},
+  {v:'eu-west-1',   l:'&#x1F1EE;&#x1F1EA; eu-west-1 \u2014 Ireland'},
+  {v:'eu-central-1',l:'&#x1F1E9;&#x1F1EA; eu-central-1 \u2014 Frankfurt'},
+  {v:'eu-west-2',   l:'&#x1F1EC;&#x1F1E7; eu-west-2 \u2014 London'},
+  {v:'eu-north-1',  l:'&#x1F1F8;&#x1F1EA; eu-north-1 \u2014 Sweden'},
   {v:'eu-south-1',  l:'&#x1F1EE;&#x1F1F9; eu-south-1 \u2014 Milan'},
-  {v:'eu-south-2',  l:'&#x1F1EA;&#x1F1F8; eu-south-2 \u2014 Espagne'},
-  {v:'us-east-1',   l:'&#x1F1FA;&#x1F1F8; us-east-1 \u2014 Virginie'},
+  {v:'eu-south-2',  l:'&#x1F1EA;&#x1F1F8; eu-south-2 \u2014 Spain'},
+  {v:'us-east-1',   l:'&#x1F1FA;&#x1F1F8; us-east-1 \u2014 Virginia'},
 ];
 const AZURE_REGION_OPTIONS = [
   {v:'francecentral',      l:'&#x1F1EB;&#x1F1F7; francecentral \u2014 Paris'},
-  {v:'northeurope',        l:'&#x1F1EE;&#x1F1EA; northeurope \u2014 Irlande'},
-  {v:'westeurope',         l:'&#x1F1F3;&#x1F1F1; westeurope \u2014 Pays-Bas'},
-  {v:'germanywestcentral', l:'&#x1F1E9;&#x1F1EA; germanywestcentral \u2014 Francfort'},
-  {v:'uksouth',            l:'&#x1F1EC;&#x1F1E7; uksouth \u2014 Londres'},
-  {v:'swedencentral',      l:'&#x1F1F8;&#x1F1EA; swedencentral \u2014 Su\u00e8de'},
+  {v:'northeurope',        l:'&#x1F1EE;&#x1F1EA; northeurope \u2014 Ireland'},
+  {v:'westeurope',         l:'&#x1F1F3;&#x1F1F1; westeurope \u2014 Netherlands'},
+  {v:'germanywestcentral', l:'&#x1F1E9;&#x1F1EA; germanywestcentral \u2014 Frankfurt'},
+  {v:'uksouth',            l:'&#x1F1EC;&#x1F1E7; uksouth \u2014 London'},
+  {v:'swedencentral',      l:'&#x1F1F8;&#x1F1EA; swedencentral \u2014 Sweden'},
   {v:'italynorth',         l:'&#x1F1EE;&#x1F1F9; italynorth \u2014 Milan'},
-  {v:'eastus',             l:'&#x1F1FA;&#x1F1F8; eastus \u2014 Virginie'},
+  {v:'eastus',             l:'&#x1F1FA;&#x1F1F8; eastus \u2014 Virginia'},
 ];
 
 function adjustLayout() {
@@ -3500,21 +3500,21 @@ function renderHeatmap() {
 
   const CITY_COORDS = {
     'eu-west-3':          { lon:2.3522, lat:48.8566, label:'Paris',     cloud:'aws'   },
-    'eu-west-1':          { lon:-6.2603,lat:53.3498, label:'Irlande',   cloud:'aws'   },
-    'eu-central-1':       { lon:8.6821, lat:50.1109, label:'Francfort', cloud:'aws'   },
-    'eu-west-2':          { lon:-0.1276,lat:51.5074, label:'Londres',   cloud:'aws'   },
+    'eu-west-1':          { lon:-6.2603,lat:53.3498, label:'Ireland',   cloud:'aws'   },
+    'eu-central-1':       { lon:8.6821, lat:50.1109, label:'Frankfurt', cloud:'aws'   },
+    'eu-west-2':          { lon:-0.1276,lat:51.5074, label:'London',   cloud:'aws'   },
     'eu-north-1':         { lon:17.9139,lat:59.3293, label:'Stockholm', cloud:'aws'   },
     'eu-south-1':         { lon:9.1900, lat:45.4654, label:'Milan',     cloud:'aws'   },
     'eu-south-2':         { lon:-3.7038,lat:40.4168, label:'Madrid',    cloud:'aws'   },
-    'us-east-1':          { lon:-77.47, lat:38.99,   label:'Virginie',  cloud:'aws'   },
+    'us-east-1':          { lon:-77.47, lat:38.99,   label:'Virginia',  cloud:'aws'   },
     'francecentral':      { lon:2.3522, lat:48.8566, label:'Paris',     cloud:'azure' },
-    'northeurope':        { lon:-6.2603,lat:53.3498, label:'Irlande',   cloud:'azure' },
+    'northeurope':        { lon:-6.2603,lat:53.3498, label:'Ireland',   cloud:'azure' },
     'westeurope':         { lon:4.9041, lat:52.3676, label:'Amsterdam', cloud:'azure' },
-    'germanywestcentral': { lon:8.6821, lat:50.1109, label:'Francfort', cloud:'azure' },
-    'uksouth':            { lon:-0.1276,lat:51.5074, label:'Londres',   cloud:'azure' },
+    'germanywestcentral': { lon:8.6821, lat:50.1109, label:'Frankfurt', cloud:'azure' },
+    'uksouth':            { lon:-0.1276,lat:51.5074, label:'London',   cloud:'azure' },
     'swedencentral':      { lon:16.3458,lat:60.1282, label:'Gävle',     cloud:'azure' },
     'italynorth':         { lon:9.1900, lat:45.4654, label:'Milan',     cloud:'azure' },
-    'eastus':             { lon:-77.47, lat:38.99,   label:'Virginie',  cloud:'azure' },
+    'eastus':             { lon:-77.47, lat:38.99,   label:'Virginia',  cloud:'azure' },
   };
   const ISO_MAP = {
     'eu-west-1':'372','northeurope':'372',
