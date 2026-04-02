@@ -1374,9 +1374,9 @@ HTML_TEMPLATE = """
     <p style="font-size:.85rem;color:#c8d0e8;line-height:1.7;margin-bottom:12px"><em>Thank you for your support</em> &#x2665;</p>
     <div style="margin-bottom:16px;font-family:'IBM Plex Mono',monospace;font-size:.72rem;color:var(--muted)"><a href="mailto:contact@finopsmap.com" style="color:#7bffe0;text-decoration:none;border-bottom:1px dotted #7bffe0">contact@finopsmap.com</a></div>
     <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center">
-      <a href="https://www.linkedin.com/in/dorian" target="_blank" style="font-family:'IBM Plex Mono',monospace;font-size:.72rem;padding:6px 14px;border:1px solid #3a4468;border-radius:4px;color:#c8d0e8;text-decoration:none">LinkedIn</a>
+      <a href="https://buymeacoffee.com/finopsmap" target="_blank" style="font-family:'IBM Plex Mono',monospace;font-size:.72rem;padding:6px 14px;border-radius:4px;color:#000;background:#FFDD00;text-decoration:none;font-weight:700">&#x2615; Keep FinOpsMap free</a>
       <a href="https://github.com/doriancpl/finopsmap" target="_blank" style="font-family:'IBM Plex Mono',monospace;font-size:.72rem;padding:6px 14px;border:1px solid #3a4468;border-radius:4px;color:#c8d0e8;text-decoration:none">GitHub</a>
-      <a href="https://buymeacoffee.com/finopsmap" target="_blank" style="font-family:'IBM Plex Mono',monospace;font-size:.72rem;padding:6px 14px;border-radius:4px;color:#000;background:#FFDD00;text-decoration:none;font-weight:700">&#x2615; Buy me a coffee</a>
+      <a href="https://www.linkedin.com/in/dorian" target="_blank" style="font-family:'IBM Plex Mono',monospace;font-size:.72rem;padding:6px 14px;border:1px solid #3a4468;border-radius:4px;color:#c8d0e8;text-decoration:none">LinkedIn</a>
     </div>
   </div>
 </div>
