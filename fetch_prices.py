@@ -1376,7 +1376,7 @@ HTML_TEMPLATE = """
     <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center">
       <a href="https://buymeacoffee.com/finopsmap" target="_blank" style="font-family:'IBM Plex Mono',monospace;font-size:.72rem;padding:6px 14px;border-radius:4px;color:#000;background:#FFDD00;text-decoration:none;font-weight:700">&#x2615; Keep FinOpsMap free</a>
       <a href="https://github.com/doriancpl/finopsmap" target="_blank" style="font-family:'IBM Plex Mono',monospace;font-size:.72rem;padding:6px 14px;border:1px solid #3a4468;border-radius:4px;color:#c8d0e8;text-decoration:none">GitHub</a>
-      <a href="https://www.linkedin.com/in/dorian" target="_blank" style="font-family:'IBM Plex Mono',monospace;font-size:.72rem;padding:6px 14px;border:1px solid #3a4468;border-radius:4px;color:#c8d0e8;text-decoration:none">LinkedIn</a>
+      <a href="https://www.linkedin.com" target="_blank" style="font-family:'IBM Plex Mono',monospace;font-size:.72rem;padding:6px 14px;border:1px solid #3a4468;border-radius:4px;color:#c8d0e8;text-decoration:none">LinkedIn</a>
     </div>
   </div>
 </div>
