@@ -936,6 +936,9 @@ HTML_TEMPLATE = """
 <html lang="fr">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-B899DM2KKM"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-B899DM2KKM');</script>
 <title>FinOpsMap — AWS &amp; Azure Cloud Pricing Comparator</title>
 <meta name="description" content="FinOpsMap is a free open-source tool to compare AWS EC2, RDS and Azure VM, Database pricing in real time. Instant, visual and actionable cloud cost comparison for FinOps engineers.">
 <meta name="keywords" content="cloud pricing, AWS EC2 pricing, Azure VM pricing, FinOps tool, cloud cost comparison, AWS vs Azure, cloud cost optimization, GreenOps, carbon intensity cloud">
