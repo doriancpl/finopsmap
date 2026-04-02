@@ -17,7 +17,6 @@ Built for FinOps engineers and cloud architects who need to compare instance pri
 - **EC2 / RDS / Azure VM / Azure DB** pricing across multiple regions
 - **Interactive heatmap** — world map with per-region cost coloring
 - **GreenOps** — carbon intensity per region (gCO2eq/kWh)
-- **Latency** — measure real network latency from your browser
 - **Reserved pricing** — 1yr / 3yr with No Upfront / All Upfront
 - **FinOps Score** — composite score based on cost, generation and ARM architecture
 - **EUR/USD** conversion via FRED API (Federal Reserve)
