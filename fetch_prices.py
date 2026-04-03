@@ -1356,7 +1356,7 @@ HTML_TEMPLATE = """
 </div>
 </main>
 <footer>
-  <span style="font-size:.8rem;color:var(--text)">
+  <span class="footer-sources" style="font-size:.8rem;color:var(--text)">
     Sources : <a href="https://prices.azure.com/api/retail/prices" target="_blank" style="color:var(--text);text-decoration:none">Azure Retail Prices API</a> &mdash;
     <a href="https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEC2/current/eu-west-3/index.json" target="_blank" style="color:var(--text);text-decoration:none">AWS Price List API</a>
   </span>

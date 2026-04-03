@@ -182,16 +182,17 @@ footer{position:fixed;bottom:0;left:0;width:100vw;z-index:100;padding:16px 36px;
   #regionSelect{max-width:30px!important;-webkit-appearance:none;appearance:none;padding:0 4px;text-align:center;cursor:pointer}
   .veille-btn{padding:4px 8px;font-size:.7rem}
   .tb-label{display:none}
-  main{height:calc(100% - 52px - 44px);margin-top:52px}
+  main{overflow-x:auto!important;margin-top:52px}
   #hero{padding:12px 14px}
   h1{font-size:1.3rem!important}
   .hero-sub{font-size:.85rem;max-width:100%}
   #filters{padding:8px 12px;gap:6px}
   #tblwrap{padding:0 0 44px}
-  #tblscroll{overflow-x:auto;-webkit-overflow-scrolling:touch;padding:0 12px}
-  :root{--filters-h:230px}
+  #tblscroll{overflow:visible;padding:0 12px}
   thead th.col-iname,#filterRow th.col-iname,tbody td.col-iname{left:0;box-shadow:none}
   footer{padding:10px 12px;gap:4px}
+  .footer-sources{display:none!important}
+  #famGrp,#discountBtn{display:none!important}
   .fn{font-size:.7rem}
   .fts{font-size:.65rem}
   #statsrow{margin-left:12px;margin-right:12px;width:calc(100% - 24px)}
