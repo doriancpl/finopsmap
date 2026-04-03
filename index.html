@@ -27,7 +27,7 @@
 <link rel="preload" href="data/agregations/regions_meta.json" as="fetch" crossorigin>
 <link rel="preload" href="data/carbon.json" as="fetch" crossorigin>
 <link rel="preload" href="data/eur_rate.json" as="fetch" crossorigin>
-<link rel="stylesheet" href="css/styles.css?v=4/3/2026 · 5:24 PM">
+<link rel="stylesheet" href="css/styles.css?v=4/3/2026 · 6:03 PM">
 </head>
 <body>
 <div id="topbar">
@@ -85,7 +85,7 @@
   </div>
   <div id="topbarActions" style="display:flex;gap:14px;align-items:center;flex:1;justify-content:flex-end">
     <button id="backBtn" onclick="goBack()" style="display:none;align-items:center;gap:6px;padding:6px 12px;background:transparent;border:1px solid #2a3050;border-radius:6px;color:#c8d0e8;font-family:'IBM Plex Mono',monospace;font-size:.72rem;cursor:pointer;transition:all .15s" onmouseenter="this.style.borderColor='#ff5566';this.style.color='#ff5566'" onmouseleave="this.style.borderColor='#2a3050';this.style.color='#c8d0e8'">&#x2190; Back</button>
-    <button class="veille-btn" id="heatmapBtn" onclick="setHeatmap()"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:5px;position:relative;top:-1px"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg><span class="tb-label">Heatmap regions</span></button>
+    <button class="veille-btn" id="heatmapBtn" onclick="setHeatmap()"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:5px;position:relative;top:-1px"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg><span class="tb-label">Heatmap</span></button>
     <button class="veille-btn" id="tcoBtn" onclick="setTco()"><span style="position:relative;top:-1px;margin-right:5px">∑</span><span class="tb-label">TCO</span></button>
     <button class="veille-btn" id="veilleBtn" onclick="setVeille()"><span style="position:relative;top:-1px">&#x25C8;</span><span class="tb-label"> Blog FinOps</span></button>
   </div>
@@ -106,7 +106,7 @@
     <div style="display:inline-flex;align-items:center;background:var(--s1);border:1px solid var(--b1);border-radius:6px;overflow:hidden;height:36px;flex-shrink:0">
       <span id="famLabel" style="padding:0 10px;background:var(--s2);font-family:'Syne',sans-serif;font-size:.78rem;font-weight:700;color:var(--text);border-right:1px solid var(--b1);height:100%;display:flex;align-items:center;white-space:nowrap">FAMILY</span>
       <select id="famSelect" onchange="setFamSel(this.value)" style="font-family:'Syne',sans-serif;font-size:.78rem;font-weight:700;color:#7bffe0;background:var(--s1);border:none;padding:0 28px 0 10px;height:100%;cursor:pointer;outline:none;appearance:none;-webkit-appearance:none;background-image:url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='%237bffe0'/%3E%3C/svg%3E&quot;);background-repeat:no-repeat;background-position:right 8px center">
-        <option value="all">All Families</option>
+        <option value="all">All</option>
         <option value="general">General</option>
         <option value="burstable">Burstable</option>
         <option value="compute">CPU</option>
@@ -124,13 +124,6 @@
       <option value="d">/ Daily</option>
       <option value="m">/ Monthly</option>
     </select>
-    <div id="priceSliderWrap" style="position:relative;width:140px;height:100%;display:flex;align-items:center;padding:0 12px">
-      <div style="position:absolute;left:12px;right:12px;height:4px;background:#2a3050;border-radius:2px"></div>
-      <div id="priceSliderFill" style="position:absolute;left:12px;height:4px;background:#2a3050;border-radius:2px;pointer-events:none"></div>
-      <div id="priceSliderThumb" style="position:absolute;width:12px;height:12px;background:#7bffe0;border-radius:50%;pointer-events:none;top:50%;transform:translate(-50%,-50%)"></div>
-      <input type="range" id="priceSlider" min="0" max="100" step="1" value="100" oninput="onPriceSlider()" style="position:absolute;left:12px;right:12px;width:calc(100% - 24px);margin:0;opacity:0;cursor:pointer;height:36px">
-    </div>
-    <span id="priceSliderLbl" style="padding:0 12px;font-family:'IBM Plex Mono',monospace;font-size:.75rem;font-weight:700;color:#c8d0e8;min-width:52px;border-left:1px solid var(--b1);height:100%;display:flex;align-items:center">any</span>
   </div>
 
   <div style="display:inline-flex;align-items:center;background:var(--s1);border:1px solid var(--b1);border-radius:6px;overflow:hidden;height:36px" id="riUpfrontToggle">
@@ -148,7 +141,7 @@
     <button class="curr-btn" id="btnEur" onclick="setCurr(&apos;eur&apos;)">&#x20AC; EUR</button>
   </div>
   <div id="discountBtn" onclick="toggleDiscount()" onmouseenter="if(!discount){document.getElementById('discountLbl').style.color='var(--accent)'}" onmouseleave="if(!discount){document.getElementById('discountLbl').style.color='#c8d0e8'}" style="display:inline-flex;align-items:center;background:transparent;border:1px solid var(--b1);border-radius:6px;overflow:hidden;cursor:pointer;transition:border-color .2s,color .2s">
-    <span id="discountLbl" style="padding:8px 15px;color:#c8d0e8;font-family:'Syne',sans-serif;font-size:.9rem;font-weight:700;white-space:nowrap;transition:color .2s;display:flex;align-items:center;gap:7px">Discount EDP</span>
+    <span id="discountLbl" style="padding:8px 15px;color:#c8d0e8;font-family:'Syne',sans-serif;font-size:.9rem;font-weight:700;white-space:nowrap;transition:color .2s;display:flex;align-items:center;gap:7px">EDP %</span>
     <div id="discountFieldWrap" style="display:none;align-items:center;border-left:1px solid var(--b1);height:100%">
       <input type="number" id="discountInput" min="0" max="99" placeholder="%" oninput="setDiscountRate(this.value)" onclick="event.stopPropagation()" style="width:58px;padding:8px 10px;background:transparent;border:none;color:#7bffe0;font-family:'IBM Plex Mono',monospace;font-size:.82rem;font-weight:700;outline:none;text-align:center;-moz-appearance:textfield;appearance:textfield">
     </div>
@@ -428,7 +421,7 @@
     <a href="https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEC2/current/eu-west-3/index.json" target="_blank" style="color:var(--text);text-decoration:none">AWS Price List API</a>
   </span>
   <span class="fts" style="color:var(--text)"><a href="#" onclick="document.getElementById('aboutModal').style.display='flex';return false;" style="color:var(--text);text-decoration:none;border-bottom:1px dotted var(--muted)">FinOpsMap · About me</a></span>
-  <span class="fts" style="color:var(--text)">Updated 4/3/2026 · 5:24 PM</span>
+  <span class="fts" style="color:var(--text)">Updated 4/3/2026 · 6:03 PM</span>
 </footer>
 
 <div id="aboutModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;align-items:center;justify-content:center" onclick="if(event.target===this)this.style.display='none'">
@@ -626,7 +619,7 @@ function setView(v) {
       famSel.innerHTML = '<option value="all">All Engines</option><option value="mysql">MySQL</option><option value="postgresql">PostgreSQL</option><option value="aurora-mysql">Aurora MySQL</option><option value="aurora-pg">Aurora PG</option><option value="mariadb">MariaDB</option><option value="oracle">Oracle</option><option value="sqlserver">SQL Server</option>';
     } else {
       if(famLbl) famLbl.textContent = 'FAMILY';
-      famSel.innerHTML = '<option value="all">All Families</option><option value="general">General</option><option value="burstable">Burstable</option><option value="compute">CPU</option><option value="memory">Memory</option><option value="storage">Storage</option><option value="gpu">GPU</option><option value="other">Other</option>';
+      famSel.innerHTML = '<option value="all">All</option><option value="general">General</option><option value="burstable">Burstable</option><option value="compute">CPU</option><option value="memory">Memory</option><option value="storage">Storage</option><option value="gpu">GPU</option><option value="other">Other</option>';
     }
     famSel.value = 'all';
   }
@@ -675,8 +668,9 @@ function getColVal(id) { const el = document.getElementById(id); return el ? el.
 
 function matchNum(val, filter) {
   if (!filter) return true;
-  const m = filter.match(/^([<>]=?)?([0-9]+[.]?[0-9]*)$/);
-  if (!m) return String(val).includes(filter);
+  const f = filter.replace(',', '.');
+  const m = f.match(/^([<>]=?)?([0-9]+[.]?[0-9]*)$/);
+  if (!m) return String(val).includes(f);
   const op = m[1] || '=', n = parseFloat(m[2]);
   if (op === '<')  return val < n;
   if (op === '<=') return val <= n;
@@ -704,8 +698,7 @@ function getFiltered() {
   const fSpot    = getColVal('f-spot');
   const fSpotsav = getColVal('f-spotsav');
   const fScore   = getColVal('f-score');
-  const sliderPct = parseInt(document.getElementById('priceSlider').value);
-  const priceSliderMax = sliderPct < 100 ? (getPricePercentile(sliderPct) / (PRICE_UNIT_MULT[period] || 1)) : null;
+  const priceSliderMax = null;
   buildSets();
   getData().forEach(d => { d.recoTag = _recoSet.has(d.iname); d.resvTag = _resvSet.has(d.iname); });
   let arr = getData().filter(d =>
@@ -717,9 +710,9 @@ function getFiltered() {
     (!fProc  || (d.processor||'').toLowerCase().includes(fProc)) &&
     (!fVcpu  || matchNum(d.vcpu, fVcpu)) &&
     (!fRam   || matchNum(d.ram,  fRam)) &&
-    (!fPvcpu || matchNum(d.vcpu > 0 ? d.price/d.vcpu : 0, fPvcpu)) &&
-    (!fPrice || matchNum(d.price, fPrice)) &&
-    (!fMonth || matchNum((d[getRiKey()]||0), fMonth)) &&
+    (!fPvcpu || matchNum(d.vcpu > 0 ? d.price / d.vcpu : 0, fPvcpu)) &&
+    (!fPrice || matchNum(d.price * (PRICE_UNIT_MULT[period]||1), fPrice)) &&
+    (!fMonth || matchNum((d[getRiKey()]||0) * (PRICE_UNIT_MULT[period]||1), fMonth)) &&
     (!fSavings || (() => { const rp = d[getRiKey()]; if (!rp) return false; return matchNum(Math.round((1-rp/d.price)*100), fSavings); })()) &&
     (!fStorage || (d.storage||'').toLowerCase().includes(fStorage)) &&
     (!fNetwork || (d.network||'').toLowerCase().includes(fNetwork)) &&
@@ -1480,10 +1473,7 @@ function onPriceSlider() {
   render();
 }
 
-function resetPriceSlider() {
-  document.getElementById('priceSlider').value = 100;
-  onPriceSlider();
-}
+function resetPriceSlider() {}
 
 function setFamSel(v) {
   fam = v;
