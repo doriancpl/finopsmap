@@ -1027,7 +1027,7 @@ HTML_TEMPLATE = """
 <main>
 <section id="hero">
   <div class="eyebrow" id="heroEyebrow"></div>
-  <h1 id="heroTitle"></h1>
+  <h1 id="heroTitle" style="opacity:0">AWS vs Azure Pricing — EC2, RDS &amp; VM</h1>
   <p class="hero-sub" id="heroSub">Chargement...</p>
 </section>
 
@@ -1539,7 +1539,9 @@ function setView(v) {
     rds:   {title:'<span style="color:#c8d0e8">Amazon RDS</span>'},
     psql:  {title:'<span style="color:#c8d0e8">Azure Database</span>', color:'azure'},
   };
-  document.getElementById('heroTitle').innerHTML     = cfg[v].title;
+  const heroTitleEl = document.getElementById('heroTitle');
+  heroTitleEl.innerHTML = cfg[v].title;
+  heroTitleEl.style.opacity = '1';
   updateDiscountLabel();
   const tbl = document.getElementById('mainTable');
   if (tbl) { tbl.classList.remove('view-aws','view-azure','view-rds','view-psql'); tbl.classList.add('view-'+v); }
