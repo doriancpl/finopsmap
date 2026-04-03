@@ -192,7 +192,12 @@ footer{position:fixed;bottom:0;left:0;width:100vw;z-index:100;padding:16px 36px;
   thead th.col-iname,#filterRow th.col-iname,tbody td.col-iname{left:0;box-shadow:none}
   footer{padding:10px 12px;gap:4px}
   .footer-sources{display:none!important}
-  #famGrp,#discountBtn{display:none!important}
+  #famGrp,#discountBtn,#priceSliderWrap,#priceSliderLbl{display:none!important}
+  #costGrp{order:1}
+  .curr-toggle{order:2}
+  #riUpfrontToggle{order:3}
+  #resetBtn{order:4}
+  #filterActionsGrp{order:5;margin-left:0;width:100%}
   .v-grid{grid-template-columns:1fr!important}
   #veilleSection{padding:16px 12px 44px}
   #colPicker{position:fixed!important;top:56px!important;left:8px!important;right:8px!important;max-height:70vh;overflow-y:auto}

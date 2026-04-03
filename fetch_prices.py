@@ -1050,14 +1050,14 @@ HTML_TEMPLATE = """
       </select>
     </div>
   </div>
-  <div style="display:inline-flex;align-items:center;background:var(--s1);border:1px solid var(--b1);border-radius:6px;overflow:hidden;height:36px;flex-shrink:0">
+  <div id="costGrp" style="display:inline-flex;align-items:center;background:var(--s1);border:1px solid var(--b1);border-radius:6px;overflow:hidden;height:36px;flex-shrink:0">
     <span style="padding:0 10px;background:var(--s2);font-family:'Syne',sans-serif;font-size:.78rem;font-weight:700;color:var(--text);border-right:1px solid var(--b1);height:100%;display:flex;align-items:center;white-space:nowrap">COST</span>
     <select id="periodSel" onchange="setPeriod(this.value)" style="font-family:'Syne',sans-serif;font-size:.78rem;font-weight:700;color:#7bffe0;background:var(--s1);border:none;border-right:1px solid var(--b1);padding:0 28px 0 10px;height:100%;cursor:pointer;outline:none;appearance:none;-webkit-appearance:none;background-image:url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='%237bffe0'/%3E%3C/svg%3E&quot;);background-repeat:no-repeat;background-position:right 8px center">
       <option value="h">/ Hourly</option>
       <option value="d">/ Daily</option>
       <option value="m">/ Monthly</option>
     </select>
-    <div style="position:relative;width:140px;height:100%;display:flex;align-items:center;padding:0 12px">
+    <div id="priceSliderWrap" style="position:relative;width:140px;height:100%;display:flex;align-items:center;padding:0 12px">
       <div style="position:absolute;left:12px;right:12px;height:4px;background:#2a3050;border-radius:2px"></div>
       <div id="priceSliderFill" style="position:absolute;left:12px;height:4px;background:#2a3050;border-radius:2px;pointer-events:none"></div>
       <div id="priceSliderThumb" style="position:absolute;width:12px;height:12px;background:#7bffe0;border-radius:50%;pointer-events:none;top:50%;transform:translate(-50%,-50%)"></div>
@@ -1086,9 +1086,9 @@ HTML_TEMPLATE = """
       <input type="number" id="discountInput" min="0" max="99" placeholder="%" oninput="setDiscountRate(this.value)" onclick="event.stopPropagation()" style="width:58px;padding:8px 10px;background:transparent;border:none;color:#7bffe0;font-family:'IBM Plex Mono',monospace;font-size:.82rem;font-weight:700;outline:none;text-align:center;-moz-appearance:textfield;appearance:textfield">
     </div>
   </div>
-  <button class="reset-btn" onclick="resetFiltres()">&#x2715; Reset</button>
+  <button class="reset-btn" id="resetBtn" onclick="resetFiltres()">&#x2715; Reset</button>
 
-  <div style="display:flex;align-items:center;gap:8px;margin-left:auto">
+  <div id="filterActionsGrp" style="display:flex;align-items:center;gap:8px;margin-left:auto">
   <div style="width:1px;height:20px;background:var(--b1)"></div>
   <div style="position:relative;flex-shrink:0" id="colPickerWrap">
     <button class="reset-btn" onclick="toggleColPicker()" id="colPickerBtn" style="display:flex;align-items:center;gap:6px">&#x229E; Columns</button>
