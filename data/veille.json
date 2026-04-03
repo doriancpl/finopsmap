@@ -1,5 +1,12 @@
 [
   {
+    "title": "Understanding the Total Cost of Ownership",
+    "url": "https://techcommunity.microsoft.com/t5/finops-blog/understanding-the-total-cost-of-ownership/ba-p/4419195",
+    "date": "Thu, 02 Apr 2026",
+    "source": "azure",
+    "summary": "Whether you're just beginning your journey in Azure or are already managing workloads in the cloud, it's essential to ground your strategy in proven guidance. T"
+  },
+  {
     "title": "AI for FinOps: Agentic Use Cases in FinOps",
     "url": "https://www.finops.org/insights/ai-for-finops-agentic-use-cases/",
     "date": "Fri, 27 Mar 2026",
@@ -208,13 +215,6 @@
     "date": "Sun, 06 Jul 2025",
     "source": "azure",
     "summary": "Whether you consider yourself a FinOps practitioner, someone who’s enthusiastic about driving cloud efficiency and maximizing the value you get from the cloud o"
-  },
-  {
-    "title": "Understanding the Total Cost of Ownership",
-    "url": "https://techcommunity.microsoft.com/t5/finops-blog/understanding-the-total-cost-of-ownership/ba-p/4419195",
-    "date": "Thu, 12 Jun 2025",
-    "source": "azure",
-    "summary": "Whether you're just beginning your journey in Azure or are already managing workloads in the cloud, it's essential to ground your strategy in proven guidance. T"
   },
   {
     "title": "A practitioner's guide to accelerating FinOps with GitHub Copilot and FinOps hubs",
