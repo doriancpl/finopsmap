@@ -169,6 +169,32 @@ footer{position:fixed;bottom:0;left:0;width:100vw;z-index:100;padding:16px 36px;
 @media(max-width:920px){.nav-cloud-label{display:none}.nav-outer{gap:12px}.nav-btn{padding:8px 10px;font-size:.75rem}#topbar{padding:0 16px}#topbarActions{gap:6px}#topbarLeftGroup{gap:8px}#topbarLogo svg{width:140px;height:26px}}
 @media(max-width:720px){#topbarLogo svg{width:110px;height:20px}.nav-btn{padding:6px 8px;font-size:.7rem}.nav-outer{gap:6px}#regionSelect{max-width:70px}#topbarLeftGroup{gap:6px}}
 @media(max-width:640px){#topbar,#hero,#filters,#tblwrap,footer{padding-left:16px;padding-right:16px}#statsrow{margin-left:16px;margin-right:16px}h1{font-size:1.6rem}}
+@media(max-width:768px){
+  #heatmapBtn,#tcoBtn{display:none!important}
+  #topbar{padding:0 12px;height:52px}
+  #topbarLogo{overflow:hidden;max-width:32px}
+  #topbarLogo svg{width:190px!important;height:36px!important}
+  #topbarLeftGroup{gap:6px}
+  #topbarActions{gap:4px}
+  .nav-cloud-label{display:none}
+  .nav-btn{padding:5px 8px;font-size:.7rem}
+  .nav-outer{gap:6px}
+  #regionSelect{max-width:30px!important;-webkit-appearance:none;appearance:none;padding:0 4px;text-align:center;cursor:pointer}
+  .veille-btn{padding:4px 8px;font-size:.7rem}
+  .tb-label{display:none}
+  main{height:calc(100% - 52px - 44px);margin-top:52px}
+  #hero{padding:12px 14px}
+  h1{font-size:1.3rem!important}
+  .hero-sub{font-size:.85rem;max-width:100%}
+  #filters{padding:8px 12px;gap:6px}
+  #tblwrap{padding:0 0 44px}
+  #tblscroll{overflow-x:auto;-webkit-overflow-scrolling:touch;padding:0 12px}
+  thead th.col-iname,#filterRow th.col-iname,tbody td.col-iname{left:0;box-shadow:none}
+  footer{padding:10px 12px;gap:4px}
+  .fn{font-size:.7rem}
+  .fts{font-size:.65rem}
+  #statsrow{margin-left:12px;margin-right:12px;width:calc(100% - 24px)}
+}
 #mainTable.hide-fam .col-fam,#mainTable.hide-curgen .col-curgen,#mainTable.hide-proc .col-proc,#mainTable.hide-vcpu .col-vcpu,#mainTable.hide-ram .col-ram,#mainTable.hide-pvcpu .col-pvcpu,#mainTable.hide-price .col-price,#mainTable.hide-month .col-month,#mainTable.hide-savings .col-savings,#mainTable.hide-storage .col-storage,#mainTable.hide-network .col-network,#mainTable.hide-maxdisks .col-maxdisks,#mainTable.hide-diskiops .col-diskiops,#mainTable.hide-spot .col-spot,#mainTable.hide-spotsav .col-spotsav,#mainTable.hide-score .col-score{display:none}
 .view-psql .col-proc,.view-rds .col-storage,.view-psql .col-storage,.view-azure .col-network,.view-psql .col-network,.view-azure .col-curgen,.view-psql .col-curgen,.view-aws .col-maxdisks,.view-rds .col-maxdisks,.view-psql .col-maxdisks,.view-aws .col-diskiops,.view-rds .col-diskiops,.view-rds .col-spot,.view-azure .col-spot,.view-psql .col-spot,.view-rds .col-spotsav,.view-azure .col-spotsav,.view-psql .col-spotsav{display:none}
 .col-pick-row{display:flex;align-items:center;gap:8px;padding:5px 0;font-family:'Syne',sans-serif;font-size:.82rem;color:#c8d0e8;cursor:pointer;white-space:nowrap}

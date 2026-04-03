@@ -2466,6 +2466,7 @@ function hmSort(col) {
 }
 
 function setTco() {
+  if (window.innerWidth <= 768) return;
   if (veilleActive) {
     veilleActive = false;
     document.getElementById('veilleBtn').classList.remove('active');
@@ -3408,6 +3409,7 @@ function populateHmRam() {
 }
 
 function setHeatmap() {
+  if (window.innerWidth <= 768) return;
   if (veilleActive)      { veilleActive = false;      document.getElementById('veilleBtn').classList.remove('active');      document.getElementById('veilleSection').style.display = 'none'; }
   if (tcoActive) {
     tcoActive = false;
