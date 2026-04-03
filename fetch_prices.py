@@ -1115,7 +1115,7 @@ HTML_TEMPLATE = """
     </div>
   </div>
   <button class="cmp-btn" id="cmpBtn" onclick="toggleCmp()">&#x229E; Compare <span class="cmp-count" id="cmpCount"></span></button>
-  <button class="reset-btn" onclick="exportCSV()" style="border-color:var(--muted);color:#c8d0e8">&#x2193; Export CSV</button>
+  <button class="reset-btn" id="exportBtn" onclick="exportCSV()" style="border-color:var(--muted)">&#x2193; Export CSV</button>
   </div>
 </div>
 
