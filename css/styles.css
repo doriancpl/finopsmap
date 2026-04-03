@@ -179,7 +179,7 @@ footer{position:fixed;bottom:0;left:0;width:100vw;z-index:100;padding:16px 36px;
   .nav-cloud-label{display:none}
   .nav-btn{padding:5px 8px;font-size:.7rem}
   .nav-outer{gap:6px}
-  #regionSelect{max-width:30px!important;-webkit-appearance:none;appearance:none;padding:0 4px;text-align:center;cursor:pointer}
+  #regionSelect{max-width:22px!important;-webkit-appearance:none;appearance:none;padding:0;cursor:pointer}
   .veille-btn{padding:4px 8px;font-size:.7rem}
   .tb-label{display:none}
   main{overflow-x:auto!important;margin-top:52px}
@@ -193,6 +193,9 @@ footer{position:fixed;bottom:0;left:0;width:100vw;z-index:100;padding:16px 36px;
   footer{padding:10px 12px;gap:4px}
   .footer-sources{display:none!important}
   #famGrp,#discountBtn{display:none!important}
+  .v-grid{grid-template-columns:1fr!important}
+  #veilleSection{padding:16px 12px 44px}
+  #colPicker{position:fixed!important;top:56px!important;left:8px!important;right:8px!important;max-height:70vh;overflow-y:auto}
   .fn{font-size:.7rem}
   .fts{font-size:.65rem}
   #statsrow{margin-left:12px;margin-right:12px;width:calc(100% - 24px)}

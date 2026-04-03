@@ -1895,6 +1895,7 @@ function hideTip(){const t=document.getElementById('globalTip');if(t)t.style.dis
 window._tipData = [];
 
 function openSeriesModal(iname, fam) {
+  if (window.innerWidth <= 768) return;
   buildSets();
   const all = getData();
   const cur = all.find(d => d.iname === iname && (!fam || d.fam === fam));
