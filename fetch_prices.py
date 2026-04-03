@@ -1454,6 +1454,16 @@ function adjustLayout() {
   document.documentElement.style.setProperty('--filters-h', filtersH + 'px');
 }
 window.addEventListener('resize', adjustLayout);
+document.addEventListener('DOMContentLoaded', function() {
+  adjustLayout();
+  setTimeout(adjustLayout, 100);
+  setTimeout(adjustLayout, 500);
+});
+if (window.ResizeObserver) {
+  var _ro = new ResizeObserver(adjustLayout);
+  var _rf = document.getElementById('filters');
+  if (_rf) _ro.observe(_rf);
+}
 
 function adaptRegionWidth(sel) {
   const ruler = document.getElementById('regionRuler');

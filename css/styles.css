@@ -189,6 +189,7 @@ footer{position:fixed;bottom:0;left:0;width:100vw;z-index:100;padding:16px 36px;
   #filters{padding:8px 12px;gap:6px}
   #tblwrap{padding:0 0 44px}
   #tblscroll{overflow-x:auto;-webkit-overflow-scrolling:touch;padding:0 12px}
+  :root{--filters-h:230px}
   thead th.col-iname,#filterRow th.col-iname,tbody td.col-iname{left:0;box-shadow:none}
   footer{padding:10px 12px;gap:4px}
   .fn{font-size:.7rem}
