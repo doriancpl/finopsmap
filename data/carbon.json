@@ -13,6 +13,20 @@
     "zone": "SE",
     "label": "Sweden"
   },
+  "eu-south-1": {
+    "co2": 371,
+    "renew": 42,
+    "mix": "Gas + Solar + Wind",
+    "zone": "IT",
+    "label": "Italy"
+  },
+  "eu-south-2": {
+    "co2": 171,
+    "renew": 58,
+    "mix": "Wind + Nuclear + Solar",
+    "zone": "ES",
+    "label": "Spain"
+  },
   "eu-central-1": {
     "co2": 312,
     "renew": 52,
@@ -40,6 +54,13 @@
     "mix": "Gas + Coal + Nuclear",
     "zone": "US-MIDA-PJM",
     "label": "US East"
+  },
+  "us-west-2": {
+    "co2": 130,
+    "renew": 78,
+    "mix": "Hydro + Wind + Gas",
+    "zone": "US-NW-BPAT",
+    "label": "US Northwest"
   },
   "francecentral": {
     "co2": 56,
@@ -84,9 +105,9 @@
     "label": "Sweden"
   },
   "italynorth": {
-    "co2": 233,
+    "co2": 371,
     "renew": 42,
-    "mix": "Gas + Hydro + Solar",
+    "mix": "Gas + Solar + Wind",
     "zone": "IT",
     "label": "Italy"
   },
@@ -96,19 +117,5 @@
     "mix": "Gas + Coal + Nuclear",
     "zone": "US-MIDA-PJM",
     "label": "US East"
-  },
-  "eu-south-1": {
-    "co2": 233,
-    "renew": 42,
-    "mix": "Gas + Hydro + Solar",
-    "zone": "IT",
-    "label": "Italy"
-  },
-  "eu-south-2": {
-    "co2": 165,
-    "renew": 57,
-    "mix": "Wind + Solar + Nuclear",
-    "zone": "ES",
-    "label": "Spain"
   }
 }

@@ -168,6 +168,7 @@ CARBON_ZONES = {
     "eu-west-1":          {"zone": "IE",           "label": "Ireland"},
     "eu-west-2":          {"zone": "GB",           "label": "United Kingdom"},
     "us-east-1":          {"zone": "US-MIDA-PJM",  "label": "US East"},
+    "us-west-2":          {"zone": "US-NW-BPAT",   "label": "US Northwest"},
     "francecentral":      {"zone": "FR",           "label": "France"},
     "northeurope":        {"zone": "IE",           "label": "Ireland"},
     "westeurope":         {"zone": "NL",           "label": "Netherlands"},
@@ -194,7 +195,10 @@ def fetch_carbon():
         "IE":          {"co2": 258, "renew": 58, "mix": "Gas + Wind"},
         "GB":          {"co2": 192, "renew": 64, "mix": "Gas + Wind + Nuclear"},
         "US-MIDA-PJM": {"co2": 358, "renew": 41, "mix": "Gas + Coal + Nuclear"},
+        "US-NW-BPAT":  {"co2": 130, "renew": 78, "mix": "Hydro + Wind + Gas"},
         "NL":          {"co2": 278, "renew": 56, "mix": "Gas + Wind"},
+        "IT":          {"co2": 371, "renew": 42, "mix": "Gas + Solar + Wind"},
+        "ES":          {"co2": 171, "renew": 58, "mix": "Wind + Nuclear + Solar"},
     }
     # Construire le dict par région cloud
     result = {}
@@ -716,6 +720,7 @@ AWS_REGIONS = {
     "eu-south-1":   {"label": "Milan",      "flag": "&#x1F1EE;&#x1F1F9;"},
     "eu-south-2":   {"label": "Spain",      "flag": "&#x1F1EA;&#x1F1F8;"},
     "us-east-1":    {"label": "Virginia",   "flag": "&#x1F1FA;&#x1F1F8;"},
+    "us-west-2":    {"label": "Oregon",     "flag": "&#x1F1FA;&#x1F1F8;"},
 }
 
 def fetch_aws(region="eu-west-3"):
@@ -995,6 +1000,7 @@ HTML_TEMPLATE = """
       <option value="eu-south-1">&#x1F1EE;&#x1F1F9; eu-south-1 &mdash; Milan</option>
       <option value="eu-south-2">&#x1F1EA;&#x1F1F8; eu-south-2 &mdash; Spain</option>
       <option value="us-east-1">&#x1F1FA;&#x1F1F8; us-east-1 &mdash; Virginia</option>
+      <option value="us-west-2">&#x1F1FA;&#x1F1F8; us-west-2 &mdash; Oregon</option>
     </select>
   </div>
   </div>
@@ -1429,6 +1435,7 @@ const AWS_REGION_OPTIONS = [
   {v:'eu-south-1',  l:'&#x1F1EE;&#x1F1F9; eu-south-1 \u2014 Milan'},
   {v:'eu-south-2',  l:'&#x1F1EA;&#x1F1F8; eu-south-2 \u2014 Spain'},
   {v:'us-east-1',   l:'&#x1F1FA;&#x1F1F8; us-east-1 \u2014 Virginia'},
+  {v:'us-west-2',   l:'&#x1F1FA;&#x1F1F8; us-west-2 \u2014 Oregon'},
 ];
 const AZURE_REGION_OPTIONS = [
   {v:'francecentral',      l:'&#x1F1EB;&#x1F1F7; francecentral \u2014 Paris'},
@@ -3499,7 +3506,7 @@ function renderHeatmap() {
 
   const HM_VIEWS = {
     eu:    { center:[10,54],  scale:900 },
-    atl:   { center:[-20,45], scale:250, ratio:0.32 },
+    atl:   { center:[-35,45], scale:250, ratio:0.32 },
     world: { center:[10,45], scale:155 },
   };
 
@@ -3520,6 +3527,7 @@ function renderHeatmap() {
     'swedencentral':      { lon:16.3458,lat:60.1282, label:'Gävle',     cloud:'azure' },
     'italynorth':         { lon:9.1900, lat:45.4654, label:'Milan',     cloud:'azure' },
     'eastus':             { lon:-77.47, lat:38.99,   label:'Virginia',  cloud:'azure' },
+    'us-west-2':          { lon:-122.68,lat:45.52,   label:'Oregon',    cloud:'aws'   },
   };
   const ISO_MAP = {
     'eu-west-1':'372','northeurope':'372',
@@ -3531,7 +3539,7 @@ function renderHeatmap() {
     'eu-south-1':'380',
     'italynorth':'380',
     'eu-south-2':'724',
-    'us-east-1':'840','eastus':'840',
+    'us-east-1':'840','eastus':'840','us-west-2':'840',
   };
 
   function median(arr) {
@@ -3574,13 +3582,14 @@ function renderHeatmap() {
     const isDbService = (c === 'aws' && hmService === 'rds') || (c === 'azure' && hmService === 'bdd');
     if (regKeys.length > 0) {
       let common_keys, getCommon;
-      // Intersection toujours sur iname — le filtre fam est déjà appliqué dans regFiltered
-      const inameSets = regKeys.map(r => new Set(regFiltered[r].map(d => d.iname)));
+      // Intersection sur iname+fam pour RDS/BDD (évite le biais moteurs manquants), sur iname seul pour EC2/VM
+      const keyFn = (d) => isDbService ? d.iname + '||' + (d.fam||'') : d.iname;
+      const inameSets = regKeys.map(r => new Set(regFiltered[r].map(keyFn)));
       const commonInames = inameSets.length > 0 ? [...inameSets[0]].filter(n => inameSets.every(s => s.has(n))) : [];
-      _commonCount = commonInames.length || (inameSets[0] ? inameSets[0].size : 0);
+      _commonCount = isDbService ? new Set(commonInames.map(k => k.split('||')[0])).size : commonInames.length;
       common_keys = commonInames;
       getCommon = (reg) => commonInames.length > 0
-        ? regFiltered[reg].filter(d => commonInames.includes(d.iname))
+        ? regFiltered[reg].filter(d => commonInames.includes(keyFn(d)))
         : regFiltered[reg];
 
       // Étape 3 : moyenne sur le panier commun pour chaque région
@@ -3651,10 +3660,15 @@ function renderHeatmap() {
     + '<span style="font-family:IBM Plex Mono,monospace;font-size:.82rem;color:#c8d0e8"> · </span>'
     + '<span style="font-family:IBM Plex Mono,monospace;font-size:.82rem;color:#c8d0e8">'+(famLabel2==='All' ? 'All families' : famLabel2+' family')+'</span>';
   const cFill = {};
-  activeRegs.forEach(reg => {
+  const cFillVal = {};
+  if (_commonCount > 0) activeRegs.forEach(reg => {
     const val = regionMedians[reg];
     const iso = ISO_MAP[reg];
-    if (iso && !cFill[iso]) cFill[iso] = diffColor(val);
+    if (!iso) return;
+    if (!cFillVal[iso] || val < cFillVal[iso]) {
+      cFillVal[iso] = val;
+      cFill[iso] = diffColor(val);
+    }
   });
 
   const svgEl = document.getElementById('worldMapSvg');
@@ -3675,11 +3689,17 @@ function renderHeatmap() {
   const proj = d3.geoMercator().center(v.center).scale(v.scale).translate([W/2, H/2]);
   const path = d3.geoPath(proj);
 
-  // Reverse map : iso -> reg
+  // Reverse map : iso -> région la moins chère du pays
   const isoToReg = {};
+  const isoToRegVal = {};
   activeRegs.forEach(reg => {
     const iso = ISO_MAP[reg];
-    if (iso) isoToReg[iso] = reg;
+    const val = regionMedians[reg];
+    if (!iso) return;
+    if (!isoToRegVal[iso] || val < isoToRegVal[iso]) {
+      isoToRegVal[iso] = val;
+      isoToReg[iso] = reg;
+    }
   });
 
   const tooltip = document.getElementById('hmTooltip');
@@ -3755,11 +3775,12 @@ function renderHeatmap() {
             +'<div style="padding-top:1px">'+cloudLbl+'</div>'
             +'</div>'
             +'<div style="border-top:1px solid #2a3050;margin-bottom:8px"></div>'
+            +(_commonCount === 0 ? '<div style="color:#ff5566;font-size:.75rem;margin-bottom:4px">No common instances</div>' : '')
             +'<div style="display:flex;justify-content:space-between;margin-bottom:3px">'
             +'<span style="color:var(--text2)">Avg On-Demand</span>'
-            +'<span style="color:#c8d0e8;font-weight:700">'+(val ? (val*currRate()).toFixed(4) : '\u2014')+' '+currSym()+'/h</span></div>'
-            +(pvcpu !== null ? '<div style="display:flex;justify-content:space-between;margin-bottom:3px"><span style="color:var(--text2)">Prix / vCPU</span><span style="color:#c8d0e8">'+(pvcpu*currRate()).toFixed(4)+' '+currSym()+'/h</span></div>' : '')
-            +(function(){ const mm = regionMinMax[reg]; if(!mm) return ''; return '<div style="border-top:1px solid #1c2030;margin-top:5px;padding-top:5px">'+'<div style="display:flex;justify-content:space-between;margin-bottom:2px">'+'<span style="color:var(--text2);font-size:.68rem">Min</span>'+'<span style="color:#c8d0e8;font-size:.68rem">'+f4(mm.min)+' '+currSym()+'</span></div>'+'<div style="display:flex;justify-content:space-between">'+'<span style="color:var(--text2);font-size:.68rem">Max</span>'+'<span style="color:#c8d0e8;font-size:.68rem">'+f4(mm.max)+' '+currSym()+'</span></div>'+'</div>'; })()
+            +'<span style="color:#c8d0e8;font-weight:700">'+(_commonCount > 0 && val ? (val*currRate()).toFixed(4)+' '+currSym()+'/h' : '\u2014')+'</span></div>'
+            +(_commonCount > 0 && pvcpu !== null ? '<div style="display:flex;justify-content:space-between;margin-bottom:3px"><span style="color:var(--text2)">Prix / vCPU</span><span style="color:#c8d0e8">'+(pvcpu*currRate()).toFixed(4)+' '+currSym()+'/h</span></div>' : '')
+            +(function(){ const mm = regionMinMax[reg]; if(!mm || _commonCount === 0) return ''; return '<div style="border-top:1px solid #1c2030;margin-top:5px;padding-top:5px">'+'<div style="display:flex;justify-content:space-between;margin-bottom:2px">'+'<span style="color:var(--text2);font-size:.68rem">Min</span>'+'<span style="color:#c8d0e8;font-size:.68rem">'+f4(mm.min)+' '+currSym()+'</span></div>'+'<div style="display:flex;justify-content:space-between">'+'<span style="color:var(--text2);font-size:.68rem">Max</span>'+'<span style="color:#c8d0e8;font-size:.68rem">'+f4(mm.max)+' '+currSym()+'</span></div>'+'</div>'; })()
             +(function(){ const cd = CARBON_DATA[reg]; if(!cd) return '';
               const co2=cd.co2; const col=co2<100?'#1D9E75':co2<300?'#BA7517':'#E24B4A';
               return '<div style="border-top:1px solid #1c2030;margin-top:5px;padding-top:5px">'
