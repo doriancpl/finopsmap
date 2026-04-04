@@ -1672,7 +1672,8 @@ function setView(v) {
       riSel.value = riYear + '_all';
     } else if (v === 'rds') {
       if (riType === 'sp') { riType = 'ri'; const tl = document.getElementById('riTypeLabel'); if (tl) tl.textContent = 'RI'; }
-      riSel.innerHTML = '<option value="1yr_no">1Y \u00b7 No Upfront</option><option value="1yr_all">1Y \u00b7 All Upfront</option><option value="3yr_no">3Y \u00b7 No Upfront</option><option value="3yr_all">3Y \u00b7 All Upfront</option>';
+      riSel.innerHTML = '<option value="1yr_no">1Y \u00b7 No Upfront</option><option value="1yr_all">1Y \u00b7 All Upfront</option><option value="3yr_all">3Y \u00b7 All Upfront</option>';
+      if (riYear === '3yr' && riUpfront === 'no') { riUpfront = 'all'; }
       riSel.value = riYear + '_' + riUpfront;
     } else {
       const spOpts = '<optgroup label="RI"><option value="1yr_no">1Y \u00b7 No Upfront</option><option value="1yr_all">1Y \u00b7 All Upfront</option><option value="3yr_no">3Y \u00b7 No Upfront</option><option value="3yr_all">3Y \u00b7 All Upfront</option></optgroup><optgroup label="Compute SP"><option value="sp_1yr_no">1Y \u00b7 No Upfront</option><option value="sp_1yr_all">1Y \u00b7 All Upfront</option><option value="sp_3yr_no">3Y \u00b7 No Upfront</option><option value="sp_3yr_all">3Y \u00b7 All Upfront</option></optgroup>';
@@ -1790,6 +1791,8 @@ function getSorted(arr) {
     if (s === 'pvcpu-desc') return (b.vcpu > 0 ? b.price/b.vcpu : 0) - (a.vcpu > 0 ? a.price/a.vcpu : 0);
     if (s === 'score-desc') return (b.score||0) - (a.score||0);
     if (s === 'score-asc')  return (a.score||0) - (b.score||0);
+    if (s === 'month-asc')  { const ra = a[getRiKey()]||0; const rb = b[getRiKey()]||0; return ra - rb; }
+    if (s === 'month-desc') { const ra = a[getRiKey()]||0; const rb = b[getRiKey()]||0; return rb - ra; }
     if (s === 'savings-desc') { const sa = a[getRiKey()]; const sb = b[getRiKey()]; const ra = sa?Math.round((1-sa/a.price)*100):0; const rb = sb?Math.round((1-sb/b.price)*100):0; return rb-ra; }
     if (s === 'savings-asc')  { const sa = a[getRiKey()]; const sb = b[getRiKey()]; const ra = sa?Math.round((1-sa/a.price)*100):0; const rb = sb?Math.round((1-sb/b.price)*100):0; return ra-rb; }
     if (s === 'storage-asc')  return (a.storage||'').localeCompare(b.storage||'');
