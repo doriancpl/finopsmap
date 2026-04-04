@@ -1448,10 +1448,23 @@ const AZURE_REGION_OPTIONS = [
   {v:'eastus',             l:'&#x1F1FA;&#x1F1F8; eastus \u2014 Virginia'},
 ];
 
+function fixStickyRows() {
+  const sortRow    = document.getElementById('sortRow');
+  const filterRow  = document.getElementById('filterRow');
+  const filtersBar = document.getElementById('filters');
+  if (!sortRow || !filterRow) return;
+  const filtersH = filtersBar ? filtersBar.offsetHeight : 0;
+  const sortH    = sortRow.offsetHeight;
+  if (!filtersH && !sortH) return;
+  sortRow.querySelectorAll('th').forEach(th => th.style.top = filtersH + 'px');
+  filterRow.querySelectorAll('th').forEach(th => th.style.top = (filtersH + sortH) + 'px');
+}
+
 function adjustLayout() {
   var filters = document.getElementById('filters');
   var filtersH = filters ? filters.getBoundingClientRect().height : 0;
   document.documentElement.style.setProperty('--filters-h', filtersH + 'px');
+  fixStickyRows();
 }
 window.addEventListener('resize', adjustLayout);
 document.addEventListener('DOMContentLoaded', function() {
@@ -2069,7 +2082,7 @@ function setPeriod(p) {
   const ri = document.getElementById('periodRiLabel');
   if (od) od.textContent = lbl;
   if (ri) ri.textContent = lbl;
-  onPriceSlider();
+  render();
 }
 
 function render() {
@@ -2165,6 +2178,7 @@ function showAllRows() {
       + '</tr>';
   }).join('');
   while (temp.firstChild) tbody.appendChild(temp.firstChild);
+  requestAnimationFrame(() => requestAnimationFrame(fixStickyRows));
 }
 
 function discountRate() {
@@ -2394,24 +2408,6 @@ function setPriceUnit(u) {
 }
 
 function onPriceSlider() {
-  const v = parseInt(document.getElementById('priceSlider').value);
-  const sel = document.getElementById('periodSel');
-  const unit = sel ? sel.value : 'h';
-  const trackW = 140 - 24;
-  const fillW = v / 100 * trackW;
-  document.getElementById('priceSliderFill').style.width = fillW + 'px';
-  document.getElementById('priceSliderThumb').style.left = 'calc(12px + ' + fillW + 'px)';
-  const active = v < 100;
-  document.getElementById('priceSliderFill').style.background = active ? '#7bffe0' : '#2a3050';
-  const lbl = document.getElementById('priceSliderLbl');
-  if (active) {
-    const priceVal = getPricePercentile(v);
-    lbl.textContent = '$' + priceVal.toFixed(unit === 'h' ? 3 : unit === 'd' ? 1 : 0);
-    lbl.style.color = '#7bffe0';
-  } else {
-    lbl.textContent = 'any';
-    lbl.style.color = '#c8d0e8';
-  }
   render();
 }
 
@@ -4053,17 +4049,7 @@ console.log('%c[CloudPrice] Run checkRefInstances() to verify reference instance
   onPriceSlider();
   adjustLayout();
   (function() {
-    function fixStickyRows() {
-      const sortRow    = document.getElementById('sortRow');
-      const filterRow  = document.getElementById('filterRow');
-      const filtersBar = document.getElementById('filters');
-      if (!sortRow || !filterRow) return;
-      const filtersH = filtersBar ? filtersBar.getBoundingClientRect().height : 0;
-      const sortH    = sortRow.getBoundingClientRect().height;
-      sortRow.querySelectorAll('th').forEach(th => th.style.top = filtersH + 'px');
-      filterRow.querySelectorAll('th').forEach(th => th.style.top = (filtersH + sortH) + 'px');
-    }
-    fixStickyRows();
+    requestAnimationFrame(() => requestAnimationFrame(fixStickyRows));
     window.addEventListener('resize', fixStickyRows);
   })();
   document.getElementById('tbody').addEventListener('click', function(e) {
