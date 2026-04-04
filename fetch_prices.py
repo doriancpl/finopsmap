@@ -2986,7 +2986,7 @@ function renderTcoResults(r) {
   var strokeColor = r.cloud === 'Azure' ? '#00aaff' : '#ff9900';
   var odColor     = '#ff4d6a';
   var gridColor   = '#2a3050';
-  var labelColor  = '#8890a8';
+  var labelColor  = '#c8d0e8';
 
   // Grid lines + Y-axis labels
   var grid='';
@@ -2995,7 +2995,7 @@ function renderTcoResults(r) {
     var y=ty(maxV*p);
     var dash = p === 0 ? '' : ' stroke-dasharray="4,4"';
     grid+='<line x1="'+pL+'" y1="'+y.toFixed(1)+'" x2="'+(svgW-pR)+'" y2="'+y.toFixed(1)+'" stroke="'+gridColor+'" stroke-width="0.7"'+dash+'/>';
-    grid+='<text x="'+(pL-8)+'" y="'+(y+4).toFixed(1)+'" fill="'+labelColor+'" font-size="10" font-family="IBM Plex Mono,monospace" text-anchor="end">'+tcoFmt(maxV*p)+'</text>';
+    grid+='<text x="'+(pL-8)+'" y="'+(y+4).toFixed(1)+'" fill="'+labelColor+'" font-size="11" font-family="IBM Plex Mono,monospace" text-anchor="end">'+tcoFmt(maxV*p)+'</text>';
   });
 
   // Build reserved line points
@@ -3033,7 +3033,7 @@ function renderTcoResults(r) {
   var mLabels='';
   var step=Math.max(1,Math.ceil(r.months/8));
   for(var ml=0;ml<=r.months;ml+=step){
-    mLabels+='<text x="'+tx(ml).toFixed(1)+'" y="'+(svgH-6)+'" fill="'+labelColor+'" font-size="10" font-family="IBM Plex Mono,monospace" text-anchor="middle">M'+ml+'</text>';
+    mLabels+='<text x="'+tx(ml).toFixed(1)+'" y="'+(svgH-6)+'" fill="'+labelColor+'" font-size="11" font-family="IBM Plex Mono,monospace" text-anchor="middle">M'+ml+'</text>';
   }
 
   // Milestone dots + value labels for reserved line
