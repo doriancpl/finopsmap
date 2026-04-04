@@ -723,6 +723,79 @@ AWS_REGIONS = {
     "us-west-2":    {"label": "Oregon",     "flag": "&#x1F1FA;&#x1F1F8;"},
 }
 
+def fetch_aws_compute_sp(region="eu-west-3"):
+    """Récupère les prix Compute Savings Plans pour une région AWS."""
+    sp_file = os.path.join(DATA_DIR_AWS, "sp-" + region + ".json")
+    if is_fresh(sp_file, days=7):
+        log("SP cache : " + sp_file)
+        with open(sp_file, encoding="utf-8") as f:
+            return json.load(f)
+    print("\nCompute SP AWS " + region + "...")
+    try:
+        # 1. Index des régions pour trouver la versionUrl
+        conn = http.client.HTTPSConnection("pricing.us-east-1.amazonaws.com", timeout=30)
+        conn.request("GET", "/savingsPlan/v1.0/aws/AWSComputeSavingsPlan/current/region_index.json",
+                     headers={"User-Agent": "cloudprice/1.0", "Accept-Encoding": "gzip"})
+        r = conn.getresponse()
+        raw = r.read()
+        conn.close()
+        if raw[:2] == b'\x1f\x8b':
+            raw = gzip.decompress(raw)
+        region_index = json.loads(raw)
+        version_url = None
+        for reg in region_index.get("regions", []):
+            if reg["regionCode"] == region:
+                version_url = reg["versionUrl"]
+                break
+        if not version_url:
+            log("SP: région non trouvée: " + region)
+            return {}
+        # 2. Données SP pour cette région
+        conn = http.client.HTTPSConnection("pricing.us-east-1.amazonaws.com", timeout=60)
+        conn.request("GET", version_url, headers={"User-Agent": "cloudprice/1.0", "Accept-Encoding": "gzip"})
+        r = conn.getresponse()
+        raw = r.read()
+        conn.close()
+        if raw[:2] == b'\x1f\x8b':
+            raw = gzip.decompress(raw)
+        data = json.loads(raw)
+        plans = data.get("terms", {}).get("savingsPlan", [])
+        KEY_MAP = {
+            ("1", "No Upfront"):  "sp_1yr_no",
+            ("1", "All Upfront"): "sp_1yr_all",
+            ("3", "No Upfront"):  "sp_3yr_no",
+            ("3", "All Upfront"): "sp_3yr_all",
+        }
+        result = {}
+        for plan in plans:
+            desc = plan.get("description", "")
+            if "Compute Savings Plan" not in desc:
+                continue
+            duration = str(plan.get("leaseContractLength", {}).get("duration", 0))
+            if "No Upfront" in desc:    upfront = "No Upfront"
+            elif "All Upfront" in desc: upfront = "All Upfront"
+            else:                       continue
+            key = KEY_MAP.get((duration, upfront))
+            if not key: continue
+            for rate in plan.get("rates", []):
+                itype = rate.get("discountedInstanceType", "")
+                if not itype or "." not in itype: continue  # exclure les bare families (c5, m5...)
+                if rate.get("discountedOperation") != "RunInstances": continue
+                usage = rate.get("discountedUsageType", "")
+                if any(x in usage for x in ("Unused", "Dedicated", "HostUsage")): continue
+                price = float(rate.get("discountedRate", {}).get("price", 0) or 0)
+                if price <= 0: continue
+                if itype not in result: result[itype] = {}
+                if key not in result[itype] or price < result[itype][key]:
+                    result[itype][key] = price
+        log("Compute SP instances : " + str(len(result)))
+        with open(sp_file, "w", encoding="utf-8") as f:
+            json.dump(result, f)
+        return result
+    except Exception as e:
+        log("SP erreur " + region + ": " + str(e))
+        return {}
+
 def fetch_aws(region="eu-west-3"):
     print("\nAWS " + region + " (~100MB, patience)...")
     conn = http.client.HTTPSConnection("pricing.us-east-1.amazonaws.com", timeout=120)
@@ -1066,12 +1139,20 @@ HTML_TEMPLATE = """
   </div>
 
   <div style="display:inline-flex;align-items:center;background:var(--s1);border:1px solid var(--b1);border-radius:6px;overflow:hidden;height:36px" id="riUpfrontToggle">
-    <span style="padding:0 10px;background:var(--s2);font-family:'IBM Plex Mono',monospace;font-size:.72rem;font-weight:700;color:#c8d0e8;border-right:1px solid var(--b1);height:100%;display:flex;align-items:center">RI</span>
-    <select id="riSelect" onchange="onRiSelect(this.value)" style="font-family:'IBM Plex Mono',monospace;font-size:.72rem;font-weight:700;color:#7bffe0;background:var(--s1);border:none;padding:0 24px 0 10px;height:100%;cursor:pointer;outline:none;appearance:none;-webkit-appearance:none;background-image:url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='%237bffe0'/%3E%3C/svg%3E&quot;);background-repeat:no-repeat;background-position:right 8px center">
-      <option value="1yr_no">1Y · No Upfront</option>
-      <option value="1yr_all">1Y · All Upfront</option>
-      <option value="3yr_no">3Y · No Upfront</option>
-      <option value="3yr_all">3Y · All Upfront</option>
+    <span style="padding:0 10px;background:var(--s2);font-family:'IBM Plex Mono',monospace;font-size:.72rem;font-weight:700;color:#c8d0e8;border-right:1px solid var(--b1);height:100%;display:flex;align-items:center" id="riTypeLabel">RI</span>
+    <select id="riSelect" onchange="onRiSelect(this.value)" style="font-family:'IBM Plex Mono',monospace;font-size:.72rem;font-weight:700;color:#7bffe0;background:var(--s1);border:none;padding:0 22px 0 10px;height:100%;cursor:pointer;outline:none;appearance:none;-webkit-appearance:none;width:fit-content;background-image:url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='%237bffe0'/%3E%3C/svg%3E&quot;);background-repeat:no-repeat;background-position:right 8px center">
+      <optgroup label="RI">
+        <option value="1yr_no">1Y · No Upfront</option>
+        <option value="1yr_all">1Y · All Upfront</option>
+        <option value="3yr_no">3Y · No Upfront</option>
+        <option value="3yr_all">3Y · All Upfront</option>
+      </optgroup>
+      <optgroup label="Compute SP">
+        <option value="sp_1yr_no">1Y · No Upfront</option>
+        <option value="sp_1yr_all">1Y · All Upfront</option>
+        <option value="sp_3yr_no">3Y · No Upfront</option>
+        <option value="sp_3yr_all">3Y · All Upfront</option>
+      </optgroup>
     </select>
   </div>
   <div class="curr-toggle">
@@ -1140,8 +1221,8 @@ HTML_TEMPLATE = """
       <th class="col-diskiops" onclick="qs(&apos;diskiops&apos;)"><div style="display:flex;align-items:center;justify-content:space-between">DISK IOPS <span class="sort-ico" id="si-diskiops">&#x2195;</span></div></th>
       <th class="col-pvcpu" onclick="qs(&apos;pvcpu&apos;)"><div style="display:flex;align-items:center;justify-content:space-between">COST/VCPU <span class="sort-ico" id="si-pvcpu">&#x2195;</span></div></th>
       <th class="col-price" onclick="qs(&apos;price&apos;)"><div style="display:flex;align-items:center;justify-content:space-between"><span id="thPriceOd" style="letter-spacing:.08em">ON DEMAND COST<span id="periodOdLabel" style="color:#7bffe0;font-size:.65rem;letter-spacing:0">/H</span><span id="discountBadgeHdr" style="display:none" class="discount-badge"></span></span> <span class="sort-ico active-ico" id="si-price">&#x2191;</span></div></th>
-      <th class="col-month" onclick="qs(&apos;month&apos;)"><div style="display:flex;align-items:center;justify-content:space-between"><span style="letter-spacing:.08em">RESERVED COST<span id="periodRiLabel" style="color:#7bffe0;font-size:.65rem;letter-spacing:0">/H</span><span id="riYearLabel" style="font-size:.65rem;margin-left:9px;letter-spacing:0;font-family:'Syne',sans-serif;font-weight:700;color:#7bffe0;background:rgba(123,255,224,0.1);border:1px solid rgba(123,255,224,0.3);border-radius:4px;padding:1px 5px">1 YEAR</span></span> <span class="sort-ico" id="si-month">&#x2195;</span></div></th>
-      <th class="col-savings" onclick="qs(&apos;savings&apos;)"><div style="display:flex;align-items:center;justify-content:space-between">SAVINGS RI <span class="sort-ico" id="si-savings">&#x2195;</span></div></th>
+      <th class="col-month" onclick="qs(&apos;month&apos;)"><div style="display:flex;align-items:center;justify-content:space-between"><span style="letter-spacing:.08em"><span id="thRiCostLabel">RESERVED COST</span><span id="periodRiLabel" style="color:#7bffe0;font-size:.65rem;letter-spacing:0">/H</span><span id="riYearLabel" style="font-size:.65rem;margin-left:9px;letter-spacing:0;font-family:'Syne',sans-serif;font-weight:700;color:#7bffe0;background:rgba(123,255,224,0.1);border:1px solid rgba(123,255,224,0.3);border-radius:4px;padding:1px 5px">1 YEAR</span></span> <span class="sort-ico" id="si-month">&#x2195;</span></div></th>
+      <th class="col-savings" onclick="qs(&apos;savings&apos;)"><div style="display:flex;align-items:center;justify-content:space-between"><span id="thSavLabel">SAVINGS RI</span> <span class="sort-ico" id="si-savings">&#x2195;</span></div></th>
       <th class="col-spot ec2-only" onclick="qs(&apos;spot&apos;)"><div style="display:flex;align-items:center;justify-content:space-between">SPOT COST<span style="color:#7bffe0;font-size:.65rem;letter-spacing:0">/H</span> <span class="sort-ico" id="si-spot">&#x2195;</span></div></th>
       <th class="col-spotsav ec2-only" onclick="qs(&apos;spotsav&apos;)"><div style="display:flex;align-items:center;justify-content:space-between">SAVINGS SPOT <span class="sort-ico" id="si-spotsav">&#x2195;</span></div></th>
       <th class="col-score" onclick="qs(&apos;score&apos;)"><div style="display:flex;align-items:center;justify-content:space-between">FINOPS SCORE <span class="sort-ico" id="si-score">&#x2195;</span></div></th>
@@ -1584,13 +1665,21 @@ function setView(v) {
   if (upfrontToggle) upfrontToggle.style.display = 'inline-flex';
   if (riSel) {
     if (v === 'azure' || v === 'psql') {
+      riType = 'ri';
+      const tl = document.getElementById('riTypeLabel'); if (tl) tl.textContent = 'RI';
       riSel.innerHTML = '<option value="1yr_all">1Y · All Upfront</option><option value="3yr_all">3Y · All Upfront</option>';
       riUpfront = 'all';
       riSel.value = riYear + '_all';
-    } else {
-      riSel.innerHTML = '<option value="1yr_no">1Y · No Upfront</option><option value="1yr_all">1Y · All Upfront</option><option value="3yr_no">3Y · No Upfront</option><option value="3yr_all">3Y · All Upfront</option>';
+    } else if (v === 'rds') {
+      if (riType === 'sp') { riType = 'ri'; const tl = document.getElementById('riTypeLabel'); if (tl) tl.textContent = 'RI'; }
+      riSel.innerHTML = '<option value="1yr_no">1Y \u00b7 No Upfront</option><option value="1yr_all">1Y \u00b7 All Upfront</option><option value="3yr_no">3Y \u00b7 No Upfront</option><option value="3yr_all">3Y \u00b7 All Upfront</option>';
       riSel.value = riYear + '_' + riUpfront;
+    } else {
+      const spOpts = '<optgroup label="RI"><option value="1yr_no">1Y \u00b7 No Upfront</option><option value="1yr_all">1Y \u00b7 All Upfront</option><option value="3yr_no">3Y \u00b7 No Upfront</option><option value="3yr_all">3Y \u00b7 All Upfront</option></optgroup><optgroup label="Compute SP"><option value="sp_1yr_no">1Y \u00b7 No Upfront</option><option value="sp_1yr_all">1Y \u00b7 All Upfront</option><option value="sp_3yr_no">3Y \u00b7 No Upfront</option><option value="sp_3yr_all">3Y \u00b7 All Upfront</option></optgroup>';
+      riSel.innerHTML = spOpts;
+      riSel.value = (riType === 'sp' ? 'sp_' : '') + riYear + '_' + riUpfront;
     }
+    fitRiSelect();
   }
   if(fam !== 'all' || currentFam !== 'all'){ fam='all'; currentFam='all'; const fs=document.getElementById('famSelect'); if(fs) fs.value='all'; }
   const cbProcRow = document.getElementById('cb-proc-row');
@@ -2037,6 +2126,7 @@ function switchModalTab(tab) {
 
 let riYear = '1yr';
 let riUpfront = 'no';
+let riType = 'ri';
 let period = 'h';
 
 function getRiKey() {
@@ -2044,23 +2134,55 @@ function getRiKey() {
   if (isAzure) {
     return riYear === '3yr' ? 'price_3yr' : 'price_1yr';
   }
+  if (riType === 'sp') {
+    return 'sp_' + riYear + '_' + riUpfront;
+  }
   const suffix = riUpfront === 'all' ? '_all' : '';
   return riYear === '3yr' ? ('price_3yr' + suffix) : ('price_1yr' + suffix);
 }
 
+function fitRiSelect() {
+  const sel = document.getElementById('riSelect');
+  if (!sel) return;
+  const tmp = document.createElement('span');
+  tmp.style.cssText = 'font-family:IBM Plex Mono,monospace;font-size:.72rem;font-weight:700;position:absolute;visibility:hidden;white-space:nowrap;';
+  document.body.appendChild(tmp);
+  let maxW = 0;
+  for (const opt of sel.options) {
+    if (opt.disabled) continue;
+    tmp.textContent = opt.text;
+    maxW = Math.max(maxW, tmp.offsetWidth);
+  }
+  document.body.removeChild(tmp);
+  if (maxW > 0) sel.style.width = (maxW + 34) + 'px';
+}
+
 function onRiSelect(val) {
   const parts = val.split('_');
-  riYear    = parts[0] === '3yr' ? '3yr' : '1yr';
-  riUpfront = parts[1] === 'all' ? 'all' : 'no';
+  if (parts[0] === 'sp') {
+    riType    = 'sp';
+    riYear    = parts[1] === '3yr' ? '3yr' : '1yr';
+    riUpfront = parts[2] === 'all' ? 'all' : 'no';
+  } else {
+    riType    = 'ri';
+    riYear    = parts[0] === '3yr' ? '3yr' : '1yr';
+    riUpfront = parts[1] === 'all' ? 'all' : 'no';
+  }
   const lbl = document.getElementById('riYearLabel');
   if (lbl) lbl.textContent = riYear === '3yr' ? '3 YEARS' : '1 YEAR';
+  const typeLbl = document.getElementById('riTypeLabel');
+  if (typeLbl) typeLbl.textContent = riType === 'sp' ? 'SP' : 'RI';
+  const riHdr = document.getElementById('thRiCostLabel');
+  if (riHdr) riHdr.textContent = riType === 'sp' ? 'COMPUTE SP COST' : 'RESERVED COST';
+  const savHdr = document.getElementById('thSavLabel');
+  if (savHdr) savHdr.textContent = riType === 'sp' ? 'SAVINGS SP' : 'SAVINGS RI';
   render();
 }
 
 function setRiYear(yr) {
   riYear = yr;
   const sel = document.getElementById('riSelect');
-  if (sel) sel.value = riYear + '_' + riUpfront;
+  if (sel) sel.value = (riType === 'sp' ? 'sp_' : '') + riYear + '_' + riUpfront;
   const lbl = document.getElementById('riYearLabel');
   if (lbl) lbl.textContent = yr === '3yr' ? '3 YEARS' : '1 YEAR';
   render();
@@ -2069,7 +2191,7 @@ function setRiYear(yr) {
 function setRiUpfront(u) {
   riUpfront = u;
   const sel = document.getElementById('riSelect');
-  if (sel) sel.value = riYear + '_' + riUpfront;
+  if (sel) sel.value = (riType === 'sp' ? 'sp_' : '') + riYear + '_' + riUpfront;
   render();
 }
 const periodMult   = { h: 1, d: 24, m: 730 };
@@ -2317,7 +2439,7 @@ function updateURL() {
   if (fam && fam !== 'all')     params.set('fam', fam);
   if (period !== 'h')           params.set('period', period);
   if (_curr !== 'usd')          params.set('curr', _curr);
-  const riKey = riYear + '_' + riUpfront;
+  const riKey = (riType === 'sp' ? 'sp_' : '') + riYear + '_' + riUpfront;
   if (riKey !== '1yr_no')       params.set('ri', riKey);
   if (sortVal !== 'price-asc')  params.set('sort', sortVal);
   const tbl = document.getElementById('mainTable');
@@ -4051,6 +4173,7 @@ console.log('%c[CloudPrice] Run checkRefInstances() to verify reference instance
   (function() {
     requestAnimationFrame(() => requestAnimationFrame(fixStickyRows));
     window.addEventListener('resize', fixStickyRows);
+    fitRiSelect();
   })();
   document.getElementById('tbody').addEventListener('click', function(e) {
     if (!cmpMode) return;
@@ -4207,6 +4330,10 @@ def generate_html(aws_data, azure_data, rds_data, fetch_date, psql_data=None, aw
         if v.get("price_3yr"):     d["price_3yr"]     = v["price_3yr"]
         if v.get("price_1yr_all"): d["price_1yr_all"] = v["price_1yr_all"]
         if v.get("price_3yr_all"): d["price_3yr_all"] = v["price_3yr_all"]
+        if v.get("sp_1yr_no"):     d["sp_1yr_no"]     = v["sp_1yr_no"]
+        if v.get("sp_1yr_all"):    d["sp_1yr_all"]    = v["sp_1yr_all"]
+        if v.get("sp_3yr_no"):     d["sp_3yr_no"]     = v["sp_3yr_no"]
+        if v.get("sp_3yr_all"):    d["sp_3yr_all"]    = v["sp_3yr_all"]
         return d
     def spot3(v):
         d = {}
@@ -4503,6 +4630,15 @@ def main():
             if iname in aws_regions_data.get(region, {}):
                 aws_regions_data[region][iname]["spot"] = sp
     # Refresh aws_data after spot enrichment
+    aws_data = aws_regions_data.get("eu-west-3", {})
+
+    # ── AWS Compute SP : toutes les régions ──
+    for region in AWS_REGIONS:
+        sp_prices = fetch_aws_compute_sp(region)
+        for iname, sp in sp_prices.items():
+            if iname in aws_regions_data.get(region, {}):
+                aws_regions_data[region][iname].update(sp)
+    # Refresh aws_data after SP enrichment
     aws_data = aws_regions_data.get("eu-west-3", {})
 
     # ── AWS EBS : toutes les régions ──
