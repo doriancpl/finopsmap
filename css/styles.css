@@ -117,6 +117,7 @@ tbody tr:nth-child(even) td.col-iname{background:#0d0f15;box-shadow:-72px 0 0 0 
 @keyframes rowIn{from{opacity:0;transform:translateX(-3px)}to{opacity:1;transform:none}}
 #tbody.no-anim tr{animation:none}#hmRegionTableBody tr{animation:none}.col-info{display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:50%;border:1px dotted #c8d0e8;color:#c8d0e8;font-size:.6rem;cursor:help;margin-left:1px;vertical-align:middle}.col-info:hover{border-color:#7bffe0;color:#7bffe0}#colInfoTooltip{display:none;position:fixed;background:#10131a;border:1px solid #2a3050;border-radius:6px;padding:8px 10px;font-size:.68rem;color:#c8d0e8;font-family:'IBM Plex Mono',monospace;white-space:normal;width:280px;line-height:1.5;z-index:9999;pointer-events:none;box-shadow:0 4px 20px rgba(0,0,0,.6)}
 td{padding:7px 16px;font-size:.85rem;vertical-align:middle;border-bottom:1px solid var(--b1)}
+td.col-ram{white-space:nowrap}
 tbody tr:last-child td{border-bottom:none}
 .iname{font-family:'IBM Plex Mono',monospace;font-size:.85rem;font-weight:600}
 .iname-aws{color:var(--aws)}.iname-azure{color:var(--azure)}
