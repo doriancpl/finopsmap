@@ -1261,7 +1261,7 @@ HTML_TEMPLATE = """
   <div class="cmp-grid" id="cmpGrid"></div>
 </div>
 
-<div id="tcoSection" style="display:none;padding:32px 36px 44px;flex:1;min-height:calc(100vh - 64px)">
+<div id="tcoSection" style="display:none;padding:32px 16px 44px;flex:1;min-height:calc(100vh - 64px)">
   <h2 style="font-size:clamp(1.4rem,2.5vw,2rem);font-weight:800;letter-spacing:-.04em;margin-bottom:4px;color:#c8d0e8"><span style="font-size:1.5rem;margin-right:8px;position:relative;top:-4px">∑</span>TCO Calculator</h2>
   <p style="font-family:'IBM Plex Mono',monospace;font-size:.82rem;color:#c8d0e8;margin-bottom:28px">Total Cost of Ownership</p>
 
@@ -2975,7 +2975,7 @@ function renderTcoResults(r) {
     '</div>';
 
   // SVG chart (cumulative cost — single cloud, enhanced)
-  var svgW=800,svgH=380,pL=70,pR=10,pT=30,pB=36;
+  var svgW=800,svgH=380,pL=70,pR=28,pT=30,pB=36;
   var cW=svgW-pL-pR, cH=svgH-pT-pB;
   var hasOd = r.odTotal && r.odTotal > r.total;
   var chartMax = hasOd ? r.odTotal : r.total;
@@ -3068,7 +3068,7 @@ function renderTcoResults(r) {
   // Build SVG — store chart params for tooltip
   window._tcoChart = { svgW:svgW, svgH:svgH, pL:pL, pR:pR, pT:pT, pB:pB, cW:cW, cH:cH, months:r.months, total:r.total, odTotal:hasOd?r.odTotal:null, maxV:maxV, strokeColor:strokeColor, odColor:hasOd?odColor:null, commitLabel:r.commitLabel };
 
-  var chartSvg='<svg id="tcoChartSvg" viewBox="0 0 '+svgW+' '+svgH+'" style="width:100%;height:auto;max-height:400px" preserveAspectRatio="xMidYMid meet">'
+  var chartSvg='<svg id="tcoChartSvg" viewBox="0 0 '+svgW+' '+svgH+'" style="width:100%;height:auto" preserveAspectRatio="xMidYMid meet">'
     +defs+grid;
   // Savings area polygon (zone between OD line and reserved line)
   if(hasOd){
