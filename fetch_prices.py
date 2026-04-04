@@ -1261,7 +1261,7 @@ HTML_TEMPLATE = """
   <div class="cmp-grid" id="cmpGrid"></div>
 </div>
 
-<div id="tcoSection" style="display:none;padding:32px 16px 44px;flex:1;min-height:calc(100vh - 64px)">
+<div id="tcoSection" style="display:none;padding:32px 36px 44px;flex:1;min-height:calc(100vh - 64px)">
   <h2 style="font-size:clamp(1.4rem,2.5vw,2rem);font-weight:800;letter-spacing:-.04em;margin-bottom:4px;color:#c8d0e8"><span style="font-size:1.5rem;margin-right:8px;position:relative;top:-4px">∑</span>TCO Calculator</h2>
   <p style="font-family:'IBM Plex Mono',monospace;font-size:.82rem;color:#c8d0e8;margin-bottom:28px">Total Cost of Ownership</p>
 
