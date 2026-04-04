@@ -27,7 +27,7 @@
 <link rel="preload" href="data/agregations/regions_meta.json" as="fetch" crossorigin>
 <link rel="preload" href="data/carbon.json" as="fetch" crossorigin>
 <link rel="preload" href="data/eur_rate.json" as="fetch" crossorigin>
-<link rel="stylesheet" href="css/styles.css?v=4/4/2026 · 5:26 PM">
+<link rel="stylesheet" href="css/styles.css?v=4/4/2026 · 7:44 PM">
 </head>
 <body>
 <div id="topbar">
@@ -430,7 +430,7 @@
     <a href="https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEC2/current/eu-west-3/index.json" target="_blank" style="color:var(--text);text-decoration:none">AWS Price List API</a>
   </span>
   <span class="fts" style="color:var(--text)"><a href="#" onclick="document.getElementById('aboutModal').style.display='flex';return false;" style="color:var(--text);text-decoration:none;border-bottom:1px dotted var(--muted)">FinOpsMap · About me</a></span>
-  <span class="fts" style="color:var(--text)">Updated 4/4/2026 · 5:26 PM</span>
+  <span class="fts" style="color:var(--text)">Updated 4/4/2026 · 7:44 PM</span>
 </footer>
 
 <div id="aboutModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;align-items:center;justify-content:center" onclick="if(event.target===this)this.style.display='none'">
@@ -1087,15 +1087,59 @@ function openSeriesModal(iname, fam) {
   const hasStor = (view === 'aws' || view === 'azure') && cur.storage;
   const famLabel = (view === 'rds' ? FL_RDS : view === 'psql' ? {[cur.fam]: cur.engine || cur.fam} : FL)[cur.fam] || cur.fam;
   function cardRow(label, val, extra) { return '<tr><td class="id-card-label">'+label+'</td><td class="id-card-value">'+val+(extra||'')+'</td></tr>'; }
-  let cardHtml = '<table class="id-card">';
-  cardHtml += cardRow('Instance Type', '<span style="color:'+color+';font-weight:700">'+cur.iname+'</span>');
-  cardHtml += cardRow('Instance Family', famLabel);
-  if (hasProc) cardHtml += cardRow('Processor', cur.processor);
-  cardHtml += cardRow('vCPUs', cur.vcpu);
-  cardHtml += cardRow('Memory', ramFmt(cur.ram));
-  if (hasStor) cardHtml += cardRow('Storage', cur.storage);
-  if (cur.network) cardHtml += cardRow('Network', cur.network);
-  cardHtml += '</table>';
+
+  // Left: specs
+  let specsHtml = '<table class="id-card">';
+  specsHtml += cardRow('Instance Type', '<span style="color:'+color+';font-weight:700">'+cur.iname+'</span>');
+  specsHtml += cardRow('Instance Family', famLabel);
+  if (hasProc) specsHtml += cardRow('Processor', cur.processor);
+  specsHtml += cardRow('vCPUs', cur.vcpu);
+  specsHtml += cardRow('Memory', ramFmt(cur.ram));
+  if (hasStor) specsHtml += cardRow('Storage', cur.storage);
+  if (cur.network) specsHtml += cardRow('Network', cur.network);
+  specsHtml += '</table>';
+
+  // Right: pricing
+  const od = cur.price;
+  function priceFmt(v) { if (!v) return null; return f4(v * (periodMult[period]||1)) + ' ' + currSym(); }
+  function savBadge(v) { if (!v || !od) return ''; const pct = Math.round((1 - v/od)*100); if (pct <= 0) return ''; return '<span class="modal-sav-badge">-'+pct+'%</span>'; }
+  function priceRow(label, v, highlight) {
+    if (!v) return '';
+    const valStyle = highlight ? 'color:'+color+';font-size:.92rem' : '';
+    const lblStyle = highlight ? 'color:#dde3f0;font-weight:700' : '';
+    return '<div class="modal-price-row'+(highlight?' modal-price-highlight':'')+'"><span class="modal-price-label" style="'+lblStyle+'">'+label+'</span><span class="modal-price-val" style="'+valStyle+'">'+priceFmt(v)+savBadge(v)+'</span></div>';
+  }
+  function priceSection(title, rows) {
+    const content = rows.join('');
+    if (!content) return '';
+    return '<div class="modal-price-section"><div class="modal-price-section-title">'+title+'</div>'+content+'</div>';
+  }
+  const isAwsView = view === 'aws' || view === 'rds';
+  const isAzureModal = view === 'azure' || view === 'psql';
+  let pricingHtml = '<div class="modal-pricing">';
+  pricingHtml += priceSection('On-Demand', [priceRow('On-Demand', od, true)]);
+  if (isAwsView || isAzureModal) {
+    pricingHtml += priceSection('Reserved Instances', [
+      priceRow('1Y · No Upfront',  cur.price_1yr),
+      priceRow('1Y · All Upfront', cur.price_1yr_all),
+      priceRow('3Y · No Upfront',  cur.price_3yr),
+      priceRow('3Y · All Upfront', cur.price_3yr_all),
+    ]);
+  }
+  if (isAwsView && (cur.sp_1yr_no || cur.sp_1yr_all || cur.sp_3yr_no || cur.sp_3yr_all)) {
+    pricingHtml += priceSection('Compute Savings Plan', [
+      priceRow('1Y · No Upfront',  cur.sp_1yr_no),
+      priceRow('1Y · All Upfront', cur.sp_1yr_all),
+      priceRow('3Y · No Upfront',  cur.sp_3yr_no),
+      priceRow('3Y · All Upfront', cur.sp_3yr_all),
+    ]);
+  }
+  if (cur.spot) {
+    pricingHtml += priceSection('Spot', [priceRow('Spot (avg)', cur.spot)]);
+  }
+  pricingHtml += '</div>';
+
+  const cardHtml = '<div class="modal-card-layout">'+specsHtml+pricingHtml+'</div>';
   document.getElementById('modalContentCard').innerHTML = cardHtml;
 
   // Mettre la bonne couleur sur les tabs selon la vue

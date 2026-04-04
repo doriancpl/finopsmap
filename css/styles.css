@@ -226,6 +226,18 @@ footer{position:fixed;bottom:0;left:0;width:100vw;z-index:100;padding:16px 36px;
 .modal-close{background:transparent;border:1px solid var(--muted);border-radius:4px;color:var(--muted);font-size:.8rem;padding:3px 9px;cursor:pointer;font-family:'Syne',sans-serif;margin-bottom:3px;flex-shrink:0}
 .modal-close:hover{color:#ff5566;border-color:#ff5566}
 .modal-tab-content{display:none;padding-top:8px}.modal-tab-content.active{display:block}
+.modal-card-layout{display:grid;grid-template-columns:1fr 1fr;gap:0;align-items:start}
+.modal-card-layout .id-card{border-right:1px solid var(--b1)}
+.modal-pricing{padding:8px 0 8px 20px;min-width:0}
+.modal-price-section{margin-bottom:18px}
+.modal-price-section:last-child{margin-bottom:0}
+.modal-price-section-title{font-family:'IBM Plex Mono',monospace;font-size:.62rem;letter-spacing:.15em;text-transform:uppercase;color:#6b738f;margin-bottom:6px;padding-bottom:5px;border-bottom:1px solid var(--b1)}
+.modal-price-row{display:flex;justify-content:space-between;align-items:center;padding:7px 8px;border-radius:5px;margin-bottom:2px}
+.modal-price-row:hover{background:rgba(255,255,255,0.03)}
+.modal-price-highlight{background:rgba(255,153,0,0.05);border:1px solid rgba(255,153,0,0.15)}
+.modal-price-label{font-family:'IBM Plex Mono',monospace;font-size:.80rem;color:#c8d0e8;font-weight:600}
+.modal-price-val{font-family:'IBM Plex Mono',monospace;font-size:.85rem;font-weight:700;color:#dde3f0;white-space:nowrap}
+.modal-sav-badge{display:inline-block;margin-left:7px;padding:1px 6px;border:1px solid rgba(123,255,224,0.3);border-radius:3px;font-size:.65rem;color:#7bffe0;font-weight:700}
 .id-card{width:100%;border-collapse:collapse;margin:8px 0}
 .id-card td{padding:11px 16px;border-bottom:1px solid var(--b1);font-size:.88rem;vertical-align:top}
 .id-card tr:last-child td{border-bottom:none}
