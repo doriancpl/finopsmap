@@ -27,7 +27,7 @@
 <link rel="preload" href="data/agregations/regions_meta.json" as="fetch" crossorigin>
 <link rel="preload" href="data/carbon.json" as="fetch" crossorigin>
 <link rel="preload" href="data/eur_rate.json" as="fetch" crossorigin>
-<link rel="stylesheet" href="css/styles.css?v=4/4/2026 · 5:04 PM">
+<link rel="stylesheet" href="css/styles.css?v=4/4/2026 · 5:08 PM">
 </head>
 <body>
 <div id="topbar">
@@ -430,7 +430,7 @@
     <a href="https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEC2/current/eu-west-3/index.json" target="_blank" style="color:var(--text);text-decoration:none">AWS Price List API</a>
   </span>
   <span class="fts" style="color:var(--text)"><a href="#" onclick="document.getElementById('aboutModal').style.display='flex';return false;" style="color:var(--text);text-decoration:none;border-bottom:1px dotted var(--muted)">FinOpsMap · About me</a></span>
-  <span class="fts" style="color:var(--text)">Updated 4/4/2026 · 5:04 PM</span>
+  <span class="fts" style="color:var(--text)">Updated 4/4/2026 · 5:08 PM</span>
 </footer>
 
 <div id="aboutModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;align-items:center;justify-content:center" onclick="if(event.target===this)this.style.display='none'">
@@ -598,14 +598,14 @@ function loadAzureRegionData(region) {
 function setRegion(region) {
   loadRegionData(region);
   window._isViewChange = false;
-  if (tcoActive) { initTcoInstanceSelect(); initTcoDiskSelect(); }
+  if (tcoActive) { initTcoInstanceSelect(); initTcoDiskSelect(); autoCalcTco(); }
   if (view === 'aws' || view === 'rds') render();
 }
 
 function setAzureRegion(region) {
   loadAzureRegionData(region);
   window._isViewChange = false;
-  if (tcoActive) { initTcoInstanceSelect(); initTcoDiskSelect(); }
+  if (tcoActive) { initTcoInstanceSelect(); initTcoDiskSelect(); autoCalcTco(); }
   if (view === 'azure' || view === 'psql') render();
 }
 

@@ -1609,14 +1609,14 @@ function loadAzureRegionData(region) {
 function setRegion(region) {
   loadRegionData(region);
   window._isViewChange = false;
-  if (tcoActive) { initTcoInstanceSelect(); initTcoDiskSelect(); }
+  if (tcoActive) { initTcoInstanceSelect(); initTcoDiskSelect(); autoCalcTco(); }
   if (view === 'aws' || view === 'rds') render();
 }
 
 function setAzureRegion(region) {
   loadAzureRegionData(region);
   window._isViewChange = false;
-  if (tcoActive) { initTcoInstanceSelect(); initTcoDiskSelect(); }
+  if (tcoActive) { initTcoInstanceSelect(); initTcoDiskSelect(); autoCalcTco(); }
   if (view === 'azure' || view === 'psql') render();
 }
 
