@@ -27,7 +27,7 @@
 <link rel="preload" href="data/agregations/regions_meta.json" as="fetch" crossorigin>
 <link rel="preload" href="data/carbon.json" as="fetch" crossorigin>
 <link rel="preload" href="data/eur_rate.json" as="fetch" crossorigin>
-<link rel="stylesheet" href="css/styles.css?v=4/4/2026 · 5:23 PM">
+<link rel="stylesheet" href="css/styles.css?v=4/4/2026 · 5:26 PM">
 </head>
 <body>
 <div id="topbar">
@@ -430,7 +430,7 @@
     <a href="https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEC2/current/eu-west-3/index.json" target="_blank" style="color:var(--text);text-decoration:none">AWS Price List API</a>
   </span>
   <span class="fts" style="color:var(--text)"><a href="#" onclick="document.getElementById('aboutModal').style.display='flex';return false;" style="color:var(--text);text-decoration:none;border-bottom:1px dotted var(--muted)">FinOpsMap · About me</a></span>
-  <span class="fts" style="color:var(--text)">Updated 4/4/2026 · 5:23 PM</span>
+  <span class="fts" style="color:var(--text)">Updated 4/4/2026 · 5:26 PM</span>
 </footer>
 
 <div id="aboutModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;align-items:center;justify-content:center" onclick="if(event.target===this)this.style.display='none'">
@@ -1964,7 +1964,7 @@ function renderTcoResults(r) {
     '</div>';
 
   // SVG chart (cumulative cost — single cloud, enhanced)
-  var svgW=800,svgH=380,pL=70,pR=28,pT=30,pB=36;
+  var svgW=800,svgH=380,pL=70,pR=10,pT=30,pB=36;
   var cW=svgW-pL-pR, cH=svgH-pT-pB;
   var hasOd = r.odTotal && r.odTotal > r.total;
   var chartMax = hasOd ? r.odTotal : r.total;
@@ -2057,7 +2057,7 @@ function renderTcoResults(r) {
   // Build SVG — store chart params for tooltip
   window._tcoChart = { svgW:svgW, svgH:svgH, pL:pL, pR:pR, pT:pT, pB:pB, cW:cW, cH:cH, months:r.months, total:r.total, odTotal:hasOd?r.odTotal:null, maxV:maxV, strokeColor:strokeColor, odColor:hasOd?odColor:null, commitLabel:r.commitLabel };
 
-  var chartSvg='<svg id="tcoChartSvg" viewBox="0 0 '+svgW+' '+svgH+'" style="width:100%;height:auto" preserveAspectRatio="xMidYMid meet">'
+  var chartSvg='<svg id="tcoChartSvg" viewBox="0 0 '+svgW+' '+svgH+'" style="width:100%;height:auto;max-height:400px" preserveAspectRatio="xMidYMid meet">'
     +defs+grid;
   // Savings area polygon (zone between OD line and reserved line)
   if(hasOd){
