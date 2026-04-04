@@ -1351,7 +1351,7 @@ HTML_TEMPLATE = """
 
     <!-- RESULTS -->
     <div class="tco-right" id="tcoResults">
-      <div class="tco-empty">Configure your workload and click <strong style="color:#7bffe0">Calculate TCO</strong></div>
+      <div class="tco-empty" style="color:#c8d0e8">Configure your workload</div>
     </div>
   </div>
 </div>
@@ -2878,6 +2878,7 @@ function calcTco() {
   let storageGB = 0;
   let diskLabel = '';
   let diskType = '';
+  let diskUnitPrice = 0;
   if (isAzure) {
     const azDiskVal = document.getElementById('tcoAzureDisk').value || '';
     const parts = azDiskVal.split('|');
@@ -2891,6 +2892,7 @@ function calcTco() {
     diskType = azType;
     storageGB = tier ? tier.size : 0;
     const tierPrice = tier ? tier.price : 0;
+    diskUnitPrice = tierPrice;
     storageCost = tierPrice * nbInst * months;
   } else {
     storageGB = parseFloat(document.getElementById('tcoStorage').value) || 0;
@@ -2900,6 +2902,7 @@ function calcTco() {
     const diskPrice = diskInfo.price_gb || 0.0928;
     storageCost = diskPrice * storageGB * nbInst * months;
     diskLabel = diskType.toUpperCase();
+    diskUnitPrice = diskPrice * storageGB;
   }
 
   // Network egress (EU, $/GB)
@@ -2923,7 +2926,7 @@ function calcTco() {
     cloud: isAzure ? 'Azure' : 'AWS',
     cloudColor: isAzure ? 'var(--azure)' : 'var(--aws)',
     total, months, compute, storageCost, egressCost, supportCost,
-    rate, nbInst, hpm, storageGB, diskType, diskLabel, egressGB,
+    rate, nbInst, hpm, storageGB, diskType, diskLabel, diskUnitPrice, egressGB,
     commitLabel, inst, suppPct, odTotal
   });
 }
@@ -2952,7 +2955,7 @@ function renderTcoResults(r) {
   // Breakdown rows — single cloud
   const bkRows = [
     { name:'Compute',        sub: r.nbInst + '\u00d7 ' + r.inst.iname + ' \u00b7 ' + r.commitLabel, cost: r.compute },
-    { name:'Storage',        sub: r.storageGB + ' GB ' + r.diskLabel + ' \u00d7 ' + r.nbInst, cost: r.storageCost },
+    { name:'Storage',        sub: r.nbInst + ' \u00d7 ' + r.storageGB + ' GB ' + r.diskLabel + (r.diskUnitPrice ? ' \u00b7 $' + r.diskUnitPrice.toFixed(3) + '/mo' : ''), cost: r.storageCost },
     { name:'Network egress', sub: r.egressGB  + ' GB/mo EU', cost: r.egressCost },
     { name:'Support',        sub: (r.suppPct*100).toFixed(0) + '% of compute', cost: r.supportCost },
   ].filter(function(row){ return row.cost > 0; });
@@ -2972,7 +2975,7 @@ function renderTcoResults(r) {
     '</div>';
 
   // SVG chart (cumulative cost — single cloud, enhanced)
-  var svgW=800,svgH=260,pL=70,pR=20,pT=30,pB=36;
+  var svgW=800,svgH=380,pL=70,pR=10,pT=30,pB=36;
   var cW=svgW-pL-pR, cH=svgH-pT-pB;
   var hasOd = r.odTotal && r.odTotal > r.total;
   var chartMax = hasOd ? r.odTotal : r.total;
@@ -3065,8 +3068,14 @@ function renderTcoResults(r) {
   // Build SVG — store chart params for tooltip
   window._tcoChart = { svgW:svgW, svgH:svgH, pL:pL, pR:pR, pT:pT, pB:pB, cW:cW, cH:cH, months:r.months, total:r.total, odTotal:hasOd?r.odTotal:null, maxV:maxV, strokeColor:strokeColor, odColor:hasOd?odColor:null, commitLabel:r.commitLabel };
 
-  var chartSvg='<svg id="tcoChartSvg" viewBox="0 0 '+svgW+' '+svgH+'" style="width:100%;height:auto;max-height:280px" preserveAspectRatio="xMidYMid meet">'
+  var chartSvg='<svg id="tcoChartSvg" viewBox="0 0 '+svgW+' '+svgH+'" style="width:100%;height:auto;max-height:400px" preserveAspectRatio="xMidYMid meet">'
     +defs+grid;
+  // Savings area polygon (zone between OD line and reserved line)
+  if(hasOd){
+    var ptsPairs = pts.trim().split(' ').filter(function(s){ return s.length>0; });
+    var savingsPts = odPts + ptsPairs.slice().reverse().join(' ');
+    chartSvg+='<polygon points="'+savingsPts+'" fill="rgba(123,255,224,0.07)" stroke="none"/>';
+  }
   // On-demand area + line (behind reserved)
   if(hasOd){
     chartSvg+='<polygon points="'+odPts+' '+(svgW-pR)+','+bLine+' '+pL+','+bLine+'" fill="url(#'+odGradId+')"/>';
@@ -3098,7 +3107,7 @@ function renderTcoResults(r) {
     chartSvg +
     '<div class="tco-chart-legend">' + legendHtml + '</div></div>';
 
-  el.innerHTML = sumHtml + bkHtml + chartHtml;
+  el.innerHTML = bkHtml + chartHtml;
 }
 function tcoChartHover(evt) {
   var c = window._tcoChart; if (!c) return;
