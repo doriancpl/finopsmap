@@ -2950,10 +2950,12 @@ function renderHeatmap() {
           tooltip.style.display = 'none';
         })
         .on('mousemove', function(event) {
+          const markerColor = (_commonCount > 0 && val) ? diffColor(val) : '#6b738f';
+          const svcTxt = hmCloud === 'aws' ? 'AWS ' + hmService.toUpperCase() : 'Azure ' + (hmService === 'ec2' ? 'VM' : (hmService === 'rds' || hmService === 'bdd') ? 'DB' : hmService.toUpperCase());
           const tipHtml =
-            '<div style="margin-bottom:7px;display:flex;justify-content:space-between;align-items:flex-start;gap:16px">'
-            +'<div><span style="font-weight:700;color:'+cloudColor+'">'+c.label+'</span><br><span style="color:#c8d0e8;font-size:.68rem">'+reg+'</span></div>'
-            +'<div style="padding-top:1px">'+cloudLbl+'</div>'
+            '<div style="margin-bottom:7px">'
+            +'<div style="display:flex;align-items:baseline;justify-content:space-between;gap:16px"><span style="font-weight:700;color:'+markerColor+'">'+c.label+'</span><span style="color:'+markerColor+';font-size:.72rem;font-weight:600">'+svcTxt+'</span></div>'
+            +'<div style="color:#8890a8;font-size:.68rem;margin-top:2px">'+reg+'</div>'
             +'</div>'
             +'<div style="border-top:1px solid #2a3050;margin-bottom:8px"></div>'
             +(_commonCount === 0 ? '<div style="color:#ff5566;font-size:.75rem;margin-bottom:4px">No common instances</div>' : '')
@@ -3019,7 +3021,7 @@ function renderHeatmap() {
   const ramLabel  = ramTarget  ? ramTarget+' GiB RAM' : 'Toute RAM';
   const instLabel = instTarget ? ' · '+instTarget : '';
   const contextLabel = famLabel+' · '+vcpuLabel+' · '+ramLabel+instLabel;
-  const serviceLabel = (hmCloud === 'aws' ? 'AWS ' : 'Azure ') + hmService.toUpperCase();
+  const serviceLabel = hmCloud === 'aws' ? 'AWS ' + hmService.toUpperCase() : 'Azure ' + (hmService === 'ec2' ? 'VM' : (hmService === 'rds' || hmService === 'bdd') ? 'DB' : hmService.toUpperCase());
 
   panel.innerHTML = '<div style="font-family:IBM Plex Mono,monospace;font-size:.82rem;font-weight:700;color:#7bffe0;letter-spacing:.06em;text-transform:uppercase;margin-bottom:4px">Top 5 Cheapest Regions</div>'
 
