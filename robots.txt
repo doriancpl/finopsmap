@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /h
+Disallow: /data/
+
+Sitemap: https://finopsmap.com/sitemap.xml
