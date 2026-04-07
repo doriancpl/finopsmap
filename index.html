@@ -919,12 +919,12 @@ function buildSets() {
         if (view === 'azure') {
           const n = x.iname.replace(/^Standard_/i,'');
           const ms = n.match(/^([A-Za-z]+?)(?=\d)/);
-          const mv = x.iname.match(/[\s_]v(\d+)/i);
+          const mv = n.match(/v(\d+)/i);
           if (!ms) return;
           s = ms[1].toLowerCase();
           g = mv ? parseInt(mv[1]) : 0;
         } else {
-          const m = x.iname.match(/^([a-z]+)(\d)/);
+          const m = x.iname.replace(/^db\./,'').match(/^([a-z]+)(\d)/);
           if (!m) return;
           s = m[1]; g = parseInt(m[2]);
         }
@@ -938,11 +938,11 @@ function buildSets() {
     if (view === 'azure') {
       const n = d.iname.replace(/^Standard_/i,'');
       const ms = n.match(/^([A-Za-z]+?)(?=\d)/);
-      const mv = d.iname.match(/[\s_]v(\d+)/i);
+      const mv = n.match(/v(\d+)/i);
       serie = ms ? ms[1].toLowerCase() : '';
       gen   = mv ? parseInt(mv[1]) : 0;
     } else {
-      const mp = d.iname.match(/^([a-z]+)(\d)/);
+      const mp = d.iname.replace(/^db\./,'').match(/^([a-z]+)(\d)/);
       serie = mp ? mp[1] : '';
       gen   = mp ? parseInt(mp[2]) : 0;
     }
@@ -1091,7 +1091,7 @@ function openSeriesModal(iname, fam) {
             + '<td><span style="padding:4px 8px;background:var(--s2);border:1px solid var(--b1);border-radius:3px;font-size:.88rem;color:#dde3f0">'+(view==="psql"?(d.engine||d.fam):((view==="rds"?FL_RDS:FL)[d.fam]||d.fam))+'</span></td>'
             + '<td><span style="padding:3px 7px;background:var(--s2);border:1px solid var(--b1);border-radius:3px;font-size:.88rem;color:#dde3f0;font-family:IBM Plex Mono,monospace">'+d.vcpu+'</span></td>'
             + '<td><span style="padding:3px 7px;background:var(--s2);border:1px solid var(--b1);border-radius:3px;font-size:.88rem;color:#dde3f0;font-family:IBM Plex Mono,monospace">'+ramFmt(d.ram)+'</span></td>'
-            + '<td><div style="display:flex;align-items:center;gap:6px;white-space:nowrap"><span style="display:inline-block;padding:4px 10px;background:'+bgC+';border:1px solid '+bdC+';border-radius:6px;font-weight:700;font-size:.88rem;color:'+color+';font-family:IBM Plex Mono,monospace">'+f4(d.price*(periodMult[period]||1))+' ' + currSym() + '</span>'+diffHtml+'</div></td>'
+            + '<td><div style="display:flex;align-items:center;gap:6px;white-space:nowrap"><span style="display:inline-block;padding:4px 10px;background:transparent;border:1px solid '+bdC+';border-radius:6px;font-weight:700;font-size:.88rem;color:'+color+';font-family:IBM Plex Mono,monospace">'+f4(d.price*(periodMult[period]||1))+' ' + currSym() + '</span>'+diffHtml+'</div></td>'
             + '<td>'+(function(){ const rp = d[getRiKey()]; return '<div style="display:flex;align-items:center;gap:6px;white-space:nowrap">' + (rp ? '<span class="ph-mo">'+f4(rp*(periodMult[period]||1))+' '+currSym()+'</span>' : '<span style="color:var(--muted);font-size:.75rem">—</span>') + '</div>'; })()+'</td>'
             + '<td><div style="display:inline-flex;align-items:center;gap:6px"><div class="score-bar-s"><div class="score-fill-s" style="width:'+(dSc/10*100).toFixed(1)+'%;background:linear-gradient(90deg,'+scoreGrad(dSc)+')"></div></div><span style="font-size:.82rem;font-weight:700;color:'+scoreColor(dSc)+';font-family:IBM Plex Mono,monospace">'+dSc+'</span></div></td>'
             + '</tr>';
@@ -1304,13 +1304,13 @@ function render() {
         + '<td class="col-spot ec2-only"><span class="ph-mo">'+(function(){ if (!d.spot) return '<span style="color:var(--muted);font-size:.75rem">—</span>'; return f4(d.spot*(currRate())*(periodMult[period]||1))+' '+currSym(); })()+'</span></td>'
         + '<td class="col-spotsav ec2-only">'+(function(){ if (!d.spot) return '<span style="color:var(--muted);font-size:.75rem">—</span>'; const sav = Math.round((1-d.spot/d.price)*100); return '<span style="padding:3px 8px;border:1px solid rgba(123,255,224,0.3);border-radius:4px;color:#7bffe0;font-weight:700;font-family:IBM Plex Mono,monospace;font-size:.82rem">−'+sav+'%</span>'; })()+'</td>'
         + '<td class="col-score" style="padding:10px 16px;border-bottom:1px solid #1c2030;white-space:nowrap">'
-        + '<div class="score-wrap" data-ti="'+_ti+'" onmouseenter="showTip(event,+this.dataset.ti)" onmousemove="moveTip(event)" onmouseleave="hideTip()">'
+        + (view==='psql' ? '<span style="color:var(--muted);font-size:.75rem">—</span>' :
+        '<div class="score-wrap" data-ti="'+_ti+'" onmouseenter="showTip(event,+this.dataset.ti)" onmousemove="moveTip(event)" onmouseleave="hideTip()">'
         + '<div style="position:relative;width:100px;height:8px;background:#1c2030;border-radius:4px;overflow:hidden">'
         + '<div style="position:absolute;left:0;top:0;height:100%;width:'+(d.score/10*100).toFixed(1)+'%;background:linear-gradient(90deg,'+scoreGrad(d.score)+');border-radius:4px"></div></div>'
         + '<span class="score-val" style="color:'+scoreColor(d.score)+'">'+d.score+'</span>'
-        + ''
-        + '</div>'
-        + '</div></div></td>'
+        + '</div>')
+        + '</td>'
         + '</tr>';
       }).join('')
       + (hasMore ? '<tr id="showAllRow"><td colspan="20" style="text-align:center;padding:16px;border-bottom:1px solid var(--b1)"><button onclick="showAllRows()" style="font-family:IBM Plex Mono,monospace;font-size:.78rem;padding:8px 20px;background:var(--s1);border:1px solid var(--b1);border-radius:6px;color:var(--accent);cursor:pointer;transition:border-color .15s">Show all ' + arr.length + ' instances</button></td></tr>' : '');
@@ -1350,7 +1350,7 @@ function showAllRows() {
       + '<td class="col-savings">'+(function(){ const rp = d[getRiKey()]; if (!rp) return '<span style="color:var(--muted);font-size:.75rem">—</span>'; const sav = Math.round((1-rp/d.price)*100); return '<span style="padding:3px 8px;border:1px solid rgba(123,255,224,0.3);border-radius:4px;color:#7bffe0;font-weight:700;font-family:IBM Plex Mono,monospace;font-size:.82rem">−'+sav+'%</span>'; })()+'</td>'
       + '<td class="col-spot ec2-only"><span class="ph-mo">'+(function(){ if (!d.spot) return '<span style="color:var(--muted);font-size:.75rem">—</span>'; return f4(d.spot*(currRate())*(periodMult[period]||1))+' '+currSym(); })()+'</span></td>'
       + '<td class="col-spotsav ec2-only">'+(function(){ if (!d.spot) return '<span style="color:var(--muted);font-size:.75rem">—</span>'; const sav = Math.round((1-d.spot/d.price)*100); return '<span style="padding:3px 8px;border:1px solid rgba(123,255,224,0.3);border-radius:4px;color:#7bffe0;font-weight:700;font-family:IBM Plex Mono,monospace;font-size:.82rem">−'+sav+'%</span>'; })()+'</td>'
-      + '<td class="col-score" style="padding:10px 16px;border-bottom:1px solid #1c2030;white-space:nowrap"><div class="score-wrap" data-ti="'+_ti+'" onmouseenter="showTip(event,+this.dataset.ti)" onmousemove="moveTip(event)" onmouseleave="hideTip()"><div style="position:relative;width:100px;height:8px;background:#1c2030;border-radius:4px;overflow:hidden"><div style="position:absolute;left:0;top:0;height:100%;width:'+(d.score/10*100).toFixed(1)+'%;background:linear-gradient(90deg,'+scoreGrad(d.score)+');border-radius:4px"></div></div><span class="score-val" style="color:'+scoreColor(d.score)+'">'+d.score+'</span></div></td>'
+      + '<td class="col-score" style="padding:10px 16px;border-bottom:1px solid #1c2030;white-space:nowrap">'+(view==='psql' ? '<span style="color:var(--muted);font-size:.75rem">—</span>' : '<div class="score-wrap" data-ti="'+_ti+'" onmouseenter="showTip(event,+this.dataset.ti)" onmousemove="moveTip(event)" onmouseleave="hideTip()"><div style="position:relative;width:100px;height:8px;background:#1c2030;border-radius:4px;overflow:hidden"><div style="position:absolute;left:0;top:0;height:100%;width:'+(d.score/10*100).toFixed(1)+'%;background:linear-gradient(90deg,'+scoreGrad(d.score)+');border-radius:4px"></div></div><span class="score-val" style="color:'+scoreColor(d.score)+'">'+d.score+'</span></div>')+'</td>'
       + '</tr>';
   }).join('');
   while (temp.firstChild) tbody.appendChild(temp.firstChild);
