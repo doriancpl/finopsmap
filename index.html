@@ -541,6 +541,24 @@ document.addEventListener('DOMContentLoaded', function() {
   adjustLayout();
   setTimeout(adjustLayout, 100);
   setTimeout(adjustLayout, 500);
+  // Remove flag emoji from region select if browser cannot render them
+  (function() {
+    var ruler = document.getElementById('regionRuler');
+    if (!ruler) { ruler = document.createElement('span'); ruler.style.cssText = 'position:fixed;visibility:hidden;font:32px serif;white-space:nowrap'; document.body.appendChild(ruler); }
+    else { ruler.style.font = '32px serif'; }
+    ruler.textContent = '\uD83C\uDDEB\uD83C\uDDF7'; // 🇫🇷
+    var flagW = ruler.offsetWidth;
+    ruler.textContent = 'FR';
+    var textW = ruler.offsetWidth;
+    ruler.style.font = '';
+    if (flagW > 0 && Math.abs(flagW - textW) < 4) {
+      var sel = document.getElementById('regionSelect');
+      if (!sel) return;
+      for (var i = 0; i < sel.options.length; i++) {
+        sel.options[i].text = sel.options[i].text.replace(/^.+?\s(?=\w+-\w)/, '');
+      }
+    }
+  })();
 });
 if (window.ResizeObserver) {
   var _ro = new ResizeObserver(adjustLayout);
@@ -744,7 +762,7 @@ function getFiltered() {
     (!fProc  || (d.processor||'').toLowerCase().includes(fProc)) &&
     (!fVcpu  || matchNum(d.vcpu, fVcpu)) &&
     (!fRam   || matchNum(d.ram,  fRam)) &&
-    (!fPvcpu || matchNum(d.vcpu > 0 ? d.price / d.vcpu : 0, fPvcpu)) &&
+    (!fPvcpu || matchNum(d.vcpu > 0 ? d.price * (PRICE_UNIT_MULT[period]||1) / d.vcpu : 0, fPvcpu)) &&
     (!fPrice || matchNum(d.price * (PRICE_UNIT_MULT[period]||1), fPrice)) &&
     (!fMonth || matchNum((d[getRiKey()]||0) * (PRICE_UNIT_MULT[period]||1), fMonth)) &&
     (!fSavings || (() => { const rp = d[getRiKey()]; if (!rp) return false; return matchNum(Math.round((1-rp/d.price)*100), fSavings); })()) &&
@@ -1279,7 +1297,7 @@ function render() {
         + '<td class="col-network"><span class="tag" style="white-space:nowrap">'+(d.network||'—')+'</span></td>'
         + '<td class="col-maxdisks"><span class="tag">'+(d.max_disks ? d.max_disks : '—')+'</span></td>'
         + '<td class="col-diskiops"><span class="tag">'+((d.disk_iops||d.iops) ? (d.disk_iops||d.iops).toLocaleString() : '—')+'</span></td>'
-        + '<td class="col-pvcpu"><span class="ph-mo">'+(d.vcpu > 0 ? f4(d.price/d.vcpu)+' '+currSym() : '—')+'</span></td>'
+        + '<td class="col-pvcpu"><span class="ph-mo">'+(d.vcpu > 0 ? f4(d.price*(periodMult[period]||1)/d.vcpu)+' '+currSym() : '—')+'</span></td>'
         + '<td class="col-price">'+((view==='aws'||view==='rds') ? '<span style="display:inline-block;padding:5px 12px;border:1px solid rgba(255,153,0,0.3);border-radius:6px;font-weight:700;font-size:.92rem;color:#ff9900;font-family:IBM Plex Mono,monospace">'+f4(d.price*(periodMult[period]||1))+' ' + currSym() + '</span>' : '<span style="display:inline-block;padding:5px 12px;border:1px solid rgba(0,170,255,0.3);border-radius:6px;font-weight:700;font-size:.92rem;color:#00aaff;font-family:IBM Plex Mono,monospace">'+f4(d.price*(periodMult[period]||1))+' ' + currSym() + '</span>')+'</td>'
         + '<td class="col-month"><span class="ph-mo">'+(function(){ const rp = d[getRiKey()]; if (!rp) return '<span style="color:var(--muted);font-size:.75rem">—</span>'; return f4(rp*(periodMult[period]||1))+' '+currSym(); })()+'</span></td>'
         + '<td class="col-savings">'+(function(){ const rp = d[getRiKey()]; if (!rp) return '<span style="color:var(--muted);font-size:.75rem">—</span>'; const sav = Math.round((1-rp/d.price)*100); return '<span style="padding:3px 8px;border:1px solid rgba(123,255,224,0.3);border-radius:4px;color:#7bffe0;font-weight:700;font-family:IBM Plex Mono,monospace;font-size:.82rem">−'+sav+'%</span>'; })()+'</td>'
@@ -1326,7 +1344,7 @@ function showAllRows() {
       + '<td class="col-network"><span class="tag" style="white-space:nowrap">'+(d.network||'—')+'</span></td>'
       + '<td class="col-maxdisks"><span class="tag">'+(d.max_disks ? d.max_disks : '—')+'</span></td>'
       + '<td class="col-diskiops"><span class="tag">'+((d.disk_iops||d.iops) ? (d.disk_iops||d.iops).toLocaleString() : '—')+'</span></td>'
-      + '<td class="col-pvcpu"><span class="ph-mo">'+(d.vcpu > 0 ? f4(d.price/d.vcpu)+' '+currSym() : '—')+'</span></td>'
+      + '<td class="col-pvcpu"><span class="ph-mo">'+(d.vcpu > 0 ? f4(d.price*(periodMult[period]||1)/d.vcpu)+' '+currSym() : '—')+'</span></td>'
       + '<td class="col-price">'+((view==='aws'||view==='rds') ? '<span style="display:inline-block;padding:5px 12px;background:rgba(255,153,0,0.1);border:1px solid rgba(255,153,0,0.3);border-radius:6px;font-weight:700;font-size:.92rem;color:#ff9900;font-family:IBM Plex Mono,monospace">'+f4(d.price*(periodMult[period]||1))+' '+currSym()+'</span>' : '<span style="display:inline-block;padding:5px 12px;background:rgba(0,170,255,0.1);border:1px solid rgba(0,170,255,0.3);border-radius:6px;font-weight:700;font-size:.92rem;color:#00aaff;font-family:IBM Plex Mono,monospace">'+f4(d.price*(periodMult[period]||1))+' '+currSym()+'</span>')+'</td>'
       + '<td class="col-month"><span class="ph-mo">'+(function(){ const rp = d[getRiKey()]; if (!rp) return '<span style="color:var(--muted);font-size:.75rem">—</span>'; return f4(rp*(periodMult[period]||1))+' '+currSym(); })()+'</span></td>'
       + '<td class="col-savings">'+(function(){ const rp = d[getRiKey()]; if (!rp) return '<span style="color:var(--muted);font-size:.75rem">—</span>'; const sav = Math.round((1-rp/d.price)*100); return '<span style="padding:3px 8px;border:1px solid rgba(123,255,224,0.3);border-radius:4px;color:#7bffe0;font-weight:700;font-family:IBM Plex Mono,monospace;font-size:.82rem">−'+sav+'%</span>'; })()+'</td>'
@@ -2231,7 +2249,7 @@ function renderComparaison() {
       +'<div style="display:flex;flex-direction:column;gap:10px">'
       +'<div><div class="cmp-metric-lbl">On-Demand /h</div><div style="display:flex;align-items:center;gap:5px"><span class="cmp-metric-val" style="color:'+color+'">'+f4(d.price)+'</span>'+(diff!==null?'<span style="font-size:9px;color:'+(diff>0?'#ff5566':'#7bffe0')+'">'+(diff>0?'+':'')+diff.toFixed(1)+'%</span>':'')+'</div></div>'
       +'<div><div class="cmp-metric-lbl">Reserved '+(riYear==='3yr'?'3yr':'1yr')+' /h</div><div class="cmp-metric-val" style="color:#7bffe0">'+(rp?f4(rp)+' <span style="font-size:9px">−'+sav+'%</span>':'<span style="color:#3a3f55">—</span>')+'</div></div>'
-      +'<div><div class="cmp-metric-lbl">Cost/vCPU</div><div class="cmp-metric-val" style="color:#c8d0e8">'+(d.vcpu>0?f4(d.price/d.vcpu):'—')+'</div></div>'
+      +'<div><div class="cmp-metric-lbl">Cost/vCPU</div><div class="cmp-metric-val" style="color:#c8d0e8">'+(d.vcpu>0?f4(d.price*(periodMult[period]||1)/d.vcpu):'—')+'</div></div>'
       +'<div><div class="cmp-metric-lbl">FinOps Score</div><div style="display:flex;align-items:center;gap:8px;margin-top:2px"><div class="cmp-bar-bg" style="flex:1"><div style="width:'+scorePct+'%;height:100%;background:'+scoreColor+';border-radius:3px"></div></div><span class="cmp-metric-val" style="color:'+scoreColor+'">'+d.score+'</span></div></div>'
       +'</div></div>';
   }).join('');
