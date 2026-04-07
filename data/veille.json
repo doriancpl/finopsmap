@@ -1,5 +1,12 @@
 [
   {
+    "title": "Bringing Data Center into Modern FinOps Using FOCUS",
+    "url": "https://www.finops.org/insights/finops-for-data-center-focus/",
+    "date": "Fri, 03 Apr 2026",
+    "source": "ff",
+    "summary": "Mike Fuller CTO, FinOps Foundation Key Insight: As more practitioners apply FOCUS to data center environments, demand for FinOps guidance in on-premises and hyb"
+  },
+  {
     "title": "Understanding the Total Cost of Ownership",
     "url": "https://techcommunity.microsoft.com/t5/finops-blog/understanding-the-total-cost-of-ownership/ba-p/4419195",
     "date": "Thu, 02 Apr 2026",
@@ -96,13 +103,6 @@
     "date": "Fri, 05 Dec 2025",
     "source": "ff",
     "summary": "Key Insight: AWS demonstrated support of FOCUS 1.2, including improvements to invoice reconciliation, capacity reservation tracking, and support for virtual cur"
-  },
-  {
-    "title": "Accelerate Enterprise FinOps Adoption: Include AI, SaaS, and Data Centers from the Start",
-    "url": "https://www.finops.org/insights/accelerate-enterprise-finops-adoption-include-ai-saas-data-center/",
-    "date": "Thu, 27 Nov 2025",
-    "source": "ff",
-    "summary": "Key Insight: HealthEdge CTO Robert Duffy discusses the critical need to embed FinOps practices from the start of a major cloud migration, and how his recent Fin"
   },
   {
     "title": "Streamline Analytics Spend on Microsoft Fabric with Azure Reservations",
