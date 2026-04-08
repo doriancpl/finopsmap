@@ -62,6 +62,13 @@
     "zone": "US-NW-BPAT",
     "label": "US Northwest"
   },
+  "westus2": {
+    "co2": 130,
+    "renew": 78,
+    "mix": "Hydro + Wind + Gas",
+    "zone": "US-NW-BPAT",
+    "label": "US West"
+  },
   "francecentral": {
     "co2": 56,
     "renew": 91,

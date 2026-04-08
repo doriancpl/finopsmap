@@ -177,6 +177,7 @@ CARBON_ZONES = {
     "swedencentral":      {"zone": "SE",           "label": "Sweden"},
     "italynorth":         {"zone": "IT",           "label": "Italy"},
     "eastus":             {"zone": "US-MIDA-PJM",  "label": "US East"},
+    "westus2":            {"zone": "US-NW-BPAT",   "label": "US West"},
 }
 
 def fetch_carbon():
@@ -250,6 +251,7 @@ AZURE_REGIONS = {
     "swedencentral":      {"label": "Sweden",      "flag": "&#x1F1F8;&#x1F1EA;", "location": "Sweden Central"},
     "italynorth":         {"label": "Milan",       "flag": "&#x1F1EE;&#x1F1F9;", "location": "Italy North"},
     "eastus":             {"label": "Virginia",    "flag": "&#x1F1FA;&#x1F1F8;", "location": "East US"},
+    "westus2":            {"label": "Seattle",     "flag": "&#x1F1FA;&#x1F1F8;", "location": "West US 2"},
 }
 
 SKUS_CACHE_DAYS = 30
@@ -1024,6 +1026,7 @@ HTML_TEMPLATE = """
 <meta property="og:description" content="Compare AWS and Azure cloud pricing in real time. Free, open-source FinOps tool for engineers and architects.">
 <meta property="og:image" content="https://finopsmap.com/og-cover.png">
 <meta property="og:type" content="website">
+<link rel="canonical" href="https://finopsmap.com/">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%23060709'/><circle cx='16' cy='16' r='11' fill='none' stroke='%233a4468' stroke-width='1.2'/><line x1='16' y1='6' x2='16' y2='26' stroke='%233a4468' stroke-width='0.8'/><line x1='6' y1='16' x2='26' y2='16' stroke='%233a4468' stroke-width='0.8'/><polygon points='16,6 13,14 16,12 19,14' fill='%23ff9900'/><polygon points='16,26 13,18 16,20 19,18' fill='%232a3050'/><polygon points='26,16 18,13 20,16 18,19' fill='%2300aaff'/><polygon points='6,16 14,13 12,16 14,19' fill='%232a3050'/><circle cx='16' cy='16' r='2.5' fill='%237bffe0'/><circle cx='16' cy='16' r='1' fill='%23060709'/></svg>">
 <link rel="icon" type="image/png" sizes="32x32" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAABwklEQVR4nM1Xq24CQRQ9O2mWh0Ig+IA14+saBKLZL6gkuKYKR8InNMFhWkuQ/QKCqCCtwq/hAxAIFMuuaQWZzey89kLZpUfNi3vOnLlzd/CgwK81ftSxayJNYk/usyrJTRzMNlGVCFY1uSrCuwW5DFa8pFzcXfKj++4ga389vePh4yXrr1ezs2KddQSCWCZJpjFqw4ZzzVUE3HcHWtBkGmdtWYRtvQmkHHAFk+2XsV7Nckd1sQAbuWx9bdjIuXGOCKcA185Vy9U+VcTNr6FVADWJKHC5QHYg4KE2NjpG6C3HGB0jbS6dH0hxCwUEPETAQ2yihUYOAJM6z/UF/H4T6fxQKMRaB+Qdt9odbb63HGfkQsDn46u27vv5LSdKhbUUt9odrFczBDzEfrfVHOjhZP2kzrPdqzkjdu/3m6ecMvAUHsEmWmATLbQcUK2X3RDkfr9p3LUM8sdIdUCQ2m5LEbGA1QFqKaXAdaX/byEC3C6oOWGqE0BxQSN9jm1BAh6i1e4YbwmFHCAegcuJ/W5rHKeW8j+/iNQqWdqLyCQEODkgV8pS34RlgKn/1apEmsQeE41bkAPSLahShMzFbBNVkAPAL4p03KMNldoPAAAAAElFTkSuQmCC">
 <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect width='180' height='180' rx='34' fill='%23060709'/><circle cx='90' cy='90' r='62' fill='none' stroke='%233a4468' stroke-width='6.8'/><line x1='90' y1='34' x2='90' y2='146' stroke='%233a4468' stroke-width='4.5'/><line x1='34' y1='90' x2='146' y2='90' stroke='%233a4468' stroke-width='4.5'/><polygon points='90,34 73,79 90,67 107,79' fill='%23ff9900'/><polygon points='90,146 73,101 90,113 107,101' fill='%232a3050'/><polygon points='146,90 101,73 113,90 101,107' fill='%2300aaff'/><polygon points='34,90 79,73 67,90 79,107' fill='%232a3050'/><circle cx='90' cy='90' r='14' fill='%237bffe0'/><circle cx='90' cy='90' r='5.6' fill='%23060709'/></svg>">
@@ -1261,7 +1264,7 @@ HTML_TEMPLATE = """
   <div class="cmp-grid" id="cmpGrid"></div>
 </div>
 
-<div id="tcoSection" style="display:none;padding:32px 36px 44px;flex:1;min-height:calc(100vh - 64px)">
+<div id="tcoSection" style="display:none;padding:32px 36px 44px;flex:1;min-height:calc(100vh - 64px - 54px)">
   <h2 style="font-size:clamp(1.4rem,2.5vw,2rem);font-weight:800;letter-spacing:-.04em;margin-bottom:4px;color:#c8d0e8"><span style="font-size:1.5rem;margin-right:8px;position:relative;top:-4px">∑</span>TCO Calculator</h2>
   <p style="font-family:'IBM Plex Mono',monospace;font-size:.82rem;color:#c8d0e8;margin-bottom:28px">Total Cost of Ownership</p>
 
@@ -1527,6 +1530,7 @@ const AZURE_REGION_OPTIONS = [
   {v:'swedencentral',      l:'&#x1F1F8;&#x1F1EA; swedencentral \u2014 Sweden'},
   {v:'italynorth',         l:'&#x1F1EE;&#x1F1F9; italynorth \u2014 Milan'},
   {v:'eastus',             l:'&#x1F1FA;&#x1F1F8; eastus \u2014 Virginia'},
+  {v:'westus2',            l:'&#x1F1FA;&#x1F1F8; westus2 \u2014 Seattle'},
 ];
 
 function fixStickyRows() {
@@ -1552,6 +1556,23 @@ document.addEventListener('DOMContentLoaded', function() {
   adjustLayout();
   setTimeout(adjustLayout, 100);
   setTimeout(adjustLayout, 500);
+  (function() {
+    var ruler = document.getElementById('regionRuler');
+    if (!ruler) { ruler = document.createElement('span'); ruler.style.cssText = 'position:fixed;visibility:hidden;font:32px serif;white-space:nowrap'; document.body.appendChild(ruler); }
+    else { ruler.style.font = '32px serif'; }
+    ruler.textContent = '\\uD83C\\uDDEB\\uD83C\\uDDF7';
+    var flagW = ruler.offsetWidth;
+    ruler.textContent = 'FR';
+    var textW = ruler.offsetWidth;
+    ruler.style.font = '';
+    if (flagW > 0 && Math.abs(flagW - textW) < 4) {
+      var sel = document.getElementById('regionSelect');
+      if (!sel) return;
+      for (var i = 0; i < sel.options.length; i++) {
+        sel.options[i].text = sel.options[i].text.replace(/^.+?\\s(?=\\w+-\\w)/, '');
+      }
+    }
+  })();
 });
 if (window.ResizeObserver) {
   var _ro = new ResizeObserver(adjustLayout);
@@ -1755,7 +1776,7 @@ function getFiltered() {
     (!fProc  || (d.processor||'').toLowerCase().includes(fProc)) &&
     (!fVcpu  || matchNum(d.vcpu, fVcpu)) &&
     (!fRam   || matchNum(d.ram,  fRam)) &&
-    (!fPvcpu || matchNum(d.vcpu > 0 ? d.price / d.vcpu : 0, fPvcpu)) &&
+    (!fPvcpu || matchNum(d.vcpu > 0 ? d.price * (PRICE_UNIT_MULT[period]||1) / d.vcpu : 0, fPvcpu)) &&
     (!fPrice || matchNum(d.price * (PRICE_UNIT_MULT[period]||1), fPrice)) &&
     (!fMonth || matchNum((d[getRiKey()]||0) * (PRICE_UNIT_MULT[period]||1), fMonth)) &&
     (!fSavings || (() => { const rp = d[getRiKey()]; if (!rp) return false; return matchNum(Math.round((1-rp/d.price)*100), fSavings); })()) &&
@@ -1912,12 +1933,12 @@ function buildSets() {
         if (view === 'azure') {
           const n = x.iname.replace(/^Standard_/i,'');
           const ms = n.match(/^([A-Za-z]+?)(?=\\d)/);
-          const mv = x.iname.match(/[\\s_]v(\\d+)/i);
+          const mv = n.match(/v(\\d+)/i);
           if (!ms) return;
           s = ms[1].toLowerCase();
           g = mv ? parseInt(mv[1]) : 0;
         } else {
-          const m = x.iname.match(/^([a-z]+)(\\d)/);
+          const m = x.iname.replace(/^db\\./,'').match(/^([a-z]+)(\\d)/);
           if (!m) return;
           s = m[1]; g = parseInt(m[2]);
         }
@@ -1931,11 +1952,11 @@ function buildSets() {
     if (view === 'azure') {
       const n = d.iname.replace(/^Standard_/i,'');
       const ms = n.match(/^([A-Za-z]+?)(?=\\d)/);
-      const mv = d.iname.match(/[\\s_]v(\\d+)/i);
+      const mv = n.match(/v(\\d+)/i);
       serie = ms ? ms[1].toLowerCase() : '';
       gen   = mv ? parseInt(mv[1]) : 0;
     } else {
-      const mp = d.iname.match(/^([a-z]+)(\\d)/);
+      const mp = d.iname.replace(/^db\\./,'').match(/^([a-z]+)(\\d)/);
       serie = mp ? mp[1] : '';
       gen   = mp ? parseInt(mp[2]) : 0;
     }
@@ -2084,7 +2105,7 @@ function openSeriesModal(iname, fam) {
             + '<td><span style="padding:4px 8px;background:var(--s2);border:1px solid var(--b1);border-radius:3px;font-size:.88rem;color:#dde3f0">'+(view==="psql"?(d.engine||d.fam):((view==="rds"?FL_RDS:FL)[d.fam]||d.fam))+'</span></td>'
             + '<td><span style="padding:3px 7px;background:var(--s2);border:1px solid var(--b1);border-radius:3px;font-size:.88rem;color:#dde3f0;font-family:IBM Plex Mono,monospace">'+d.vcpu+'</span></td>'
             + '<td><span style="padding:3px 7px;background:var(--s2);border:1px solid var(--b1);border-radius:3px;font-size:.88rem;color:#dde3f0;font-family:IBM Plex Mono,monospace">'+ramFmt(d.ram)+'</span></td>'
-            + '<td><div style="display:flex;align-items:center;gap:6px;white-space:nowrap"><span style="display:inline-block;padding:4px 10px;background:'+bgC+';border:1px solid '+bdC+';border-radius:6px;font-weight:700;font-size:.88rem;color:'+color+';font-family:IBM Plex Mono,monospace">'+f4(d.price*(periodMult[period]||1))+' ' + currSym() + '</span>'+diffHtml+'</div></td>'
+            + '<td><div style="display:flex;align-items:center;gap:6px;white-space:nowrap"><span style="display:inline-block;padding:4px 10px;background:transparent;border:1px solid '+bdC+';border-radius:6px;font-weight:700;font-size:.88rem;color:'+color+';font-family:IBM Plex Mono,monospace">'+f4(d.price*(periodMult[period]||1))+' ' + currSym() + '</span>'+diffHtml+'</div></td>'
             + '<td>'+(function(){ const rp = d[getRiKey()]; return '<div style="display:flex;align-items:center;gap:6px;white-space:nowrap">' + (rp ? '<span class="ph-mo">'+f4(rp*(periodMult[period]||1))+' '+currSym()+'</span>' : '<span style="color:var(--muted);font-size:.75rem">—</span>') + '</div>'; })()+'</td>'
             + '<td><div style="display:inline-flex;align-items:center;gap:6px"><div class="score-bar-s"><div class="score-fill-s" style="width:'+(dSc/10*100).toFixed(1)+'%;background:linear-gradient(90deg,'+scoreGrad(dSc)+')"></div></div><span style="font-size:.82rem;font-weight:700;color:'+scoreColor(dSc)+';font-family:IBM Plex Mono,monospace">'+dSc+'</span></div></td>'
             + '</tr>';
@@ -2290,20 +2311,13 @@ function render() {
         + '<td class="col-network"><span class="tag" style="white-space:nowrap">'+(d.network||'—')+'</span></td>'
         + '<td class="col-maxdisks"><span class="tag">'+(d.max_disks ? d.max_disks : '—')+'</span></td>'
         + '<td class="col-diskiops"><span class="tag">'+((d.disk_iops||d.iops) ? (d.disk_iops||d.iops).toLocaleString() : '—')+'</span></td>'
-        + '<td class="col-pvcpu"><span class="ph-mo">'+(d.vcpu > 0 ? f4(d.price/d.vcpu)+' '+currSym() : '—')+'</span></td>'
+        + '<td class="col-pvcpu"><span class="ph-mo">'+(d.vcpu > 0 ? f4(d.price*(periodMult[period]||1)/d.vcpu)+' '+currSym() : '—')+'</span></td>'
         + '<td class="col-price">'+((view==='aws'||view==='rds') ? '<span style="display:inline-block;padding:5px 12px;border:1px solid rgba(255,153,0,0.3);border-radius:6px;font-weight:700;font-size:.92rem;color:#ff9900;font-family:IBM Plex Mono,monospace">'+f4(d.price*(periodMult[period]||1))+' ' + currSym() + '</span>' : '<span style="display:inline-block;padding:5px 12px;border:1px solid rgba(0,170,255,0.3);border-radius:6px;font-weight:700;font-size:.92rem;color:#00aaff;font-family:IBM Plex Mono,monospace">'+f4(d.price*(periodMult[period]||1))+' ' + currSym() + '</span>')+'</td>'
         + '<td class="col-month"><span class="ph-mo">'+(function(){ const rp = d[getRiKey()]; if (!rp) return '<span style="color:var(--muted);font-size:.75rem">—</span>'; return f4(rp*(periodMult[period]||1))+' '+currSym(); })()+'</span></td>'
         + '<td class="col-savings">'+(function(){ const rp = d[getRiKey()]; if (!rp) return '<span style="color:var(--muted);font-size:.75rem">—</span>'; const sav = Math.round((1-rp/d.price)*100); return '<span style="padding:3px 8px;border:1px solid rgba(123,255,224,0.3);border-radius:4px;color:#7bffe0;font-weight:700;font-family:IBM Plex Mono,monospace;font-size:.82rem">\u2212'+sav+'%</span>'; })()+'</td>'
         + '<td class="col-spot ec2-only"><span class="ph-mo">'+(function(){ if (!d.spot) return '<span style="color:var(--muted);font-size:.75rem">—</span>'; return f4(d.spot*(currRate())*(periodMult[period]||1))+' '+currSym(); })()+'</span></td>'
         + '<td class="col-spotsav ec2-only">'+(function(){ if (!d.spot) return '<span style="color:var(--muted);font-size:.75rem">—</span>'; const sav = Math.round((1-d.spot/d.price)*100); return '<span style="padding:3px 8px;border:1px solid rgba(123,255,224,0.3);border-radius:4px;color:#7bffe0;font-weight:700;font-family:IBM Plex Mono,monospace;font-size:.82rem">\u2212'+sav+'%</span>'; })()+'</td>'
-        + '<td class="col-score" style="padding:10px 16px;border-bottom:1px solid #1c2030;white-space:nowrap">'
-        + '<div class="score-wrap" data-ti="'+_ti+'" onmouseenter="showTip(event,+this.dataset.ti)" onmousemove="moveTip(event)" onmouseleave="hideTip()">'
-        + '<div style="position:relative;width:100px;height:8px;background:#1c2030;border-radius:4px;overflow:hidden">'
-        + '<div style="position:absolute;left:0;top:0;height:100%;width:'+(d.score/10*100).toFixed(1)+'%;background:linear-gradient(90deg,'+scoreGrad(d.score)+');border-radius:4px"></div></div>'
-        + '<span class="score-val" style="color:'+scoreColor(d.score)+'">'+d.score+'</span>'
-        + ''
-        + '</div>'
-        + '</div></div></td>'
+        + '<td class="col-score" style="padding:10px 16px;border-bottom:1px solid #1c2030;white-space:nowrap">'+(view==='psql' ? '<span style="color:var(--muted);font-size:.75rem">\u2014</span>' : '<div class="score-wrap" data-ti="'+_ti+'" onmouseenter="showTip(event,+this.dataset.ti)" onmousemove="moveTip(event)" onmouseleave="hideTip()"><div style="position:relative;width:100px;height:8px;background:#1c2030;border-radius:4px;overflow:hidden"><div style="position:absolute;left:0;top:0;height:100%;width:'+(d.score/10*100).toFixed(1)+'%;background:linear-gradient(90deg,'+scoreGrad(d.score)+');border-radius:4px"></div></div><span class="score-val" style="color:'+scoreColor(d.score)+'">'+d.score+'</span></div>')+'</td>'
         + '</tr>';
       }).join('')
       + (hasMore ? '<tr id="showAllRow"><td colspan="20" style="text-align:center;padding:16px;border-bottom:1px solid var(--b1)"><button onclick="showAllRows()" style="font-family:IBM Plex Mono,monospace;font-size:.78rem;padding:8px 20px;background:var(--s1);border:1px solid var(--b1);border-radius:6px;color:var(--accent);cursor:pointer;transition:border-color .15s">Show all ' + arr.length + ' instances</button></td></tr>' : '');
@@ -2337,13 +2351,13 @@ function showAllRows() {
       + '<td class="col-network"><span class="tag" style="white-space:nowrap">'+(d.network||'\u2014')+'</span></td>'
       + '<td class="col-maxdisks"><span class="tag">'+(d.max_disks ? d.max_disks : '\u2014')+'</span></td>'
       + '<td class="col-diskiops"><span class="tag">'+((d.disk_iops||d.iops) ? (d.disk_iops||d.iops).toLocaleString() : '\u2014')+'</span></td>'
-      + '<td class="col-pvcpu"><span class="ph-mo">'+(d.vcpu > 0 ? f4(d.price/d.vcpu)+' '+currSym() : '\u2014')+'</span></td>'
+      + '<td class="col-pvcpu"><span class="ph-mo">'+(d.vcpu > 0 ? f4(d.price*(periodMult[period]||1)/d.vcpu)+' '+currSym() : '\u2014')+'</span></td>'
       + '<td class="col-price">'+((view==='aws'||view==='rds') ? '<span style="display:inline-block;padding:5px 12px;background:rgba(255,153,0,0.1);border:1px solid rgba(255,153,0,0.3);border-radius:6px;font-weight:700;font-size:.92rem;color:#ff9900;font-family:IBM Plex Mono,monospace">'+f4(d.price*(periodMult[period]||1))+' '+currSym()+'</span>' : '<span style="display:inline-block;padding:5px 12px;background:rgba(0,170,255,0.1);border:1px solid rgba(0,170,255,0.3);border-radius:6px;font-weight:700;font-size:.92rem;color:#00aaff;font-family:IBM Plex Mono,monospace">'+f4(d.price*(periodMult[period]||1))+' '+currSym()+'</span>')+'</td>'
       + '<td class="col-month"><span class="ph-mo">'+(function(){ const rp = d[getRiKey()]; if (!rp) return '<span style="color:var(--muted);font-size:.75rem">\u2014</span>'; return f4(rp*(periodMult[period]||1))+' '+currSym(); })()+'</span></td>'
       + '<td class="col-savings">'+(function(){ const rp = d[getRiKey()]; if (!rp) return '<span style="color:var(--muted);font-size:.75rem">\u2014</span>'; const sav = Math.round((1-rp/d.price)*100); return '<span style="padding:3px 8px;border:1px solid rgba(123,255,224,0.3);border-radius:4px;color:#7bffe0;font-weight:700;font-family:IBM Plex Mono,monospace;font-size:.82rem">\u2212'+sav+'%</span>'; })()+'</td>'
       + '<td class="col-spot ec2-only"><span class="ph-mo">'+(function(){ if (!d.spot) return '<span style="color:var(--muted);font-size:.75rem">\u2014</span>'; return f4(d.spot*(currRate())*(periodMult[period]||1))+' '+currSym(); })()+'</span></td>'
       + '<td class="col-spotsav ec2-only">'+(function(){ if (!d.spot) return '<span style="color:var(--muted);font-size:.75rem">\u2014</span>'; const sav = Math.round((1-d.spot/d.price)*100); return '<span style="padding:3px 8px;border:1px solid rgba(123,255,224,0.3);border-radius:4px;color:#7bffe0;font-weight:700;font-family:IBM Plex Mono,monospace;font-size:.82rem">\u2212'+sav+'%</span>'; })()+'</td>'
-      + '<td class="col-score" style="padding:10px 16px;border-bottom:1px solid #1c2030;white-space:nowrap"><div class="score-wrap" data-ti="'+_ti+'" onmouseenter="showTip(event,+this.dataset.ti)" onmousemove="moveTip(event)" onmouseleave="hideTip()"><div style="position:relative;width:100px;height:8px;background:#1c2030;border-radius:4px;overflow:hidden"><div style="position:absolute;left:0;top:0;height:100%;width:'+(d.score/10*100).toFixed(1)+'%;background:linear-gradient(90deg,'+scoreGrad(d.score)+');border-radius:4px"></div></div><span class="score-val" style="color:'+scoreColor(d.score)+'">'+d.score+'</span></div></td>'
+      + '<td class="col-score" style="padding:10px 16px;border-bottom:1px solid #1c2030;white-space:nowrap">'+(view==='psql' ? '<span style="color:var(--muted);font-size:.75rem">\u2014</span>' : '<div class="score-wrap" data-ti="'+_ti+'" onmouseenter="showTip(event,+this.dataset.ti)" onmousemove="moveTip(event)" onmouseleave="hideTip()"><div style="position:relative;width:100px;height:8px;background:#1c2030;border-radius:4px;overflow:hidden"><div style="position:absolute;left:0;top:0;height:100%;width:'+(d.score/10*100).toFixed(1)+'%;background:linear-gradient(90deg,'+scoreGrad(d.score)+');border-radius:4px"></div></div><span class="score-val" style="color:'+scoreColor(d.score)+'">'+d.score+'</span></div>')+'</td>'
       + '</tr>';
   }).join('');
   while (temp.firstChild) tbody.appendChild(temp.firstChild);
@@ -3242,7 +3256,7 @@ function renderComparaison() {
       +'<div style="display:flex;flex-direction:column;gap:10px">'
       +'<div><div class="cmp-metric-lbl">On-Demand /h</div><div style="display:flex;align-items:center;gap:5px"><span class="cmp-metric-val" style="color:'+color+'">'+f4(d.price)+'</span>'+(diff!==null?'<span style="font-size:9px;color:'+(diff>0?'#ff5566':'#7bffe0')+'">'+(diff>0?'+':'')+diff.toFixed(1)+'%</span>':'')+'</div></div>'
       +'<div><div class="cmp-metric-lbl">Reserved '+(riYear==='3yr'?'3yr':'1yr')+' /h</div><div class="cmp-metric-val" style="color:#7bffe0">'+(rp?f4(rp)+' <span style="font-size:9px">−'+sav+'%</span>':'<span style="color:#3a3f55">—</span>')+'</div></div>'
-      +'<div><div class="cmp-metric-lbl">Cost/vCPU</div><div class="cmp-metric-val" style="color:#c8d0e8">'+(d.vcpu>0?f4(d.price/d.vcpu):'—')+'</div></div>'
+      +'<div><div class="cmp-metric-lbl">Cost/vCPU</div><div class="cmp-metric-val" style="color:#c8d0e8">'+(d.vcpu>0?f4(d.price*(periodMult[period]||1)/d.vcpu):'—')+'</div></div>'
       +'<div><div class="cmp-metric-lbl">FinOps Score</div><div style="display:flex;align-items:center;gap:8px;margin-top:2px"><div class="cmp-bar-bg" style="flex:1"><div style="width:'+scorePct+'%;height:100%;background:'+scoreColor+';border-radius:3px"></div></div><span class="cmp-metric-val" style="color:'+scoreColor+'">'+d.score+'</span></div></div>'
       +'</div></div>';
   }).join('');
@@ -3701,6 +3715,7 @@ function renderHeatmap() {
     'swedencentral':      { lon:16.3458,lat:60.1282, label:'Gävle',     cloud:'azure' },
     'italynorth':         { lon:9.1900, lat:45.4654, label:'Milan',     cloud:'azure' },
     'eastus':             { lon:-77.47, lat:38.99,   label:'Virginia',  cloud:'azure' },
+    'westus2':            { lon:-120.88,lat:47.23,   label:'Seattle',   cloud:'azure' },
     'us-west-2':          { lon:-122.68,lat:45.52,   label:'Oregon',    cloud:'aws'   },
   };
   const ISO_MAP = {
@@ -3713,7 +3728,7 @@ function renderHeatmap() {
     'eu-south-1':'380',
     'italynorth':'380',
     'eu-south-2':'724',
-    'us-east-1':'840','eastus':'840','us-west-2':'840',
+    'us-east-1':'840','eastus':'840','westus2':'840','us-west-2':'840',
   };
 
   function median(arr) {
@@ -3943,10 +3958,12 @@ function renderHeatmap() {
           tooltip.style.display = 'none';
         })
         .on('mousemove', function(event) {
+          const markerColor = (_commonCount > 0 && val) ? diffColor(val) : '#6b738f';
+          const svcTxt = hmCloud === 'aws' ? 'AWS ' + hmService.toUpperCase() : 'Azure ' + (hmService === 'ec2' ? 'VM' : (hmService === 'rds' || hmService === 'bdd') ? 'DB' : hmService.toUpperCase());
           const tipHtml =
-            '<div style="margin-bottom:7px;display:flex;justify-content:space-between;align-items:flex-start;gap:16px">'
-            +'<div><span style="font-weight:700;color:'+cloudColor+'">'+c.label+'</span><br><span style="color:#c8d0e8;font-size:.68rem">'+reg+'</span></div>'
-            +'<div style="padding-top:1px">'+cloudLbl+'</div>'
+            '<div style="margin-bottom:7px">'
+            +'<div style="display:flex;align-items:baseline;justify-content:space-between;gap:16px"><span style="font-weight:700;color:'+markerColor+'">'+c.label+'</span><span style="color:'+markerColor+';font-size:.72rem;font-weight:600">'+svcTxt+'</span></div>'
+            +'<div style="color:#8890a8;font-size:.68rem;margin-top:2px">'+reg+'</div>'
             +'</div>'
             +'<div style="border-top:1px solid #2a3050;margin-bottom:8px"></div>'
             +(_commonCount === 0 ? '<div style="color:#ff5566;font-size:.75rem;margin-bottom:4px">No common instances</div>' : '')
@@ -4011,7 +4028,7 @@ function renderHeatmap() {
   const ramLabel  = ramTarget  ? ramTarget+' GiB RAM' : 'Toute RAM';
   const instLabel = instTarget ? ' · '+instTarget : '';
   const contextLabel = famLabel+' · '+vcpuLabel+' · '+ramLabel+instLabel;
-  const serviceLabel = (hmCloud === 'aws' ? 'AWS ' : 'Azure ') + hmService.toUpperCase();
+  const serviceLabel = hmCloud === 'aws' ? 'AWS ' + hmService.toUpperCase() : 'Azure ' + (hmService === 'ec2' ? 'VM' : (hmService === 'rds' || hmService === 'bdd') ? 'DB' : hmService.toUpperCase());
 
   panel.innerHTML = '<div style="font-family:IBM Plex Mono,monospace;font-size:.82rem;font-weight:700;color:#7bffe0;letter-spacing:.06em;text-transform:uppercase;margin-bottom:4px">Top 5 Cheapest Regions</div>'
 
@@ -4088,7 +4105,7 @@ function renderHeatmap() {
         + '<span style="color:#c8d0e8">'+c.label+'</span>'
 
         + '</td>'
-        + '<td style="padding:10px 16px;border-bottom:1px solid #1c2030;font-family:IBM Plex Mono,monospace;font-size:.75rem;color:#c8d0e8">'+reg+'</td>'
+        + '<td style="padding:10px 16px;border-bottom:1px solid #1c2030;font-family:IBM Plex Mono,monospace;font-size:.75rem;color:#c8d0e8;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+reg+'">'+reg+'</td>'
         + '<td style="padding:10px 16px;border-bottom:1px solid #1c2030;font-family:IBM Plex Mono,monospace;font-size:.85rem">'
         + '<div style="display:flex;align-items:center;gap:10px">'
         + '<span style="color:#c8d0e8;font-weight:700;min-width:28px;text-align:right">'+avail+'</span>'
