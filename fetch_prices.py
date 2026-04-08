@@ -1936,7 +1936,7 @@ function buildSets() {
           const mv = n.match(/v(\\d+)/i);
           if (!ms) return;
           s = ms[1].toLowerCase();
-          g = mv ? parseInt(mv[1]) : 0;
+          g = mv ? parseInt(mv[1]) : 1;
         } else {
           const m = x.iname.replace(/^db\\./,'').match(/^([a-z]+)(\\d)/);
           if (!m) return;
@@ -1954,7 +1954,7 @@ function buildSets() {
       const ms = n.match(/^([A-Za-z]+?)(?=\\d)/);
       const mv = n.match(/v(\\d+)/i);
       serie = ms ? ms[1].toLowerCase() : '';
-      gen   = mv ? parseInt(mv[1]) : 0;
+      gen   = mv ? parseInt(mv[1]) : 1;
     } else {
       const mp = d.iname.replace(/^db\\./,'').match(/^([a-z]+)(\\d)/);
       serie = mp ? mp[1] : '';
@@ -1963,7 +1963,7 @@ function buildSets() {
     const sorted = _gensBySerie[serie] || [gen];
     const rank   = sorted.indexOf(gen);
     const GEN_PTS = [3, 2.5, 1.5, 0.5];
-    const genPts  = (view==='azure' && gen===0) ? 0 : (rank < GEN_PTS.length ? GEN_PTS[rank] : 0);
+    const genPts  = rank < GEN_PTS.length ? GEN_PTS[rank] : 0;
     // Cache bestInGroup
     if (!window._bestInGroup) {
       window._bestInGroup = {};
@@ -2041,8 +2041,8 @@ function openSeriesModal(iname, fam) {
   }
   function getVersion(name) {
     if (view === 'azure') {
-      const mv = name.match(/[\\s_]v(\\d+)/i);
-      return mv ? parseInt(mv[1]) : 0;
+      const mv = name.replace(/^Standard_/i,'').match(/v(\\d+)/i);
+      return mv ? parseInt(mv[1]) : 1;
     } else {
       const m = name.match(/[a-z]+(\\d)/);
       return m ? parseInt(m[1]) : 0;
